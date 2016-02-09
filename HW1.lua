@@ -295,6 +295,63 @@ function linearSVM(Xtrain, Ytrain, nfeatures, nclasses, ep_max, batch_size, eta,
     return W,b,tot_Loss
 end
 
+function nfold_cv(Classifier,Xtrain,Ytrain,nfold,hyperparam,ep_max,nfeatures,nclasses)
+    local hyperparam = hyperparam
+    local tensor_folds = torch.split(torch.linspace(1,Xtrain:size()[1],Xtrain:size()[1]),nfold)
+    local Xtrain_fold = torch.Tensor(math.floor(Xtrain:size()[1])/nfold),Xtrain:size()[2])
+    local Xtrain_rest = torch.zeros(math.floor(Xtrain:size()[1])/nfold)*(nfold-1),Xtrain:size()[2])
+    local Ytrain_fold = torch.Tensor(math.floor(Xtrain:size()[1])/nfold))
+    local Ytrain_rest = torch.zeros(math.floor(Xtrain:size()[1])/nfold)*(nfold-1))
+    local av_acc = 0
+    
+    for n_mod = 1,hyperparam:size()[1] do
+
+        for i = 1,nfold do
+            Xtrain_fold:copy(Xtrain:index(1,tensor_folds[i]:type('torch.LongTensor')))
+            Ytrain_fold:copy(Ytrain:index(1,tensor_folds[i]:type('torch.LongTensor')))
+
+            for j = 1,nfold do
+                if j ~= i then
+                    Xtrain_rest:indexAdd(1,torch.linspace((j-1)*nfold+1,j*nfold,nfold):type('torch.LongTensor'),Xtrain:index(1,tensor_folds[j]:type('torch.LongTensor'))
+                    Ytrain_rest:indexAdd(1,torch.linspace((j-1)*nfold+1,j*nfold,nfold):type('torch.LongTensor'),Ytrain:index(1,tensor_folds[j]:type('torch.LongTensor'))
+                end
+            end
+
+            if Classifier == 'NB' then
+
+                prior, x_conditional_y = NaiveBayes(Xtrain_rest, Ytrain_rest, nfeatures, nclasses, hyperparam[n_mod][1])
+
+                Ypred, acc = predict_NB(Xtrain_fold,prior,x_conditional_y,nclasses,Ytrain_fold)
+
+
+            else
+
+                if Classifier = 'log_reg' then
+                    W, b, L = logreg(Xtrain_rest, Ytrain_rest, nfeatures, nclasses, ep_max, hyperparam[n_mod][1], hyperparam[n_mod][2], hyperparam[n_mod][3])
+                elseif Classifier = 'linear_svm' then
+                    W, b, L = linearSVM(Xtrain_rest, Ytrain_rest, nfeatures, nclasses, ep_max, hyperparam[n_mod][1], hyperparam[n_mod][2], hyperparam[n_mod][3])
+                end 
+
+                Validpred, acc = predict(Xtrain_fold, W, b, Ytrain_fold)
+
+            end
+
+            av_acc = av_acc + ac
+
+        end
+
+        if Classifier == 'NB' then
+            hyperparam[n_mod][2] = av_acc/nfold
+        else
+            hyperparam[n_mod][4] = av_acc/nfold
+
+    end
+
+    return hyperparam
+
+end
+
+
 
 function main() 
    -- Parse input params
