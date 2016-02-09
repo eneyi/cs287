@@ -435,7 +435,7 @@ function main()
             Validpred, accuracy = predict(valid_input, W, b, valid_output)
             Trainpred, train_accuracy = predict(train_input, W, b, train_output)
             -- Prediction on the test set
-            --Testpred = predict(test_input, W, b)
+            Testpred = predict(test_input, W, b)
         end
 
         -- Saving the predictions on test
