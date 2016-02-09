@@ -438,13 +438,13 @@ function main()
             --Testpred = predict(test_input, W, b)
         end
 
-        -- -- Saving the predictions on test
-        -- filename = classifier .. opt.f
-        -- if (filename) then
-        --     myFile = hdf5.open(filename, 'w')
-        --     myFile:write('Testpred', Testpred)
-        --     myFile:close()
-        -- end
+        -- Saving the predictions on test
+        filename = classifier .. opt.f
+        if (filename) then
+            myFile = hdf5.open(filename, 'w')
+            myFile:write('Testpred', Testpred)
+            myFile:close()
+        end
 
     else
         if (classifier == 'nb') then
