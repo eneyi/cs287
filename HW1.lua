@@ -425,26 +425,26 @@ function main()
            
             -- Learning the model
             if (classifier == 'log_reg') then
-                math.randomseed(1234)
+                torch.manualSeed(123)
                 W, b, L = logreg(train_input, train_output, nfeatures, nclasses, ep_max, batch_size, eta, lambda)
             elseif (classifier == 'linear_svm') then
-                math.randomseed(1234)
+                torch.manualSeed(123)
                 W, b, L = linearSVM(train_input, train_output, nfeatures, nclasses, ep_max, batch_size, eta, lambda)
             end
             -- Prediction on the validation set
             Validpred, accuracy = predict(valid_input, W, b, valid_output)
             Trainpred, train_accuracy = predict(train_input, W, b, train_output)
             -- Prediction on the test set
-            --Testpred = predict(test_input, W, b)
+            Testpred = predict(test_input, W, b)
         end
 
-        -- -- Saving the predictions on test
-        -- filename = classifier .. opt.f
-        -- if (filename) then
-        --     myFile = hdf5.open(filename, 'w')
-        --     myFile:write('Testpred', Testpred)
-        --     myFile:close()
-        -- end
+        -- Saving the predictions on test
+        filename = classifier .. opt.f
+        if (filename) then
+            myFile = hdf5.open(filename, 'w')
+            myFile:write('Testpred', Testpred)
+            myFile:close()
+        end
 
     else
         if (classifier == 'nb') then
