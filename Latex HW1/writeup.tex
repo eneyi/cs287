@@ -16,7 +16,11 @@ We first build a Naive Bayes which is pretty fast to train, a multinomial logist
 
 The Stanford Sentiment dataset contains about 150 000 text reviews of movies with their rating (from 1 to 5), containing about 17 000 unique words. The reviews are already pre-processed and come as sparse bag-of-words features. The goal is to predict the rating of each review.
 
-We used the Torch Lua framework to build the models and implemented them in the file \textbf{HW1.lua}. This file contains a \textit{main()} function which can be called with different parameters from the command line.
+We used the Torch Lua framework to build the models and implemented them in the file \textbf{HW1.lua}. This file contains a \textit{main()} function which can be called with different parameters from the command line. The files can be found in the following github repository:
+
+$$\text{http://github.com/virgodi/cs287}$$
+
+This repository also contains iTorch notebooks where we drafted code.
 
 
 \section{Problem Description}
@@ -102,10 +106,10 @@ with l2 regularization
 We used a stochastic gradient descent with minibatch. $\eta$ is a crucial parameter to tune to make it converge fast. We can also tune the size of the mini-batch. The number of total iteration, also called epoch, could be tuned but we noticed with our experiment that given the size of the data set (around 150 000 rows) one epoch is enough to converge.\\
 
 
-Pseudo-code for the SGD with mini-batch:
+Pseudo-code for the SGD with mini-batch and regularisation:
 
   \begin{algorithmic}[1]
-    \For{$iteration = 1, \ldots, epoch_max$ }
+    \For{$iteration = 1, \ldots, epoch_{max}$ }
     \State{Sample a minibatch of m examples}
     \State{$\mathbf{\hat{g}} \gets 0$}
     \For{$i = 1, \ldots, $m}
@@ -113,43 +117,58 @@ Pseudo-code for the SGD with mini-batch:
 	\State{Compute gradients \textbf{g'} of $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$ with respect to $\theta$)}
     \State{$\hat{\boldg} \gets \hat{\boldg} +  \frac{1}{m} \boldg'$}
     \EndFor{}
-    \State{$\theta \gets \theta - \eta_k \hat{\boldg}$}
+    \State{$\theta \gets (1-\frac{\eta\lambda}{n})\theta - \eta_k \hat{\boldg}$}
     \EndFor{}
     \State{\Return{$\theta$}}
   \end{algorithmic}
 
+In order to speed up the code, we took advantage of the hint made by Sasha about the rather sparse structure of our data. We therefore only updated the gradients with the terms derived by the differentiation of the regularisation term only once every 10 minibatch. This allowed us to get significant speed improvements (about 10 seconds faster).
 
 \section{Experiments}
 
-We applied our three models on the Stanford Sentimental dataset and report in a table below our results. We show the running time to emphasize how faster is the Naive Bayes and the accuracy both on the training and test set. We also show the loss, its the exact value for the Naive Bayes and an approximation on the last mini-batch of the epoch (extrapolated then to the whole dataset) for the two other models.
+We applied our three models on the Stanford Sentimental dataset and report in a table below our results. We show the running time to emphasize how faster is the Naive Bayes and the accuracy both on the training and test set. We also show the loss, its the exact value for the Naive Bayes and an approximation on the last mini-batch of the epoch (extrapolated then to the whole dataset) for the two other models.\\
 
-TABLE WITH time, loss, accuracy train, accuracy test on default parameter
+\noindent We ran a validation pipeline to come up with the best set of parameters. We also coded a k-fold cross validation but due to a lack of time, did not experiment enough to show interesting results. We therefore retained the set of parameters using validation which optimizes the accuracy. We obtained the following parameters for each model:
 
-
-\noindent We ran a cross validation pipeline to come up with the best set of parameters. We chose to apply a 10-fold cross validation on the training set and retain the set of parameters which optimizes the accuracy. We retain the following parameters for each model:
 \begin{itemize}
 	\item \textbf{Naive Bayes} $\alpha = 1$
 	\item \textbf{Logistic Regression} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$
-	\item \textbf{Linear SVM} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$
+	\item \textbf{Linear SVM} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$\\
 \end{itemize}
 
-TABLE WITH OPTIMIZED RESULTs
+If we look at the results below, we can note that Naive Bayes has the highest Training accuracy but smallest Test accuracy, which seems to indicate that Naive Bayes might be a slightly more overfitting algorithm than the other two.\\
 
-
-\begin{table}[]
+\begin{table}[h!]
 \centering
 \caption{Results Summary}
-\label{my-label}
-\begin{tabular}{c|c|c|c|c|}
-\cline{2-5}
-\multicolumn{1}{l|}{}                     & Training Accuracy & Validation Accuracy & Run Time & Loss                      \\ \hline
-\multicolumn{1}{|c|}{Naive Bayes}         & 0.666             & 0.399               & 5-6s     &         XX                  \\ \cline{1-1}
-\multicolumn{1}{|c|}{Logistic Regression} & 0.601             & 0.403               & 85-87s   & $4x10^12$   \\ \cline{1-1}
-\multicolumn{1}{|c|}{Linear SVM}          & 0.631             & 0.411               & 86-90s   & $1.21x10^5$ \\ \hline
+\label{Results Summary}
+\begin{tabular}{c|c|c|c|c|c|}
+\cline{2-6}
+\multicolumn{1}{l|}{}                     & Training & Validation & Test  & Run Time & Loss                      \\ \hline
+\multicolumn{1}{|c|}{Naive Bayes}         & 0.666    & 0.399      & 0.344 & 5-6s     &    XX                       \\ \cline{1-1}
+\multicolumn{1}{|c|}{Logistic Regression} & 0.601    & 0.403      & 0.354 & 85-87s   & $4$x$10^12$   \\ \cline{1-1}
+\multicolumn{1}{|c|}{Linear SVM}          & 0.631    & 0.411      & 0.350 & 86-90s   & $1.21$x$10^5$ \\ \hline
 \end{tabular}
 \end{table}
 
+Variances of the outputs of these algorithms are also key insights for analysis.\\
 
+\begin{table}[h!]
+\centering
+\caption{Range of prediction accuracy}
+\label{my-label}
+\begin{tabular}{c|c|c|}
+\cline{2-3}
+\multicolumn{1}{l|}{}                     & Min Accuracy & Max Accuracy \\ \cline{2-3} 
+\multicolumn{1}{l|}{}                     & Validation   & Validation   \\ \hline
+\multicolumn{1}{|c|}{Naive Bayes}         & 0.257        & 0.399        \\ \hline
+\multicolumn{1}{|c|}{Logistic Regression} & 0.367        & 0.403        \\ \hline
+\multicolumn{1}{|c|}{Linear SVM}          & 0.333        & 0.411        \\ \hline
+\end{tabular}
+\end{table}
+
+What we can see is that parametrisation is much more crucial for the Naive Bayes algorithm, with performance almost increased by 50\% by adding the smoothing paramater $\alpha = 1$. Logistic Regression and linear SVM have very similar performance, both on accuracy and runtime. On the other hand, the Naive Bayes algorithm runs way faster and this aspect must be taken into account when having to choose an algorithm to run.
+ 
 
 \section{Conclusion}
 
