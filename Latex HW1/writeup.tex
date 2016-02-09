@@ -2,6 +2,7 @@
 \documentclass[11pt]{article}
 
 \usepackage{common}
+\usepackage{amsmath}
 \title{HW1: Text Classification}
 \author{Virgile Audi \\ vaudi@g.harvard.edu \and Nicolas Drizard \\ nicolasdrizard@g.harvard.edu }
 \begin{document}
@@ -120,7 +121,7 @@ Pseudo-code for the SGD with mini-batch:
 
 \section{Experiments}
 
-We applied our three models on the Stanford Sentimental dataset and report on a table our results. We show the running time to emphasize how faster is the Naive Bayes and the accuracy both on the training and test set. We also show the loss, its the exact value for the Naive Bayes and an approximation on the last mini-batch of the epoch (extrapolated then to the whole dataset) for the two other models.
+We applied our three models on the Stanford Sentimental dataset and report in a table below our results. We show the running time to emphasize how faster is the Naive Bayes and the accuracy both on the training and test set. We also show the loss, its the exact value for the Naive Bayes and an approximation on the last mini-batch of the epoch (extrapolated then to the whole dataset) for the two other models.
 
 TABLE WITH time, loss, accuracy train, accuracy test on default parameter
 
@@ -128,27 +129,24 @@ TABLE WITH time, loss, accuracy train, accuracy test on default parameter
 \noindent We ran a cross validation pipeline to come up with the best set of parameters. We chose to apply a 10-fold cross validation on the training set and retain the set of parameters which optimizes the accuracy. We retain the following parameters for each model:
 \begin{itemize}
 	\item \textbf{Naive Bayes} $\alpha = 1$
-	\item \textbf{Logistic Regression}
-	\item \textbf{Linear SVM}
+	\item \textbf{Logistic Regression} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$
+	\item \textbf{Linear SVM} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$
 \end{itemize}
 
 TABLE WITH OPTIMIZED RESULTs
 
 
-\begin{table}[h]
+\begin{table}[]
 \centering
-\begin{tabular}{llr}
- \toprule
- Model &  & Acc. \\
- \midrule
- \textsc{Baseline 1} & & 0.45\\
- \textsc{Baseline 2} & & 2.59 \\
- \textsc{Model 1} & & 10.59  \\
- \textsc{Model 2} & &13.42 \\
- \textsc{Model 3} & & 7.49\\
- \bottomrule
+\caption{Results Summary}
+\label{my-label}
+\begin{tabular}{c|c|c|c|c|}
+\cline{2-5}
+\multicolumn{1}{l|}{}                     & Training Accuracy & Validation Accuracy & Run Time & Loss                      \\ \hline
+\multicolumn{1}{|c|}{Naive Bayes}         & 0.666             & 0.399               & 5-6s     &         XX                  \\ \cline{1-1}
+\multicolumn{1}{|c|}{Logistic Regression} & 0.601             & 0.403               & 85-87s   & $4x10^12$   \\ \cline{1-1}
+\multicolumn{1}{|c|}{Linear SVM}          & 0.631             & 0.411               & 86-90s   & $1.21x10^5$ \\ \hline
 \end{tabular}
-\caption{\label{tab:results} Table with the main results.}
 \end{table}
 
 
