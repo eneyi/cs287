@@ -1,0 +1,166 @@
+
+\documentclass[11pt]{article}
+
+\usepackage{common}
+\title{HW1: Text Classification}
+\author{Virgile Audi \\ vaudi@g.harvard.edu \and Nicolas Drizard \\ nicolasdrizard@g.harvard.edu }
+\begin{document}
+
+\maketitle{}
+\section{Introduction}
+
+This assignement aims to build three different linear models for text classification and to tune them to fit the Stanford Sentiment dataset (Socher et al., 2013).
+
+We first build a Naive Bayes which is pretty fast to train, a multinomial logistic regression and a linear support vector machine. We evaluate each of these models with their accuracy on the validation set. Our main work was then on tuning the hyperparameters. First, we applied to the validationn set the models with several set of hyperparameters and select the most accurate and then we decided to build a k-fold cross-validation pipeline.
+
+The Stanford Sentiment dataset contains about 150 000 text reviews of movies with their rating (from 1 to 5), containing about 17 000 unique words. The reviews are already pre-processed and come as sparse bag-of-words features. The goal is to predict the rating of each review.
+
+We used the Torch Lua framework to build the models and implemented them in the file \textbf{HW1.lua}. This file contains a \textit{main()} function which can be called with different parameters from the command line.
+
+
+\section{Problem Description}
+
+The problem to solve is a multi-class classification on text reviews. We build three linear models which share the same workflow.\\
+
+\noindent The signature of the classifier is the following:
+
+\begin{itemize}
+	\item \textbf{Input:} Movie review input with sparse features corresponding to one-hot vector for each word, with $\mathcal{F}$ the vocabulary of the language.
+	\[ x = \sum_{f \in \mathcal{F}} \delta(f) \]
+	\item \textbf{Output:} Movie rating, with $c \in \mathcal{C}$, $\mathcal{C} = {1, \hdots, 5}$ the set of possible output classes
+	\[ \hat{y} = \delta(\hat{c})\]
+\end{itemize}
+
+\noindent The pipeline to build and train the classifier is the following:
+\begin{itemize}
+	\item \textbf{Linear model formulation}: $\mathbf{W} \in \mathcal{R}^{|\mathcal{F}| \times |\mathcal{C}|}$, $\mathbf{b} \in \mathcal{R}^{1 \times |\mathcal{C}|}$ the model parameters
+	\[ \mathbf{\hat{y}} = \mathbf{xW} + \mathbf{b} \]
+	\item \textbf{Loss function}: we use the Negative Log-Likelihood (NLL) for the probabilistic models (NB and Log-Reg) and a loss function for the linear SVM, with $ \theta = (\mathbf{W}, \mathbf{b})$
+	\[\mathcal{L}(\theta) = - \sum_{i=1}^{n} log p(\mathcal{y_i}| \mathcal{x_i}; \theta) \]
+	\item \textbf{Optimization}: here we want to find the parameters which minimize the loss function
+	\[ \hat{\theta} = \argmin_{\theta}{\mathcal{L}(\theta)} \]
+	NB: this lead to a close formula with the Naive Bayes, we used a gradient descent for the two other models.
+	\item \textbf{Prediction}
+	\[\hat{c} = \argmax{p(y|x)} \]
+	\item \textbf{Evaluation}: we use the accuracy (on the training and validation set)
+	\[ \sum_{i = 1}^{n} \mathbf{1}(\frac{\delta(\hat{c_i}) = \delta(c_i)}{n} \]
+\end{itemize}
+
+
+
+\section{Model and Algorithms}
+
+We present here in more details each models with its specificity and the different algorithms we use.
+
+\subsection{Multinomial Naive Bayes}
+
+The multinomial Naive Bayes is a generative model, it means that we specify the class conditional distribution $p(\boldx | y=c)$ as a multinoulli distribution. The main assumption here, which the justufies the 'naive' name, is that the feature are condionnaly independent given the class label.\\ \\
+The goal is then to select the parameters that maximizes the likelihood of the training data:
+    \[p(\boldy = \mathbf{\delta(c)}) = \sum_{i = 1}^n \frac{1(\boldy_i = c)}{n}\]
+We also define the count matrix $\boldF$ to compute the closed form of the probability of $\boldx$ given $\boldy$,
+\[F_{f,c} = \sum_{i = 1}^n \mathbf{1}(\boldy_i = c) \mathbf{1}(x_{i, f} = 1) \mathrm{\ for all\ } c\in \mcC, f\in \mcF\] 
+Then,
+      \[p(x_f = 1 | \boldy=\mathbf{\delta(c)}) = \frac{F_{f, c}}{\displaystyle \sum_{f' \in \mcF} F_{f',c}}  \]
+
+\noindent Knowing these parameters we can compute the probabity of the class given the features:
+
+\[ p(\boldy = c | x) \propto p(\boldy = c) \prod_{f \in \mathcal{F}} p(x_f = 1 | \boldy=\mathbf{\delta(c)})\]
+
+\noindent We can add a hyperparameter to handle the long tail of words by distributing the means. We add a Laplacian smoothing parameter $\alpha$ as follows:
+
+  \[\hat{\boldF} = \alpha + F\]
+
+\subsection{Multinomial Logistic Regression}
+
+The Multinomial Logistic Regression is a discrimative model. The model formulation is the following:
+\[\mathbf{\hat{y}} = p(\mathbf{y} = c | \mathbf{x} ; \theta) = softmax(\mathbf{xW} + \mathbf{b}) \]
+
+\noindent On the contrary to the Naive Bayes, there is no closed form for this optimization problem. We use in practive a gradient descent to find a global optimum as the NLL is still convex. We use the cross entropy loss:
+\[ \mathcal{L(\theta)} = - \sum_{i=1}^{n} log p(\mathbf{y_i}| \mathbf{x_i}; \theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) \]
+
+\noindent To prevent overfitting on the training set, we add a l2 regularization:
+\[ \mathcal{L(\theta)} = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) + \frac{\lambda}{2} ||\theta||_2^2\]
+
+\noindent We have two kinds of hyperparameters: $\lambda$ from the penalization term and the gradient descent parameters.
+
+\subsection{Linear Support Vector Machine}
+
+Now we try to directy find \textbf{W} and \textbf{b} without any probabilistic interpretation.
+\[\mathbf{\hat{y}} = \mathbf{xW} + \mathbf{b} \]
+We use the linear support vector machine model. The loss function is related to the number of wrong classifications:
+  \[\mathcal{L}(\theta) = \sum_{i=1}^n L_{0/1}(\mathbf{y}, \mathbf{\hat{y}}) = \mathbf{1(\argmax_{c'} \hat{y}_{c'} \neq c)}\]
+  We use the \textit{Hinge} loss:
+    \[\mathcal{L}(\theta) = \sum_{i=1}^n L_{hinge}(\mathbf{y},\hat{\mathbf{y}}) =  \sum_{i=1}^n \max\{0, 1 - (\hat{y}_{ci} - \hat{y}_{ci'}) \}  \]
+with l2 regularization
+\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) + \frac{\lambda}{2} ||\theta||_2^2\]
+
+\noindent We have the same hyperparameters as with the multinomial logistic regression.
+
+\subsection{Stochastic Gradient Descent}
+
+We used a stochastic gradient descent with minibatch. $\eta$ is a crucial parameter to tune to make it converge fast. We can also tune the size of the mini-batch. The number of total iteration, also called epoch, could be tuned but we noticed with our experiment that given the size of the data set (around 150 000 rows) one epoch is enough to converge.\\
+
+
+Pseudo-code for the SGD with mini-batch:
+
+  \begin{algorithmic}[1]
+    \For{$iteration = 1, \ldots, epoch_max$ }
+    \State{Sample a minibatch of m examples}
+    \State{$\mathbf{\hat{g}} \gets 0$}
+    \For{$i = 1, \ldots, $m}
+    \State{Compute the loss $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$}
+	\State{Compute gradients \textbf{g'} of $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$ with respect to $\theta$}
+    \State{$\hat{\boldg} \gets \hat{\boldg} +  \frac{1}{m} \boldg'$}
+    \EndFor{}
+    \State{$\theta \gets \theta - \eta_k \hat{\boldg}$}
+    \EndFor{}
+    \State{\Return{$\theta$}}
+  \end{algorithmic}
+
+
+\section{Experiments}
+
+We applied our three models on the Stanford Sentimental dataset and report on a table our results. We show the running time to emphasize how faster is the Naive Bayes and the accuracy both on the training and test set. We also show the loss, its the exact value for the Naive Bayes and an approximation on the last mini-batch of the epoch (extrapolated then to the whole dataset) for the two other models.
+
+TABLE WITH time, loss, accuracy train, accuracy test on default parameter
+
+
+\noindent We ran a cross validation pipeline to come up with the best set of parameters. We chose to apply a 10-fold cross validation on the training set and retain the set of parameters which optimizes the accuracy. We retain the following parameters for each model:
+\begin{itemize}
+	\item \textbf{Naive Bayes} $\alpha = 1$
+	\item \textbf{Logistic Regression}
+	\item \textbf{Linear SVM}
+\end{itemize}
+
+TABLE WITH OPTIMIZED RESULTs
+
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llr}
+ \toprule
+ Model &  & Acc. \\
+ \midrule
+ \textsc{Baseline 1} & & 0.45\\
+ \textsc{Baseline 2} & & 2.59 \\
+ \textsc{Model 1} & & 10.59  \\
+ \textsc{Model 2} & &13.42 \\
+ \textsc{Model 3} & & 7.49\\
+ \bottomrule
+\end{tabular}
+\caption{\label{tab:results} Table with the main results.}
+\end{table}
+
+
+
+\section{Conclusion}
+
+
+This assignement made us build three different linear models for a text classification task. Whereas the naive bayes is fast to train, the linear SVM and the logistic regression require an optimization algorithm (here stochastic gradient descent). However, the accuracy reached are pretty similar for the different models. We also realized the importance of the tuning part on the hyperparameters to improve our classification accuracy.
+
+There is still room for improvement if more time. First, we could build more features on our reviews. In the current models, we just considered each word separately and built a one-hot feature from it. We could also consider the sequence of consecutive words of a given size n, called also n-grams, to incorporate the relationships between the words to our features. We could also think of additional linear models.
+
+\bibliographystyle{apalike}
+\bibliography{writeup}
+
+\end{document}
