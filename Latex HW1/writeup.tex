@@ -11,7 +11,7 @@
 
 This assignement aims to build three different linear models for text classification and to tune them to fit the Stanford Sentiment dataset (Socher et al., 2013).
 
-We first build a Naive Bayes which is pretty fast to train, a multinomial logistic regression and a linear support vector machine. We evaluate each of these models with their accuracy on the validation set. Our main work was then on tuning the hyperparameters. First, we applied to the validationn set the models with several set of hyperparameters and select the most accurate and then we decided to build a k-fold cross-validation pipeline.
+We first build a Naive Bayes which is pretty fast to train, a multinomial logistic regression and a linear support vector machine. We evaluate each of these models with their accuracy on the validation set. Our main work was then on tuning the hyperparameters. First, we applied to the validation set, the models with several set of hyperparameters and select the most accurate and then we decided to build a k-fold cross-validation pipeline.
 
 The Stanford Sentiment dataset contains about 150 000 text reviews of movies with their rating (from 1 to 5), containing about 17 000 unique words. The reviews are already pre-processed and come as sparse bag-of-words features. The goal is to predict the rating of each review.
 
@@ -39,32 +39,32 @@ The problem to solve is a multi-class classification on text reviews. We build t
 	\[\mathcal{L}(\theta) = - \sum_{i=1}^{n} log p(\mathcal{y_i}| \mathcal{x_i}; \theta) \]
 	\item \textbf{Optimization}: here we want to find the parameters which minimize the loss function
 	\[ \hat{\theta} = \argmin_{\theta}{\mathcal{L}(\theta)} \]
-	NB: this lead to a close formula with the Naive Bayes, we used a gradient descent for the two other models.
+	NB: this leads to a close formula with the Naive Bayes, we used a gradient descent for the two other models.
 	\item \textbf{Prediction}
 	\[\hat{c} = \argmax{p(y|x)} \]
 	\item \textbf{Evaluation}: we use the accuracy (on the training and validation set)
-	\[ \sum_{i = 1}^{n} \mathbf{1}(\frac{\delta(\hat{c_i}) = \delta(c_i)}{n} \]
+	\[ \sum_{i = 1}^{n} \mathbf{1}(\frac{\delta(\hat{c_i}) = \delta(c_i)}{n}) \]
 \end{itemize}
 
 
 
 \section{Model and Algorithms}
 
-We present here in more details each models with its specificity and the different algorithms we use.
+We present here in more details each model with its specificity and the different algorithms we used.
 
 \subsection{Multinomial Naive Bayes}
 
-The multinomial Naive Bayes is a generative model, it means that we specify the class conditional distribution $p(\boldx | y=c)$ as a multinoulli distribution. The main assumption here, which the justufies the 'naive' name, is that the feature are condionnaly independent given the class label.\\ \\
+The multinomial Naive Bayes is a generative model, it means that we specify the class conditional distribution $p(\boldx | y=c)$ as a multinoulli distribution. The main assumption here, which  justifies the 'naive' name, is that the feature are condionnaly independent given the class label.\\ \\
 The goal is then to select the parameters that maximizes the likelihood of the training data:
-    \[p(\boldy = \mathbf{\delta(c)}) = \sum_{i = 1}^n \frac{1(\boldy_i = c)}{n}\]
+    \[p(\boldy = \boldmath{\delta(c)}) = \sum_{i = 1}^n \frac{1(\boldy_i = c)}{n}\]
 We also define the count matrix $\boldF$ to compute the closed form of the probability of $\boldx$ given $\boldy$,
 \[F_{f,c} = \sum_{i = 1}^n \mathbf{1}(\boldy_i = c) \mathbf{1}(x_{i, f} = 1) \mathrm{\ for all\ } c\in \mcC, f\in \mcF\] 
 Then,
-      \[p(x_f = 1 | \boldy=\mathbf{\delta(c)}) = \frac{F_{f, c}}{\displaystyle \sum_{f' \in \mcF} F_{f',c}}  \]
+      \[p(x_f = 1 | \boldy=\boldmath{\delta(c)}) = \frac{F_{f, c}}{\displaystyle \sum_{f' \in \mcF} F_{f',c}}  \]
 
 \noindent Knowing these parameters we can compute the probabity of the class given the features:
 
-\[ p(\boldy = c | x) \propto p(\boldy = c) \prod_{f \in \mathcal{F}} p(x_f = 1 | \boldy=\mathbf{\delta(c)})\]
+\[ p(\boldy = c | x) \propto p(\boldy = c) \prod_{f \in \mathcal{F}} p(x_f = 1 | \boldy=\boldmath{\delta(c)})\]
 
 \noindent We can add a hyperparameter to handle the long tail of words by distributing the means. We add a Laplacian smoothing parameter $\alpha$ as follows:
 
@@ -76,10 +76,10 @@ The Multinomial Logistic Regression is a discrimative model. The model formulati
 \[\mathbf{\hat{y}} = p(\mathbf{y} = c | \mathbf{x} ; \theta) = softmax(\mathbf{xW} + \mathbf{b}) \]
 
 \noindent On the contrary to the Naive Bayes, there is no closed form for this optimization problem. We use in practive a gradient descent to find a global optimum as the NLL is still convex. We use the cross entropy loss:
-\[ \mathcal{L(\theta)} = - \sum_{i=1}^{n} log p(\mathbf{y_i}| \mathbf{x_i}; \theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) \]
+\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} log p(\mathbf{y_i}| \mathbf{x_i}; \theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) \]
 
 \noindent To prevent overfitting on the training set, we add a l2 regularization:
-\[ \mathcal{L(\theta)} = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) + \frac{\lambda}{2} ||\theta||_2^2\]
+\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) + \frac{\lambda}{2} ||\theta||_2^2\]
 
 \noindent We have two kinds of hyperparameters: $\lambda$ from the penalization term and the gradient descent parameters.
 
@@ -108,8 +108,8 @@ Pseudo-code for the SGD with mini-batch:
     \State{Sample a minibatch of m examples}
     \State{$\mathbf{\hat{g}} \gets 0$}
     \For{$i = 1, \ldots, $m}
-    \State{Compute the loss $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$}
-	\State{Compute gradients \textbf{g'} of $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$ with respect to $\theta$}
+    \State{Compute the loss $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$)}
+	\State{Compute gradients \textbf{g'} of $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$ with respect to $\theta$)}
     \State{$\hat{\boldg} \gets \hat{\boldg} +  \frac{1}{m} \boldg'$}
     \EndFor{}
     \State{$\theta \gets \theta - \eta_k \hat{\boldg}$}
