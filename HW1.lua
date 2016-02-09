@@ -425,10 +425,10 @@ function main()
            
             -- Learning the model
             if (classifier == 'log_reg') then
-                math.randomseed(1234)
+                torch.manualSeed(123)
                 W, b, L = logreg(train_input, train_output, nfeatures, nclasses, ep_max, batch_size, eta, lambda)
             elseif (classifier == 'linear_svm') then
-                math.randomseed(1234)
+                torch.manualSeed(123)
                 W, b, L = linearSVM(train_input, train_output, nfeatures, nclasses, ep_max, batch_size, eta, lambda)
             end
             -- Prediction on the validation set
