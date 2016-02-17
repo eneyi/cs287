@@ -76,7 +76,7 @@ end
 function predict(Xvalid, W, b, Yvalid)
     local Yvalid = Yvalid or Nil
     local z = torch.zeros(5, 1)
-    local Ypred = torch.IntTensor(Xvalid:size()[1])
+    local Ypred = torch.IntTensor(Xvalid:size(1))
     local max = torch.zeros(1)
     local accu = 0
     local n = Xvalid:size(1)
@@ -342,12 +342,9 @@ function nfold_cv(Classifier, Xtrain, Ytrain, nfold, hyperparam, ep_max, nfeatur
             if Classifier == 'nb' then
 
                 prior, x_conditional_y = NaiveBayes(Xtrain_rest, Ytrain_rest, nfeatures, nclasses, hyperparam[n_mod][1])
-
                 Ypred, acc = predict_NB(Xtrain_fold, prior, x_conditional_y, nclasses, Ytrain_fold)
 
-
             else
-
                 if Classifier == 'log_reg' then
                     W, b, L = logreg(Xtrain_rest, Ytrain_rest, nfeatures, nclasses, ep_max, hyperparam[n_mod][1], hyperparam[n_mod][2], hyperparam[n_mod][3])
                 elseif Classifier == 'linear_svm' then
@@ -357,9 +354,7 @@ function nfold_cv(Classifier, Xtrain, Ytrain, nfold, hyperparam, ep_max, nfeatur
                 Validpred, acc = predict(Xtrain_fold, W, b, Ytrain_fold)
 
             end
-
             av_acc = av_acc + acc
-
         end
 
         if Classifier == 'nb' then
@@ -421,8 +416,6 @@ function main()
             batch_size = opt.batch_size
             eta = opt.eta
             lambda = opt.lambda
-            
-           
             -- Learning the model
             if (classifier == 'log_reg') then
                 torch.manualSeed(123)

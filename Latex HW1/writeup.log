@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2016.2.2)  9 FEB 2016 15:24
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.9.2)  9 FEB 2016 16:44
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -442,51 +442,50 @@ Underfull \hbox (badness 10000) in paragraph at lines 106--107
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 129--130
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 136--137
+Underfull \hbox (badness 10000) in paragraph at lines 130--131
 
  []
 
 [4]
-Underfull \hbox (badness 10000) in paragraph at lines 139--140
+Underfull \hbox (badness 10000) in paragraph at lines 137--138
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 154--155
+Underfull \hbox (badness 10000) in paragraph at lines 140--141
 
  []
 
-No file writeup.bbl.
-[5] (./writeup.aux) ) 
+
+Underfull \hbox (badness 10000) in paragraph at lines 155--156
+
+ []
+
+[5] (./writeup.bbl) [6] (./writeup.aux) ) 
 Here is how much of TeX's memory you used:
- 5046 strings out of 493089
- 72304 string characters out of 6134843
- 131424 words of memory out of 5000000
- 8397 multiletter control sequences out of 15000+600000
+ 5057 strings out of 493089
+ 72568 string characters out of 6134843
+ 131553 words of memory out of 5000000
+ 8406 multiletter control sequences out of 15000+600000
  40457 words of font info for 113 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 43i,8n,40p,456b,273s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/base/8
-r.enc}</usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10
-.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.
-pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pf
-b></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb
-></usr/local/texlive/2015/texmf-dist/fonts/type1/public/mathpazo/fplmbi.pfb></u
-sr/local/texlive/2015/texmf-dist/fonts/type1/public/mathpazo/fplmr.pfb></usr/lo
-cal/texlive/2015/texmf-dist/fonts/type1/public/mathpazo/fplmri.pfb></usr/local/
-texlive/2015/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></usr/local/texlive
-/2015/texmf-dist/fonts/type1/urw/palatino/uplbi8a.pfb></usr/local/texlive/2015/
-texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></usr/local/texlive/2015/texmf-d
-ist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on writeup.pdf (5 pages, 122673 bytes).
+ 43i,9n,40p,455b,273s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/usr/local/texlive/2015/texmf-dist/fo
+nts/enc/dvips/base/8r.enc}</usr/local/texlive/2015/texmf-dist/fonts/type1/publi
+c/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public
+/amsfonts/cm/cmex10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmr10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/am
+sfonts/cm/cmsy10.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/mat
+hpazo/fplmbi.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/mathpaz
+o/fplmr.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/public/mathpazo/fpl
+mri.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb
+></usr/local/texlive/2015/texmf-dist/fonts/type1/urw/palatino/uplbi8a.pfb></usr
+/local/texlive/2015/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></usr/local/
+texlive/2015/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
+Output written on writeup.pdf (6 pages, 125636 bytes).
 PDF statistics:
- 65 PDF objects out of 1000 (max. 8388607)
- 46 compressed objects within 1 object stream
+ 68 PDF objects out of 1000 (max. 8388607)
+ 48 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

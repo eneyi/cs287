@@ -4,19 +4,19 @@
 \usepackage{common}
 \usepackage{amsmath}
 \title{HW1: Text Classification}
-\author{Virgile Audi \\ vaudi@g.harvard.edu \and Nicolas Drizard \\ nicolasdrizard@g.harvard.edu }
+\author{Virgile Audi \\ Kaggle ID: Virgile Audi \\ vaudi@g.harvard.edu \and Nicolas Drizard \\ Kaggle ID: nicodri \\ nicolasdrizard@g.harvard.edu }
 \begin{document}
 
 \maketitle{}
 \section{Introduction}
 
-This assignement aims to build three different linear models for text classification and to tune them to fit the Stanford Sentiment dataset (Socher et al., 2013).
+This assignement aims to build three different linear models for text classification and to tune them to fit the Stanford Sentiment dataset\citep{socher2013recursive}.
 
-We first build a Naive Bayes which is pretty fast to train, a multinomial logistic regression and a linear support vector machine. We evaluate each of these models with their accuracy on the validation set. Our main work was then on tuning the hyperparameters. First, we applied to the validation set, the models with several set of hyperparameters and select the most accurate and then we decided to build a k-fold cross-validation pipeline.
+We first build a Naive Bayes which is pretty fast to train, a multinomial logistic regression and a linear support vector machine. We evaluate each of these models with their accuracy on the validation set. Our main work was then on tuning the hyperparameters. First, we applied the models with several set of hyperparameters and select the most accurate to the validation set and then we decided to build a k-fold cross-validation pipeline.
 
 The Stanford Sentiment dataset contains about 150 000 text reviews of movies with their rating (from 1 to 5), containing about 17 000 unique words. The reviews are already pre-processed and come as sparse bag-of-words features. The goal is to predict the rating of each review.
 
-We used the Torch Lua framework to build the models and implemented them in the file \textbf{HW1.lua}. This file contains a \textit{main()} function which can be called with different parameters from the command line. The files can be found in the following github repository:
+We used the Torch Lua framework to build the models and implemented them in the file \textbf{HW1.lua}. This file contains a \textit{main()} function which can be called with different parameters from the command line. We also submit results for the team under our Kaggle ID, both ID were used for the team with no regards to the username used. The files can be found in the following github repository:
 
 $$\text{http://github.com/virgodi/cs287}$$
 
@@ -44,7 +44,7 @@ The problem to solve is a multi-class classification on text reviews. We build t
 	\[\mathcal{L}(\theta) = - \sum_{i=1}^{n} log p(\mathcal{y_i}| \mathcal{x_i}; \theta) \]
 	\item \textbf{Optimization}: here we want to find the parameters which minimize the loss function
 	\[ \hat{\theta} = \argmin_{\theta}{\mathcal{L}(\theta)} \]
-	NB: this leads to a close formula with the Naive Bayes, we used a gradient descent for the two other models.
+	NB: this leads to a closed formula with the Naive Bayes, we used a gradient descent for the two other models.
 	\item \textbf{Prediction}
 	\[\hat{c} = \argmax{p(y|x)} \]
 	\item \textbf{Evaluation}: we use the accuracy (on the training and validation set)
@@ -59,7 +59,7 @@ We present here in more details each model with its specificity and the differen
 
 \subsection{Multinomial Naive Bayes}
 
-The multinomial Naive Bayes is a generative model, it means that we specify the class conditional distribution $p(\boldx | y=c)$ as a multinoulli distribution. The main assumption here, which  justifies the 'naive' name, is that the feature are condionnaly independent given the class label.\\ \\
+The multinomial Naive Bayes \citep{murphy2012machine} is a generative model, it means that we specify the class conditional distribution $p(\boldx | y=c)$ as a multinoulli distribution. The main assumption here, which  justifies the 'naive' name, is that the feature are condionnaly independent given the class label.\\ \\
 The goal is then to select the parameters that maximizes the likelihood of the training data:
     \[p(\boldy = \boldmath{\delta(c)}) = \sum_{i = 1}^n \frac{1(\boldy_i = c)}{n}\]
 We also define the count matrix $\boldF$ to compute the closed form of the probability of $\boldx$ given $\boldy$,
@@ -103,7 +103,7 @@ with l2 regularization
 
 \subsection{Stochastic Gradient Descent}
 
-We used a stochastic gradient descent with minibatch. $\eta$ is a crucial parameter to tune to make it converge fast. We can also tune the size of the mini-batch. The number of total iteration, also called epoch, could be tuned but we noticed with our experiment that given the size of the data set (around 150 000 rows) one epoch is enough to converge.\\
+We used a stochastic gradient descent \citep{bottou2012stochastic} with minibatch. $\eta$ is a crucial parameter to tune to make it converge fast. We can also tune the size of the mini-batch. The number of total iteration, also called epoch, could be tuned but we noticed with our experiment that given the size of the data set (around 150 000 rows) one epoch is enough to converge.\\
 
 
 Pseudo-code for the SGD with mini-batch and regularisation:
@@ -121,14 +121,15 @@ Pseudo-code for the SGD with mini-batch and regularisation:
     \EndFor{}
     \State{\Return{$\theta$}}
   \end{algorithmic}
+  
 
-In order to speed up the code, we took advantage of the hint made by Sasha about the rather sparse structure of our data. We therefore only updated the gradients with the terms derived by the differentiation of the regularisation term only once every 10 minibatch. This allowed us to get significant speed improvements (about 10 seconds faster).
+\noindent In order to speed up the code, we took advantage of the hint made by Sasha about the rather sparse structure of our data. We therefore only updated the gradients with the terms derived by the differentiation of the regularisation term only once every 10 minibatch. This allowed us to get significant speed improvements (about 10 seconds faster).
 
 \section{Experiments}
 
 We applied our three models on the Stanford Sentimental dataset and report in a table below our results. We show the running time to emphasize how faster is the Naive Bayes and the accuracy both on the training and test set. We also show the loss, its the exact value for the Naive Bayes and an approximation on the last mini-batch of the epoch (extrapolated then to the whole dataset) for the two other models.\\
 
-\noindent We ran a validation pipeline to come up with the best set of parameters. We also coded a k-fold cross validation but due to a lack of time, did not experiment enough to show interesting results. We therefore retained the set of parameters using validation which optimizes the accuracy. We obtained the following parameters for each model:
+\noindent We ran a validation pipeline to come up with the best set of parameters. We also coded a k-fold cross validation but due to a lack of time, did not experiment enough to show interesting results. We therefore retained the set of parameters using validation which optimizes the accuracy. We kept the same seed and the exact other same parameters for the different models training. We obtained the following parameters for each model:
 
 \begin{itemize}
 	\item \textbf{Naive Bayes} $\alpha = 1$
@@ -136,7 +137,7 @@ We applied our three models on the Stanford Sentimental dataset and report in a 
 	\item \textbf{Linear SVM} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$\\
 \end{itemize}
 
-If we look at the results below, we can note that Naive Bayes has the highest Training accuracy but smallest Test accuracy, which seems to indicate that Naive Bayes might be a slightly more overfitting algorithm than the other two.\\
+If we look at the results below, we can note that Naive Bayes has the highest Training accuracy but smallest Test accuracy, which seems to indicate that Naive Bayes might be a slightly more overfitting algorithm than the other two. We report the accuracy on the three dataset: train, validation and test (from our Kaggle submission).\\
 
 \begin{table}[h!]
 \centering
@@ -146,7 +147,7 @@ If we look at the results below, we can note that Naive Bayes has the highest Tr
 \cline{2-6}
 \multicolumn{1}{l|}{}                     & Training & Validation & Test  & Run Time & Loss                      \\ \hline
 \multicolumn{1}{|c|}{Naive Bayes}         & 0.666    & 0.399      & 0.344 & 5-6s     &    XX                       \\ \cline{1-1}
-\multicolumn{1}{|c|}{Logistic Regression} & 0.601    & 0.403      & 0.354 & 85-87s   & $4$x$10^12$   \\ \cline{1-1}
+\multicolumn{1}{|c|}{Logistic Regression} & 0.601    & 0.403      & 0.354 & 85-87s   & $4$x$10^{12}$   \\ \cline{1-1}
 \multicolumn{1}{|c|}{Linear SVM}          & 0.631    & 0.411      & 0.350 & 86-90s   & $1.21$x$10^5$ \\ \hline
 \end{tabular}
 \end{table}
