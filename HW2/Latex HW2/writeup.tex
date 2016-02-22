@@ -3,6 +3,7 @@
 
 \usepackage{common}
 \usepackage{amsmath}
+\usepackage{hyperref}
 \title{HW2: Tagging from Scratch}
 \author{Virgile Audi \\ Kaggle ID: Virgile Audi \\ vaudi@g.harvard.edu \and Nicolas Drizard \\ Kaggle ID: nicodri \\ nicolasdrizard@g.harvard.edu }
 \begin{document}
@@ -62,17 +63,23 @@ Then,
 
 \subsection{Multinomial Logistic Regression}
 
-The Multinomial Logistic Regression is a discrimative model. The model formulation is the following:
+As a second baseline model, we implement a multiclass logistic regression for this problem. We recall the theory from homework 1 below.\\
+
+\noindent The Multinomial Logistic Regression is a discrimative model. The model formulation is the following:
 \[\mathbf{\hat{y}} = p(\mathbf{y} = c | \mathbf{x} ; \theta) = softmax(\mathbf{xW} + \mathbf{b}) \]
 
 \noindent On the contrary to the Naive Bayes, there is no closed form for this optimization problem. We use in practive a gradient descent to find a global optimum as the NLL is still convex. We use the cross entropy loss:
-\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} log p(\mathbf{y_i}| \mathbf{x_i}; \theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) \]
+\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} log p(\mathbf{y_i}| \mathbf{x_i}; \theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_{ci} + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) \]
 
-\noindent To prevent overfitting on the training set, we add a l2 regularization:
-\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) + \frac{\lambda}{2} ||\theta||_2^2\]
+\noindent For this particular problem of speach tagging, we had the two same set of input features as for the Naive Bayes approach, i.e. the word windows as well as the capital windows. The main difference however is that for fitting this particular model, we needed to create some new features based on the position of the word and the type of capitalisation in the window. To do so we indexed words in first position from 1 to 100 002 (the size of the vocabulary), words in second position from 100 003 to 200 004, etc. For instance if the first training point was originally represented by: 
+$$ \left(1 \quad 1 \quad 5032 \quad 2 \quad 4\right),$$ \noindent it was now inputed as:
 
-\noindent We have two kinds of hyperparameters: $\lambda$ from the penalization term and the gradient descent parameters.
+$$ \left(1 \quad 100\, 003 \quad 205\, 036 \quad 300\, 008 \quad 400\, 014\right)$$
 
+\noindent In total, we needed to fit 100 002x5 = 500 010 parameters. After writing a functional explicit stochastic gradient descent algorithm, we decided to use the more optimised function \newline \textbf{nn.StochasticGradient()} in order to gain some valuable training time. This function, for which documentation can be found on \href{https://github.com/torch/nn/blob/master/doc/training.md}{here} (hyperlink), takes for input a dataset with a special table structure, the model itself and the criterion. We can also tune the learning rate and number of epochs to run. It is not clear though what the size of the minibatch is but the function was fast enough not to worry about it.\\
+
+\noindent As the primary goal of this homework was building the neural network, we did not intensively work on the Logistic Regression and kept it rather simple, only implementing a version that only took into consideration the word windows. We will present the results in the Experiments section.
+ 
 \subsection{Neural Network Model}
 
 Now we try to directy find \textbf{W} and \textbf{b} without any probabilistic interpretation.
@@ -86,29 +93,7 @@ with l2 regularization
 
 \noindent We have the same hyperparameters as with the multinomial logistic regression.
 
-\subsection{Stochastic Gradient Descent}
-
-We used a stochastic gradient descent \citep{bottou2012stochastic} with minibatch. $\eta$ is a crucial parameter to tune to make it converge fast. We can also tune the size of the mini-batch. The number of total iteration, also called epoch, could be tuned but we noticed with our experiment that given the size of the data set (around 150 000 rows) one epoch is enough to converge.\\
-
-
-Pseudo-code for the SGD with mini-batch and regularisation:
-
-  \begin{algorithmic}[1]
-    \For{$iteration = 1, \ldots, epoch_{max}$ }
-    \State{Sample a minibatch of m examples}
-    \State{$\mathbf{\hat{g}} \gets 0$}
-    \For{$i = 1, \ldots, $m}
-    \State{Compute the loss $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$)}
-	\State{Compute gradients \textbf{g'} of $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$ with respect to $\theta$)}
-    \State{$\hat{\boldg} \gets \hat{\boldg} +  \frac{1}{m} \boldg'$}
-    \EndFor{}
-    \State{$\theta \gets (1-\frac{\eta\lambda}{n})\theta - \eta_k \hat{\boldg}$}
-    \EndFor{}
-    \State{\Return{$\theta$}}
-  \end{algorithmic}
-  
-
-\noindent In order to speed up the code, we took advantage of the hint made by Sasha about the rather sparse structure of our data. We therefore only updated the gradients with the terms derived by the differentiation of the regularisation term only once every 10 minibatch. This allowed us to get significant speed improvements (about 10 seconds faster).
+\noindent In order to simplify the code and be able to use the above function that only takes a single datastructure argument, we chose to reformat the input data. Instead of having to deal with two different input tensors, i.e. the word and caps tensors, we concatenated the into one single tensor of size: dim(train) x 10. To be able to then use a single Look-up table, we had to index the caps
 
 \section{Experiments}
 
