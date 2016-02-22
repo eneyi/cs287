@@ -1,0 +1,14 @@
+\begin{thebibliography}{}
+
+\bibitem[Bottou, 2012]{bottou2012stochastic}
+Bottou, L. (2012).
+\newblock Stochastic gradient descent tricks.
+\newblock In {\em Neural Networks: Tricks of the Trade}, pages 421--436.
+  Springer.
+
+\bibitem[Murphy, 2012]{murphy2012machine}
+Murphy, K.~P. (2012).
+\newblock {\em Machine learning: a probabilistic perspective}.
+\newblock MIT press.
+
+\end{thebibliography}

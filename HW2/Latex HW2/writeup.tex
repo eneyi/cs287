@@ -1,0 +1,169 @@
+
+\documentclass[11pt]{article}
+
+\usepackage{common}
+\usepackage{amsmath}
+\title{HW2: Tagging from Scratch}
+\author{Virgile Audi \\ Kaggle ID: Virgile Audi \\ vaudi@g.harvard.edu \and Nicolas Drizard \\ Kaggle ID: nicodri \\ nicolasdrizard@g.harvard.edu }
+\begin{document}
+
+\maketitle{}
+\section{Introduction}
+
+This assignement aims to tackle the task of part-of-speech tagging based on the paper \cite{Collobert}.
+
+We applied several models, both in terms of the features used and of the models. First, we applied a multi-class Naive Bayes and then a Multinomial Logistic Regression. We used slicing window features with information from the words and capitalization. We tried both with and without the position of the words inside the window.
+
+Then, we used a neural network architecture with two layers. We ran several experiments on this model which was the most accurate. For instance, we trained it on a pre-trained embeddings of words from \cite{pennington}. This lead to our best prediction on the test set.
+
+$$\text{http://github.com/virgodi/cs287}$$
+
+This repository also contains iTorch notebooks where we drafted code.
+
+
+\section{Problem Description}
+
+The problem to solve is mult-class classification of tags on words, aka part-of-speech tagging based.\\
+
+
+We have a training set of around 600 000 words in sentences, and a validation and test set of both around 100 000 words. We pre-processed them to extract in slicing windows of 5 words a vector of word-index and a vector of capitalisation feature for each word. We followed the conventions used in \cite{Collobert}. The words-index were extracted from the dictionary of words of the embeddings. For the capitalisations features, we used the following values:
+\begin{itemize}
+\item 1: lower case words
+\item 2: capital letter feature
+\item 3: first letter in caps
+\item 4: else
+\end{itemize}
+
+The output is a set of 45 classes of tags. We evaluated our model on the validation set to tune the hyperparameters.
+
+
+
+\section{Model and Algorithms}
+
+We present here in more details each model with its specificity and the different algorithms we used.
+
+\subsection{Multinomial Naive Bayes}
+
+The multinomial Naive Bayes \citep{murphy2012machine} is a generative model, it means that we specify the class conditional distribution $p(\boldx | y=c)$ as a multinoulli distribution. The main assumption here, which  justifies the 'naive' name, is that the feature are condionnaly independent given the class label.\\ \\
+The goal is then to select the parameters that maximizes the likelihood of the training data:
+    \[p(\boldy = \boldmath{\delta(c)}) = \sum_{i = 1}^n \frac{1(\boldy_i = c)}{n}\]
+We also define the count matrix $\boldF$ to compute the closed form of the probability of $\boldx$ given $\boldy$,
+\[F_{f,c} = \sum_{i = 1}^n \mathbf{1}(\boldy_i = c) \mathbf{1}(x_{i, f} = 1) \mathrm{\ for all\ } c\in \mcC, f\in \mcF\] 
+Then,
+      \[p(x_f = 1 | \boldy=\boldmath{\delta(c)}) = \frac{F_{f, c}}{\displaystyle \sum_{f' \in \mcF} F_{f',c}}  \]
+
+\noindent Knowing these parameters we can compute the probabity of the class given the features:
+
+\[ p(\boldy = c | x) \propto p(\boldy = c) \prod_{f \in \mathcal{F}} p(x_f = 1 | \boldy=\boldmath{\delta(c)})\]
+
+\noindent We can add a hyperparameter to handle the long tail of words by distributing the means. We add a Laplacian smoothing parameter $\alpha$ as follows:
+
+  \[\hat{\boldF} = \alpha + F\]
+
+\subsection{Multinomial Logistic Regression}
+
+The Multinomial Logistic Regression is a discrimative model. The model formulation is the following:
+\[\mathbf{\hat{y}} = p(\mathbf{y} = c | \mathbf{x} ; \theta) = softmax(\mathbf{xW} + \mathbf{b}) \]
+
+\noindent On the contrary to the Naive Bayes, there is no closed form for this optimization problem. We use in practive a gradient descent to find a global optimum as the NLL is still convex. We use the cross entropy loss:
+\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} log p(\mathbf{y_i}| \mathbf{x_i}; \theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) \]
+
+\noindent To prevent overfitting on the training set, we add a l2 regularization:
+\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) + \frac{\lambda}{2} ||\theta||_2^2\]
+
+\noindent We have two kinds of hyperparameters: $\lambda$ from the penalization term and the gradient descent parameters.
+
+\subsection{Neural Network Model}
+
+Now we try to directy find \textbf{W} and \textbf{b} without any probabilistic interpretation.
+\[\mathbf{\hat{y}} = \mathbf{xW} + \mathbf{b} \]
+We use the linear support vector machine model. The loss function is related to the number of wrong classifications:
+  \[\mathcal{L}(\theta) = \sum_{i=1}^n L_{0/1}(\mathbf{y}, \mathbf{\hat{y}}) = \mathbf{1(\argmax_{c'} \hat{y}_{c'} \neq c)}\]
+  We use the \textit{Hinge} loss:
+    \[\mathcal{L}(\theta) = \sum_{i=1}^n L_{hinge}(\mathbf{y},\hat{\mathbf{y}}) =  \sum_{i=1}^n \max\{0, 1 - (\hat{y}_{ci} - \hat{y}_{ci'}) \}  \]
+with l2 regularization
+\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) + \frac{\lambda}{2} ||\theta||_2^2\]
+
+\noindent We have the same hyperparameters as with the multinomial logistic regression.
+
+\subsection{Stochastic Gradient Descent}
+
+We used a stochastic gradient descent \citep{bottou2012stochastic} with minibatch. $\eta$ is a crucial parameter to tune to make it converge fast. We can also tune the size of the mini-batch. The number of total iteration, also called epoch, could be tuned but we noticed with our experiment that given the size of the data set (around 150 000 rows) one epoch is enough to converge.\\
+
+
+Pseudo-code for the SGD with mini-batch and regularisation:
+
+  \begin{algorithmic}[1]
+    \For{$iteration = 1, \ldots, epoch_{max}$ }
+    \State{Sample a minibatch of m examples}
+    \State{$\mathbf{\hat{g}} \gets 0$}
+    \For{$i = 1, \ldots, $m}
+    \State{Compute the loss $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$)}
+	\State{Compute gradients \textbf{g'} of $L(\mathbf{\hat{y_i}}, \mathbf{y_i}; \theta$ with respect to $\theta$)}
+    \State{$\hat{\boldg} \gets \hat{\boldg} +  \frac{1}{m} \boldg'$}
+    \EndFor{}
+    \State{$\theta \gets (1-\frac{\eta\lambda}{n})\theta - \eta_k \hat{\boldg}$}
+    \EndFor{}
+    \State{\Return{$\theta$}}
+  \end{algorithmic}
+  
+
+\noindent In order to speed up the code, we took advantage of the hint made by Sasha about the rather sparse structure of our data. We therefore only updated the gradients with the terms derived by the differentiation of the regularisation term only once every 10 minibatch. This allowed us to get significant speed improvements (about 10 seconds faster).
+
+\section{Experiments}
+
+We applied our three models on the Stanford Sentimental dataset and report in a table below our results. We show the running time to emphasize how faster is the Naive Bayes and the accuracy both on the training and test set. We also show the loss, its the exact value for the Naive Bayes and an approximation on the last mini-batch of the epoch (extrapolated then to the whole dataset) for the two other models.\\
+
+\noindent We ran a validation pipeline to come up with the best set of parameters. We also coded a k-fold cross validation but due to a lack of time, did not experiment enough to show interesting results. We therefore retained the set of parameters using validation which optimizes the accuracy. We kept the same seed and the exact other same parameters for the different models training. We obtained the following parameters for each model:
+
+\begin{itemize}
+	\item \textbf{Naive Bayes} $\alpha = 1$
+	\item \textbf{Logistic Regression} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$
+	\item \textbf{Linear SVM} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$\\
+\end{itemize}
+
+If we look at the results below, we can note that Naive Bayes has the highest Training accuracy but smallest Test accuracy, which seems to indicate that Naive Bayes might be a slightly more overfitting algorithm than the other two. We report the accuracy on the three dataset: train, validation and test (from our Kaggle submission).\\
+
+\begin{table}[h!]
+\centering
+\caption{Results Summary}
+\label{Results Summary}
+\begin{tabular}{c|c|c|c|c|c|}
+\cline{2-6}
+\multicolumn{1}{l|}{}                     & Training & Validation & Test  & Run Time & Loss                      \\ \hline
+\multicolumn{1}{|c|}{Naive Bayes}         & 0.666    & 0.399      & 0.344 & 5-6s     &    XX                       \\ \cline{1-1}
+\multicolumn{1}{|c|}{Logistic Regression} & 0.601    & 0.403      & 0.354 & 85-87s   & $4$x$10^{12}$   \\ \cline{1-1}
+\multicolumn{1}{|c|}{Linear SVM}          & 0.631    & 0.411      & 0.350 & 86-90s   & $1.21$x$10^5$ \\ \hline
+\end{tabular}
+\end{table}
+
+Variances of the outputs of these algorithms are also key insights for analysis.\\
+
+\begin{table}[h!]
+\centering
+\caption{Range of prediction accuracy}
+\label{my-label}
+\begin{tabular}{c|c|c|}
+\cline{2-3}
+\multicolumn{1}{l|}{}                     & Min Accuracy & Max Accuracy \\ \cline{2-3} 
+\multicolumn{1}{l|}{}                     & Validation   & Validation   \\ \hline
+\multicolumn{1}{|c|}{Naive Bayes}         & 0.257        & 0.399        \\ \hline
+\multicolumn{1}{|c|}{Logistic Regression} & 0.367        & 0.403        \\ \hline
+\multicolumn{1}{|c|}{Linear SVM}          & 0.333        & 0.411        \\ \hline
+\end{tabular}
+\end{table}
+
+What we can see is that parametrisation is much more crucial for the Naive Bayes algorithm, with performance almost increased by 50\% by adding the smoothing paramater $\alpha = 1$. Logistic Regression and linear SVM have very similar performance, both on accuracy and runtime. On the other hand, the Naive Bayes algorithm runs way faster and this aspect must be taken into account when having to choose an algorithm to run.
+ 
+
+\section{Conclusion}
+
+
+This assignement made us build three different linear models for a text classification task. Whereas the naive bayes is fast to train, the linear SVM and the logistic regression require an optimization algorithm (here stochastic gradient descent). However, the accuracy reached are pretty similar for the different models. We also realized the importance of the tuning part on the hyperparameters to improve our classification accuracy.
+
+There is still room for improvement if more time. First, we could build more features on our reviews. In the current models, we just considered each word separately and built a one-hot feature from it. We could also consider the sequence of consecutive words of a given size n, called also n-grams, to incorporate the relationships between the words to our features. We could also think of additional linear models.
+
+\bibliographystyle{apalike}
+\bibliography{writeup}
+
+\end{document}
