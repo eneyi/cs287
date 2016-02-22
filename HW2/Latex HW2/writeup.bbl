@@ -1,14 +1,16 @@
 \begin{thebibliography}{}
 
-\bibitem[Bottou, 2012]{bottou2012stochastic}
-Bottou, L. (2012).
-\newblock Stochastic gradient descent tricks.
-\newblock In {\em Neural Networks: Tricks of the Trade}, pages 421--436.
-  Springer.
+\bibitem[Collobert et~al., 2011]{Collobert}
+Collobert, R., Weston, J., Bottou, L., Karlen, M., Kavukcuoglu, K., and Kuksa,
+  P. (2011).
+\newblock Natural language processing (almost) from scratch.
+\newblock volume~12, pages 2493--2537. JMLR.org.
 
-\bibitem[Murphy, 2012]{murphy2012machine}
-Murphy, K.~P. (2012).
-\newblock {\em Machine learning: a probabilistic perspective}.
-\newblock MIT press.
+\bibitem[Pennington et~al., 2014]{pennington}
+Pennington, J., Socher, R., and Manning, C. (2014).
+\newblock Glove: Global vectors for word representation.
+\newblock In {\em Proceedings of the 2014 Conference on Empirical Methods in
+  Natural Language Processing (EMNLP)}, pages 1532--1543, Doha, Qatar.
+  Association for Computational Linguistics.
 
 \end{thebibliography}

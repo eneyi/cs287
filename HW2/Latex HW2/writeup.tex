@@ -11,7 +11,7 @@
 \maketitle{}
 \section{Introduction}
 
-This assignement aims to tackle the task of part-of-speech tagging based on the paper \cite{Collobert}.
+This assignement aims to tackle the task of part-of-speech tagging based on the paper by \cite{Collobert}.
 
 We applied several models, both in terms of the features used and of the models. First, we applied a multi-class Naive Bayes and then a Multinomial Logistic Regression. We used slicing window features with information from the words and capitalization. We tried both with and without the position of the words inside the window.
 
@@ -27,7 +27,7 @@ This repository also contains iTorch notebooks where we drafted code.
 The problem to solve is mult-class classification of tags on words, aka part-of-speech tagging based.\\
 
 
-We have a training set of around 600 000 words in sentences, and a validation and test set of both around 100 000 words. We pre-processed them to extract in slicing windows of 5 words a vector of word-index and a vector of capitalisation feature for each word. We followed the conventions used in \cite{Collobert}. The words-index were extracted from the dictionary of words of the embeddings. For the capitalisations features, we used the following values:
+We have a training set of around 600 000 words in sentences, and a validation and test set of both around 100 000 words. We pre-processed them to extract in slicing windows of 5 words a vector of word-index and a vector of capitalisation feature for each word. We followed the conventions used by \cite{Collobert}. The words-index were extracted from the dictionary of words of the embeddings. For the capitalisations features, we used the following values:
 \begin{itemize}
 \item 1: lower case words
 \item 2: capital letter feature
@@ -63,13 +63,7 @@ Then,
 
 \subsection{Multinomial Logistic Regression}
 
-As a second baseline model, we implement a multiclass logistic regression for this problem. We recall the theory from homework 1 below.\\
-
-\noindent The Multinomial Logistic Regression is a discrimative model. The model formulation is the following:
-\[\mathbf{\hat{y}} = p(\mathbf{y} = c | \mathbf{x} ; \theta) = softmax(\mathbf{xW} + \mathbf{b}) \]
-
-\noindent On the contrary to the Naive Bayes, there is no closed form for this optimization problem. We use in practive a gradient descent to find a global optimum as the NLL is still convex. We use the cross entropy loss:
-\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} log p(\mathbf{y_i}| \mathbf{x_i}; \theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_{ci} + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) \]
+As a second baseline model, we implement a multiclass logistic regression for this problem. We won't recall the theoretical framework from homework 1 here, but will explain how it applies to speech tagging.\\
 
 \noindent For this particular problem of speach tagging, we had the two same set of input features as for the Naive Bayes approach, i.e. the word windows as well as the capital windows. The main difference however is that for fitting this particular model, we needed to create some new features based on the position of the word and the type of capitalisation in the window. To do so we indexed words in first position from 1 to 100 002 (the size of the vocabulary), words in second position from 100 003 to 200 004, etc. For instance if the first training point was originally represented by: 
 $$ \left(1 \quad 1 \quad 5032 \quad 2 \quad 4\right),$$ \noindent it was now inputed as:
@@ -82,18 +76,21 @@ $$ \left(1 \quad 100\, 003 \quad 205\, 036 \quad 300\, 008 \quad 400\, 014\right
  
 \subsection{Neural Network Model}
 
-Now we try to directy find \textbf{W} and \textbf{b} without any probabilistic interpretation.
-\[\mathbf{\hat{y}} = \mathbf{xW} + \mathbf{b} \]
-We use the linear support vector machine model. The loss function is related to the number of wrong classifications:
-  \[\mathcal{L}(\theta) = \sum_{i=1}^n L_{0/1}(\mathbf{y}, \mathbf{\hat{y}}) = \mathbf{1(\argmax_{c'} \hat{y}_{c'} \neq c)}\]
-  We use the \textit{Hinge} loss:
-    \[\mathcal{L}(\theta) = \sum_{i=1}^n L_{hinge}(\mathbf{y},\hat{\mathbf{y}}) =  \sum_{i=1}^n \max\{0, 1 - (\hat{y}_{ci} - \hat{y}_{ci'}) \}  \]
-with l2 regularization
-\[ \mathcal{L}(\theta) = - \sum_{i=1}^{n} \left( (\mathbf{x_i W} + \mathbf{b})_ci + log \sum_{c'} exp(\mathbf{x_i W} + \mathbf{b})_{c'} \right) + \frac{\lambda}{2} ||\theta||_2^2\]
+We then focused on the primary objective of the homework which was building a neural network for word tagging. The model is designed as follows. \\
 
-\noindent We have the same hyperparameters as with the multinomial logistic regression.
+\noindent We input both word and cap windows, both of dimension 5. Each of these windows are then passed through look-up tables of dimensions dim(Vocabulary) x (hidden-parameter) and dim(Cap) x (hidden-parameter) . For each window, this outputs a 5xhidden-parameter tensor. We then concatenate corresponding tensors for a particular window to form a vector of dimension 1x(10$*$hidden-parameter).\\
 
-\noindent In order to simplify the code and be able to use the above function that only takes a single datastructure argument, we chose to reformat the input data. Instead of having to deal with two different input tensors, i.e. the word and caps tensors, we concatenated the into one single tensor of size: dim(train) x 10. To be able to then use a single Look-up table, we had to index the caps
+\noindent We then applied a linear transformation to this vector followed by a layer to extract highly non-linear features in the form of a hardtanh() module. The output of this hardtanh() module is then passed through an other linear layer  to output a score for each of the 45 possible tags, followed by a softmax() module to transform these scores into a probability distribution over these tags. \\
+
+\noindent This design therefore introduces to hidden parameters that need to be tuned, the dimension of the look-up table and the dimension of the output of the first Linear layer. We will present various experiments below.\\
+
+\noindent In order to simplify the code and be able to use the nn.StochasticGradient() function to train the neural network and taking into account that it only takes a single datastructure argument, we chose to reformat the input data. Instead of having to deal with two different input tensors, i.e. the word and caps tensors, we concatenated the into one single tensor of size: dim(train) x 10. To be able to then use a single Look-up table, we had to index the caps from 100 003 to 100 006 and count them as extra words.
+
+\noindent We would now like to share a trick that helped us run the code. When first coded the Sequential module in Torch, we had issues passing from the concatenation step to the first linear layer due to dimension issues in minibatching. Debugging the code, we noticed that the outputed tensor from the concatenation had an extra unnecessary 1 dimension that came from applying the nn.View() layer. As suggested in the following \href{https://groups.google.com/forum/#!topic/torch7/u4OEc0GB74k}{discussion tread} , we implemented a nn.Squeeze() layer similar to the nn.View() in order to transfer what the torch.Squeeze() function did to remove unwanted 1D dimensions in a tensor.\\
+
+\noindent The url of the group is: https://groups.google.com/forum/\#!topic/torch7/u4OEc0GB74k\\
+
+\noindent We now present results of the experiments.
 
 \section{Experiments}
 
@@ -149,6 +146,6 @@ This assignement made us build three different linear models for a text classifi
 There is still room for improvement if more time. First, we could build more features on our reviews. In the current models, we just considered each word separately and built a one-hot feature from it. We could also consider the sequence of consecutive words of a given size n, called also n-grams, to incorporate the relationships between the words to our features. We could also think of additional linear models.
 
 \bibliographystyle{apalike}
-\bibliography{writeup}
+\bibliography{HW1.bib}
 
 \end{document}
