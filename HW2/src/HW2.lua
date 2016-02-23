@@ -172,6 +172,17 @@ function train_nn(train_output, train_input_word_windows, train_input_cap_window
     return neuralnet_wc
 end
 
+function pred_nn(input_word_windows, input_cap_windows, neuralnet_wc, output)
+    new = torch.cat(input_word_windows,
+        torch.add(input_cap_windows, 100002),2)
+    pred_val = neuralnet_wc:forward(new)
+    if output then
+        valid_accuracy = compute_accuracy(pred_val, output)
+        return pred_val, accuracy
+    end
+    return pred_val
+end
+
 function main() 
     -- Parse input params
     opt = cmd:parse(arg)
@@ -182,8 +193,10 @@ function main()
     valid_input_cap_windows = f:read('valid_input_cap_windows'):all()
     train_output = f:read('train_output'):all()
     valid_output = f:read('valid_output'):all()
+    word_embeddings = f:read('word_embeddings'):all()
     nclasses = f:read('nclasses'):all()[1]
     nwords = f:read('nwords'):all()[1]
+    ncap = 4
 
     -- Reading the model
     classifier = opt.classifier
@@ -217,7 +230,14 @@ function main()
 
             print('Time elapsed for NB ' .. timer:time().real .. ' seconds',"\n")
         end
-    else
+    elseif (classifier == 'nn') then
+        dim_hidden1 = opt.dim_hidden1
+        dim_hidden2 = opt.dim_hidden2
+        if opt.embeddings then
+            neuralnet_wc = define_nn(nwords, ncap, nclasses, dim_hidden1, dim_hidden2, word_embeddings)
+        else
+            neuralnet_wc = define_nn(nwords, ncap, nclasses, dim_hidden1, dim_hidden2, word_embeddings)
+        end
     end
 
     -- Saving the predictions on test
