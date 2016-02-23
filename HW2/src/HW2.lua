@@ -109,6 +109,25 @@ function predict_NB(Xword, Xcap, prior, x_conditional_y_word, x_conditional_y_ca
 end
 
 --------------------------
+-- Logistic Regression
+--------------------------
+
+function define_log_reg(nwords, ncap, nclasses)
+    log_reg = nn.Sequential()
+    --Include the lookup tables
+    par = nn.ParallelTable()
+    par:add(nn.LookupTable(5*nwords, nclasses)) -- first child
+    par:add(nn.LookupTable(5*ncap,nclasses)) 
+
+    log_reg:add(par)
+    log_reg:add(nn.Sum(2))
+    -- Add the bias b
+    log_reg:add(nn.Add(nclasses))
+    log_reg:add(nn.LogSoftMax())
+
+    return log_reg
+
+--------------------------
 -- Neural Network
 --------------------------
 
@@ -149,7 +168,7 @@ function define_nn(nwords, ncap, nclasses, dim_hidden, dim_hidden2, word_embeddi
     return neuralnet_wc
 end
 
-function train_nn(train_output, train_input_word_windows, train_input_cap_windows, neuralnet_wc, ep_max, eta)
+function train(train_output, train_input_word_windows, train_input_cap_windows, neuralnet_wc, ep_max, eta)
     train_new = torch.cat(train_input_word_windows,
         torch.add(train_input_cap_windows, 100002),2)
     -- Formating the dataset to train
@@ -200,20 +219,22 @@ function main()
 
     -- Reading the model
     classifier = opt.classifier
+    eta = opt.eta
+    ep_max = opt.ep_max
 
     if ((classifier == 'nb') || (classifier == 'log_reg')) then
         -- Process the features for NB and log reg
         for j = 1, 5 do
-            train_word:narrow(2,j,1):add((j-1)*100002)
-            valid_word:narrow(2,j,1):add((j-1)*100002)
+            train_word:narrow(2,j,1):add((j-1)*nwords)
+            valid_word:narrow(2,j,1):add((j-1)*nwords)
         end
         for j = 1, 5 do
-            train_cap:narrow(2,j,1):add((j-1)*4)
-            valid_cap:narrow(2,j,1):add((j-1)*4)
+            train_cap:narrow(2,j,1):add((j-1)*ncap)
+            valid_cap:narrow(2,j,1):add((j-1)*ncap)
         end
         for j = 1, 5 do
-            test_word:narrow(2,j,1):add((j-1)*4)
-            test_cap:narrow(2,j,1):add((j-1)*4)
+            test_word:narrow(2,j,1):add((j-1)*ncap)
+            test_cap:narrow(2,j,1):add((j-1)*ncap)
         end
 
         if (classifier == 'nb') then
@@ -226,18 +247,32 @@ function main()
             -- Prediction on the validation set
             Ypred_validate, accuracy_validate = predict_NB(valid_word, valid_cap, prior, x_conditional_y_word, x_conditional_y_cap, nclasses, valid_output)
             -- Prediction on the test set
-            Ypred_validate, accuracy_validate = predict_NB(test_word, test_cap, prior, x_conditional_y_word, x_conditional_y_cap, nclasses)
+            Testpred = predict_NB(test_word, test_cap, prior, x_conditional_y_word, x_conditional_y_cap, nclasses)
 
             print('Time elapsed for NB ' .. timer:time().real .. ' seconds',"\n")
         end
     elseif (classifier == 'nn') then
+        -- Setting the parameters
         dim_hidden1 = opt.dim_hidden1
         dim_hidden2 = opt.dim_hidden2
+
         if opt.embeddings then
             neuralnet_wc = define_nn(nwords, ncap, nclasses, dim_hidden1, dim_hidden2, word_embeddings)
         else
             neuralnet_wc = define_nn(nwords, ncap, nclasses, dim_hidden1, dim_hidden2, word_embeddings)
         end
+        neuralnet_wc = train_nn(train_output, train_input_word_windows, train_input_cap_windows, neuralnet_wc, ep_max, eta)
+
+        -- Accuracy on validation set
+        new_validation = torch.cat(valid_input_word_windows,
+            torch.add(valid_input_cap_windows, nwords),2)
+        validation_accuracy = compute_accuracy(neuralnet_wc:forward(valid_new), valid_output)
+        print("Accuracy on validation: " .. validation_accuracy)
+
+        -- Prediction on test
+        new_test = torch.cat(test_input_word_windows,
+            torch.add(test_input_cap_windows, nwords),2)
+        Testpred = neuralnet_wc:forward(new_test)
     end
 
     -- Saving the predictions on test
