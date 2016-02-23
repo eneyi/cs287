@@ -8,11 +8,10 @@ I was expecting a `,' or a `}'---line 47 of file HW1.bib.bib
  :              Group,
 I'm skipping whatever remains of this entry
 Warning--I didn't find a database entry for "murphy2012machine"
-Warning--I didn't find a database entry for "GoogleGroup"
 Warning--empty booktitle in Collobert
 You've used 2 entries,
             1935 wiz_defined-function locations,
-            491 strings with 4217 characters,
+            489 strings with 4195 characters,
 and the built_in function-call counts, 1307 in all, are:
 = -- 137
 > -- 51

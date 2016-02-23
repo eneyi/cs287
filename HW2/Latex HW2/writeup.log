@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2016.2.2)  22 FEB 2016 20:35
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.9.2)  22 FEB 2016 20:19
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -518,182 +518,232 @@ LaTeX Font Info:    Font shape `OMS/ppl/m/n' in size <10.95> not available
 
 {/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Font shape `OT1/ppl/bx/n' in size <12> not available
-(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 48.
+(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 47.
 LaTeX Font Info:    Font shape `OT1/ppl/bx/n' in size <10.95> not available
-(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 50.
+(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 49.
 
 
 Package natbib Warning: Citation `murphy2012machine' on page 2 undefined on inp
-ut line 50.
+ut line 49.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 50--52
+Underfull \hbox (badness 10000) in paragraph at lines 49--51
 
  []
 
 
-LaTeX Font Warning: Command \boldmath invalid in math mode on input line 52.
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 51.
 
 
-LaTeX Font Warning: Command \mathversion invalid in math mode on input line 52.
-
-
-
-LaTeX Font Warning: Command \boldmath invalid in math mode on input line 56.
-
-
-LaTeX Font Warning: Command \mathversion invalid in math mode on input line 56.
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 51.
 
 
 
-LaTeX Font Warning: Command \boldmath invalid in math mode on input line 60.
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 55.
 
 
-LaTeX Font Warning: Command \mathversion invalid in math mode on input line 60.
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 55.
 
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 68--69
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 57.
+
+
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 57.
+
+
+
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 59.
+
+
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 59.
+
+
+
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 59.
+
+
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 59.
+
+
+
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 59.
+
+
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 59.
+
+
+
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 65.
+
+
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 65.
+
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 73--74
 
  []
 
 [2]
-Underfull \hbox (badness 10000) in paragraph at lines 75--76
+Underfull \hbox (badness 10000) in paragraph at lines 80--81
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 81--82
+Underfull \hbox (badness 10000) in paragraph at lines 86--87
 
  []
 
 
-Overfull \hbox (3.11536pt too wide) in paragraph at lines 83--84
+Overfull \hbox (3.11536pt too wide) in paragraph at lines 88--89
 \OT1/ppl/m/n/10.95 passed through look-up ta-bles of di-men-sions dim(Vocabular
 y) x (hidden-parameter) and dim(Cap)
  []
 
 
-Overfull \hbox (9.52083pt too wide) in paragraph at lines 83--84
+Overfull \hbox (9.52083pt too wide) in paragraph at lines 88--89
 \OT1/ppl/m/n/10.95 cate-nate cor-re-spond-ing ten-sors for a par-tic-u-lar win-
 dow to form a vec-tor of di-men-sion 1x(10$\OMS/zplm/m/n/10.95 ^^C$\OT1/ppl/m/n
 /10.95 hidden-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 83--84
+Underfull \hbox (badness 10000) in paragraph at lines 88--89
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 85--86
+Underfull \hbox (badness 10000) in paragraph at lines 90--91
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 87--88
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 91--92
+Underfull \hbox (badness 10000) in paragraph at lines 92--93
 
  []
 
 [3]
-Underfull \hbox (badness 10000) in paragraph at lines 93--94
+Underfull \hbox (badness 10000) in paragraph at lines 96--97
 
  []
 
-<logReg_err.png, id=82, 433.62pt x 282.05376pt>
+
+Underfull \hbox (badness 10000) in paragraph at lines 98--99
+
+ []
+
+<training_nb.png, id=83, 506.89375pt x 356.33125pt>
+File: training_nb.png Graphic file (type png)
+ <use training_nb.png>
+Package pdftex.def Info: training_nb.png used on input line 118.
+(pdftex.def)             Requested size: 225.4784pt x 158.50436pt.
+
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 118--119
+ [][] 
+ []
+
+<validation_nb.png, id=85, 515.9275pt x 351.3125pt>
+File: validation_nb.png Graphic file (type png)
+ <use validation_nb.png>
+Package pdftex.def Info: validation_nb.png used on input line 123.
+(pdftex.def)             Requested size: 225.4784pt x 153.53265pt.
+
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 123--124
+ [][] 
+ []
+
+[4] <logReg_err.png, id=90, 433.62pt x 282.05376pt>
 File: logReg_err.png Graphic file (type png)
  <use logReg_err.png>
-Package pdftex.def Info: logReg_err.png used on input line 106.
+Package pdftex.def Info: logReg_err.png used on input line 135.
 (pdftex.def)             Requested size: 270.30118pt x 175.82695pt.
 
-<nn1.png, id=84, 503.8825pt x 405.515pt>
+[5 <./training_nb.png> <./validation_nb.png> <./logReg_err.png>]
+<nn1.png, id=101, 503.8825pt x 405.515pt>
 File: nn1.png Graphic file (type png)
  <use nn1.png>
-Package pdftex.def Info: nn1.png used on input line 130.
+Package pdftex.def Info: nn1.png used on input line 159.
 (pdftex.def)             Requested size: 270.30118pt x 217.5331pt.
- [4 <./logReg_err.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 146--147
+
+Underfull \hbox (badness 10000) in paragraph at lines 175--176
 
  []
 
-[5 <./nn1.png>] <compa.png, id=99, 610.28pt x 529.98pt>
+[6 <./nn1.png>] <compa.png, id=109, 610.28pt x 529.98pt>
 File: compa.png Graphic file (type png)
  <use compa.png>
-Package pdftex.def Info: compa.png used on input line 157.
+Package pdftex.def Info: compa.png used on input line 186.
 (pdftex.def)             Requested size: 225.4784pt x 195.80647pt.
 
-Overfull \hbox (37.57925pt too wide) in paragraph at lines 157--158
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 186--187
  [][] 
  []
 
-<nn_embed.png, id=100, 616.3025pt x 529.98pt>
+<nn_embed.png, id=110, 616.3025pt x 529.98pt>
 File: nn_embed.png Graphic file (type png)
  <use nn_embed.png>
-Package pdftex.def Info: nn_embed.png used on input line 162.
+Package pdftex.def Info: nn_embed.png used on input line 191.
 (pdftex.def)             Requested size: 225.4784pt x 193.89798pt.
 
-Overfull \hbox (37.57925pt too wide) in paragraph at lines 162--163
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 191--192
  [][] 
  []
 
-<train_nn.png, id=101, 637.38126pt x 529.98pt>
+<train_nn.png, id=111, 637.38126pt x 529.98pt>
 File: train_nn.png Graphic file (type png)
  <use train_nn.png>
-Package pdftex.def Info: train_nn.png used on input line 172.
+Package pdftex.def Info: train_nn.png used on input line 201.
 (pdftex.def)             Requested size: 225.4784pt x 187.48512pt.
 
-Overfull \hbox (37.57925pt too wide) in paragraph at lines 172--173
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 201--202
  [][] 
  []
 
-<valid_nn.png, id=102, 642.4pt x 529.98pt>
+<valid_nn.png, id=112, 642.4pt x 529.98pt>
 File: valid_nn.png Graphic file (type png)
  <use valid_nn.png>
-Package pdftex.def Info: valid_nn.png used on input line 177.
+Package pdftex.def Info: valid_nn.png used on input line 206.
 (pdftex.def)             Requested size: 225.4784pt x 186.02141pt.
 
-Overfull \hbox (37.57925pt too wide) in paragraph at lines 177--178
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 206--207
  [][] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 194--195
+Underfull \hbox (badness 10000) in paragraph at lines 223--224
 
  []
 
-[6 <./compa.png> <./nn_embed.png> <./train_nn.png> <./valid_nn.png>]
+[7 <./compa.png> <./nn_embed.png> <./train_nn.png> <./valid_nn.png>]
 (./writeup.bbl)
 
 Package natbib Warning: There were undefined citations.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 232.
-[7]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 232.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 261.
+[8]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 261.
  (./writeup.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 232.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 232.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 261.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 261.
 Package rerunfilecheck Info: File `writeup.out' has not changed.
 (rerunfilecheck)             Checksum: ED86CFF1D78459115CD879A54E7CB005;659.
 
 
 LaTeX Warning: There were multiply-defined labels.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 232.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 261.
  ) 
 Here is how much of TeX's memory you used:
- 8608 strings out of 493089
- 126367 string characters out of 6134843
+ 8626 strings out of 493089
+ 126628 string characters out of 6134843
  210808 words of memory out of 5000000
- 11896 multiletter control sequences out of 15000+600000
- 39782 words of font info for 112 fonts, out of 8000000 for 9000
+ 11904 multiletter control sequences out of 15000+600000
+ 42202 words of font info for 118 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 43i,8n,40p,720b,349s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 43i,8n,40p,720b,324s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
+exlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmbsy10.pfb></usr/local/t
 exlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/te
 xlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texl
 ive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texli
@@ -704,10 +754,10 @@ exmf-dist/fonts/type1/public/mathpazo/fplmri.pfb></usr/local/texlive/2015/texmf
 onts/type1/urw/palatino/uplbi8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/t
 ype1/urw/palatino/uplr8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/ur
 w/palatino/uplri8a.pfb>
-Output written on writeup.pdf (7 pages, 316094 bytes).
+Output written on writeup.pdf (8 pages, 525986 bytes).
 PDF statistics:
- 168 PDF objects out of 1000 (max. 8388607)
- 135 compressed objects within 2 object streams
- 31 named destinations out of 1000 (max. 500000)
- 119 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 181 PDF objects out of 1000 (max. 8388607)
+ 142 compressed objects within 2 object streams
+ 33 named destinations out of 1000 (max. 500000)
+ 129 words of extra memory for PDF output out of 10000 (max. 10000000)
 

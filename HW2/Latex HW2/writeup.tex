@@ -40,24 +40,29 @@ We have a training set of around 600 000 words in sentences, and a validation an
 The output is a set of 45 classes of tags. We evaluated our model on the validation set to tune the hyperparameters.
 
 
-
 \section{Model and Algorithms}
 
 We present here in more details each model with its specificity and the different algorithms we used.
 
 \subsection{Multinomial Naive Bayes}
 
-The multinomial Naive Bayes \citep{murphy2012machine} is a generative model, it means that we specify the class conditional distribution $p(\boldx | y=c)$ as a multinoulli distribution. The main assumption here, which  justifies the 'naive' name, is that the feature are condionnaly independent given the class label.\\ \\
+The multinomial Naive Bayes \cite{murphy2012machine} is a generative model, it means that we specify the class conditional distribution $p(\boldx | y=c)$ as a multinoulli distribution. The main assumption here, which  justifies the 'naive' name, is that the feature are condionnaly independent given the class label.\\ \\
 The goal is then to select the parameters that maximizes the likelihood of the training data:
     \[p(\boldy = \boldmath{\delta(c)}) = \sum_{i = 1}^n \frac{1(\boldy_i = c)}{n}\]
-We also define the count matrix $\boldF$ to compute the closed form of the probability of $\boldx$ given $\boldy$,
+
+\noindent With the chain rule and the independency assumption we canc ompute the likelihood as follows:
+
+\[ p(\boldy = c | x) \propto p(\boldy = c) \prod_{f \in \mathcal{F}} p(x_f| \boldy=\boldmath{\delta(c)})\]
+
+\noindent We compute $p(x_f| \boldy=\boldmath{\delta(c)})$ with a count matrix. In our case, we have both the features related to the words and the caps, as they are independent we can treat each relative window position as a separate multinomial distribution which will give:
+
+\[ p(x| \boldy=\boldmath{\delta(c)}) = \prod_{i = -d_{win}/2}^{i =d_{win}/2} p(\text{word at i in x}| \boldy=\boldmath{\delta(c)}) p(\text{capitalisation at i in x} | \boldy=\boldmath{\delta(c)}))\]
+
+
+\noindent We use the count matrix $\boldF$ of both the words features and the capitalization one. The global definition is the following one:
 \[F_{f,c} = \sum_{i = 1}^n \mathbf{1}(\boldy_i = c) \mathbf{1}(x_{i, f} = 1) \mathrm{\ for all\ } c\in \mcC, f\in \mcF\] 
 Then,
       \[p(x_f = 1 | \boldy=\boldmath{\delta(c)}) = \frac{F_{f, c}}{\displaystyle \sum_{f' \in \mcF} F_{f',c}}  \]
-
-\noindent Knowing these parameters we can compute the probabity of the class given the features:
-
-\[ p(\boldy = c | x) \propto p(\boldy = c) \prod_{f \in \mathcal{F}} p(x_f = 1 | \boldy=\boldmath{\delta(c)})\]
 
 \noindent We can add a hyperparameter to handle the long tail of words by distributing the means. We add a Laplacian smoothing parameter $\alpha$ as follows:
 
@@ -97,6 +102,30 @@ We then focused on the primary objective of the homework which was building a ne
 \section{Experiments}
 
 \subsection{Naive Bayes}
+
+We first tried the Naive Bayes on the windowed features without considering the index of the words inside the window. The results were pretty bad (even if we tuned the hyperparameter):
+\begin{itemize}
+	\item Training Accuracy: \textbf{37 \%}
+	\item Test Accuracy: \textbf{35 \%}
+\end{itemize}
+
+As a result, we decided to use the features described in the multinomial logistic regression part. This provided better results. We were able then to tune the alpha parameter with the accuracy value on the validation set.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.4\textwidth}
+  \centering
+  \includegraphics[width=1.2\linewidth]{training_nb}
+\end{minipage} 
+\hfill
+\begin{minipage}{.4\textwidth}
+  \centering
+  \includegraphics[width=1.2\linewidth]{validation_nb}
+\end{minipage}
+\end{figure}
+
+The plots demonstrate how the Naive Bayes is prone to overfitting and also the impact of the alpha parameter. In deed we see that the accuracy keeps decreasing on the training set when alphas increase but on the validation set it has a maximum on $\alpha = 0.5$. The accuracy reached are still lower than those reached with the neural network architecture but it provides a good result with regards to the really low training time: \textbf{30 seconds}
+
 
 \subsection{Linear Regression}
 As mentioned earlier, we did not run exhaustive tests as it was more of a warm-up. We present the results of a test made with a learning rate of 0.01:
