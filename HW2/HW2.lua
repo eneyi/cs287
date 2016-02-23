@@ -119,15 +119,13 @@ end
 -- Logistic Regression
 --------------------------
 
-function define_log_reg(nwords, ncap, nclasses)
+function define_log_reg(nwords, nclasses)
     log_reg = nn.Sequential()
     --Include the lookup tables
-    par = nn.LookupTable(nwords + ncap,nclasses)
-    log_reg:add(par)
-    log_reg:add(nn.View(1,-1,10*nclasses))
-    log_reg:add(nn.Squeeze()) -- this layer is to go from a 1xAxB tensor to AxB dimensional tensor (https://groups.google.com/forum/#!topic/torch7/u4OEc0GB74k)
+    log_reg:add(nn.LookupTable(nwords,nclasses))
+    log_reg:add(nn.Sum(2))
     -- Add the bias b
-    log_reg:add(nn.Add(10*nclasses))
+    log_reg:add(nn.Add(nclasses))
     log_reg:add(nn.LogSoftMax())
 
     return log_reg
@@ -177,13 +175,19 @@ end
 -- Helper
 --------------------------
 
-function train(train_input, train_output, model, ep_max, eta)
+function build_dataset(train_input, train_output, size)
     -- Formating the dataset to train
     dataset={};
     for i=1,train_input:size(1) do 
-      dataset[i] = {train_input[i]:view(1,10), train_output[i]}
+      dataset[i] = {train_input[i]:view(1,size), train_output[i]}
     end
     function dataset:size() return train_input:size(1) end -- 100 examples
+
+    return dataset
+end
+
+function train(train_input, train_output, model, ep_max, eta, dataset_size)
+    dataset = build_dataset(train_input, train_output, dataset_size)
 
     criterion = nn.ClassNLLCriterion()
 
@@ -270,21 +274,15 @@ function main()
             print('Time elapsed for NB ' .. timer:time().real .. ' seconds',"\n")
         else
             timer = torch.Timer()
-            log_reg = define_log_reg(nwords_bis, ncap_bis, nclasses)
-            new_train = torch.cat(train_word,
-                torch.add(train_cap, nwords),2)
-            log_reg = train(new_train, train_output, log_reg, ep_max, eta)
+            log_reg = define_log_reg(nwords_bis, nclasses)
+            log_reg = train(train_word, train_output, log_reg, ep_max, eta, 5)
 
             -- Accuracy on validation set
-            new_validation = torch.cat(valid_word,
-                torch.add(valid_cap, nwords),2)
-            pred_accuracy, validation_accuracy = pred(new_validation, log_reg, valid_output)
+            pred_accuracy, validation_accuracy = pred(valid_word, log_reg, valid_output)
             print("Accuracy on validation: " .. validation_accuracy)
 
             -- Prediction on test
-            new_test = torch.cat(test_word,
-                torch.add(test_cap, nwords),2)
-            Testpred = pred(new_test, log_reg)
+            Testpred = pred(test_word, log_reg)
             print('Time elapsed for NB ' .. timer:time().real .. ' seconds',"\n")
 
         end
@@ -301,7 +299,7 @@ function main()
         else
             neuralnet_wc = define_nn(nwords, ncap, nclasses, dim_hidden1, dim_hidden2, word_embeddings)
         end
-        neuralnet_wc = train(new_train, train_output, neuralnet_wc, ep_max, eta)
+        neuralnet_wc = train(new_train, train_output, neuralnet_wc, ep_max, eta, 10)
 
         -- Accuracy on validation set
         new_validation = torch.cat(valid_word,
