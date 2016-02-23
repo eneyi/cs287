@@ -4,6 +4,8 @@
 \usepackage{common}
 \usepackage{amsmath}
 \usepackage{hyperref}
+\usepackage{graphicx}
+
 \title{HW2: Tagging from Scratch}
 \author{Virgile Audi \\ Kaggle ID: Virgile Audi \\ vaudi@g.harvard.edu \and Nicolas Drizard \\ Kaggle ID: nicodri \\ nicolasdrizard@g.harvard.edu }
 \begin{document}
@@ -94,56 +96,135 @@ We then focused on the primary objective of the homework which was building a ne
 
 \section{Experiments}
 
-We applied our three models on the Stanford Sentimental dataset and report in a table below our results. We show the running time to emphasize how faster is the Naive Bayes and the accuracy both on the training and test set. We also show the loss, its the exact value for the Naive Bayes and an approximation on the last mini-batch of the epoch (extrapolated then to the whole dataset) for the two other models.\\
+\subsection{Naive Bayes}
 
-\noindent We ran a validation pipeline to come up with the best set of parameters. We also coded a k-fold cross validation but due to a lack of time, did not experiment enough to show interesting results. We therefore retained the set of parameters using validation which optimizes the accuracy. We kept the same seed and the exact other same parameters for the different models training. We obtained the following parameters for each model:
+\subsection{Linear Regression}
+As mentioned earlier, we did not run exhaustive tests as it was more of a warm-up. We present the results of a test made with a learning rate of 0.01:
 
-\begin{itemize}
-	\item \textbf{Naive Bayes} $\alpha = 1$
-	\item \textbf{Logistic Regression} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$
-	\item \textbf{Linear SVM} $\text{Batch size} = 50,\quad \eta = 1, \quad \lambda = 0.1$\\
-\end{itemize}
-
-If we look at the results below, we can note that Naive Bayes has the highest Training accuracy but smallest Test accuracy, which seems to indicate that Naive Bayes might be a slightly more overfitting algorithm than the other two. We report the accuracy on the three dataset: train, validation and test (from our Kaggle submission).\\
-
-\begin{table}[h!]
+\begin{figure}[h]
 \centering
-\caption{Results Summary}
-\label{Results Summary}
-\begin{tabular}{c|c|c|c|c|c|}
-\cline{2-6}
-\multicolumn{1}{l|}{}                     & Training & Validation & Test  & Run Time & Loss                      \\ \hline
-\multicolumn{1}{|c|}{Naive Bayes}         & 0.666    & 0.399      & 0.344 & 5-6s     &    XX                       \\ \cline{1-1}
-\multicolumn{1}{|c|}{Logistic Regression} & 0.601    & 0.403      & 0.354 & 85-87s   & $4$x$10^{12}$   \\ \cline{1-1}
-\multicolumn{1}{|c|}{Linear SVM}          & 0.631    & 0.411      & 0.350 & 86-90s   & $1.21$x$10^5$ \\ \hline
-\end{tabular}
-\end{table}
+\includegraphics[width=9.5cm]{logReg_err}
+\end{figure}
 
-Variances of the outputs of these algorithms are also key insights for analysis.\\
+\noindent This lead to the following accuracy results:
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
-\caption{Range of prediction accuracy}
 \label{my-label}
-\begin{tabular}{c|c|c|}
-\cline{2-3}
-\multicolumn{1}{l|}{}                     & Min Accuracy & Max Accuracy \\ \cline{2-3} 
-\multicolumn{1}{l|}{}                     & Validation   & Validation   \\ \hline
-\multicolumn{1}{|c|}{Naive Bayes}         & 0.257        & 0.399        \\ \hline
-\multicolumn{1}{|c|}{Logistic Regression} & 0.367        & 0.403        \\ \hline
-\multicolumn{1}{|c|}{Linear SVM}          & 0.333        & 0.411        \\ \hline
+\begin{tabular}{|c|c|c|}
+\hline
+Training & Validation & Test    \\ \hline
+92.99\%  & 91.04\%    & 91.93\% \\ \hline
 \end{tabular}
+\caption{Accuracy for Multiclass Logistic Regression}
 \end{table}
 
-What we can see is that parametrisation is much more crucial for the Naive Bayes algorithm, with performance almost increased by 50\% by adding the smoothing paramater $\alpha = 1$. Logistic Regression and linear SVM have very similar performance, both on accuracy and runtime. On the other hand, the Naive Bayes algorithm runs way faster and this aspect must be taken into account when having to choose an algorithm to run.
- 
+\noindent Based on the shape of the Loss curve, we thought running the algorithm for some extra epochs would not improve the accuracy drastically and decided to focus on the next part of the problem, the neural network.
+
+\subsection{Neural Network}
+
+We started by running the simplest model by setting the 2 hidden parameters to be equal to 50. As for the Linear regression model, we plot the loss function:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=9.5cm]{nn1}
+\end{figure}
+
+\noindent As one can observe, the starting loss for the neural network is almost equal to final loss obtained for the LogReg model ! We also note that we observe the same phenomenum of platauing. After 5-6 epochs, the improvements in the loss are incremental. Regarding accuracy, we submitted an entry for this particular model for the Kaggle Competetion and obtained the following results:
+
+\begin{table}[H]
+\centering
+\label{my-label2}
+\begin{tabular}{|c|c|c|}
+\hline
+Training & Validation & Test    \\ \hline
+97.48\%  & 95.92\%    & 93.47\% \\ \hline
+\end{tabular}
+\caption{Accuracy for Neural Network}
+\end{table}
+
+\noindent We trained some other models with different parametrisation but did not notice major improvements in term of accuracy and loss. So we decided to pursue by adding the pre-embeddings for the words. Using these values as starting points for the words parameter helped us enormously as it constrained the first hidden parameter to 50 and allowing us to concentrate more computational ressources on tuning the second hidden parameter corresponding to the second linear layer.\\
+
+\noindent We used 6 values for training: $$40, \quad 50, \quad 60, \quad 80, \quad 100, \quad 120$$
+
+\noindent We present various plots to illustrate the results. We first show the evolution of the loss function, and we add both previous losses in order to compare:
+
+\newpage
+\begin{figure}[H]
+\centering
+\begin{minipage}{.4\textwidth}
+  \centering
+  \includegraphics[width=1.2\linewidth]{compa}
+\end{minipage} 
+\hfill
+\begin{minipage}{.4\textwidth}
+  \centering
+  \includegraphics[width=1.2\linewidth]{nn_embed}
+\end{minipage}
+\end{figure}
+
+\noindent This shows how much adding the embeddings helped reach better results in terms of loss but also in terms of accuracy on both train and validation:
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.4\textwidth}
+  \centering
+  \includegraphics[width=1.2\linewidth]{train_nn}
+\end{minipage} 
+\hfill
+\begin{minipage}{.4\textwidth}
+  \centering
+  \includegraphics[width=1.2\linewidth]{valid_nn}
+\end{minipage}
+\end{figure}
+
+We decided to submit the predictions of the models with highest validation accuracy since the performance on the training sets were very close and we also wanted to avoid overfitting. We obtained:
+
+\begin{table}[H]
+\centering
+\label{my-label2}
+\begin{tabular}{|c|c|c|}
+\hline
+Training & Validation & Test    \\ \hline
+97.97\%  & 95.99\%    & 96.19\% \\ \hline
+\end{tabular}
+\caption{Accuracy for Neural Network with word embeddings and HP2 = 60}
+\end{table}
+
+\noindent If we look at training times (that also include evaluating intermediate accuracies), we can see that they seem pretty reasonable for 20 epochs:\\
+
+\begin{table}[H]
+\centering
+\label{my-label3}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+HP2      & 40   & 50   & 60   & 80   & 100  & 120  \\ \hline
+Time (s) & 5532 & 5636 & 5730 & 5916 & 6100 & 7126 \\ \hline
+\end{tabular}
+\caption{Run Times}
+\end{table}
+
+\noindent We topped the Kaggle competition for some time but eventually lost our lead. To try to regain it, we tried some new experiments. We first tried to fix the embeddings at each epoch but obtained strange results probably due to a coding issues (more info can be found in the notebooks). We also tried to add an extra Hardtanh layer followed by another linear one. Results were not as good as expected and we decided to not pursue this lead any further. We show results for 2 differents parametrisations: 50,50,50 and 50,70,50. We used the embeddings that forced us to use 50 as our first hidden parameter.
+
+\begin{table}[H]
+\centering
+
+\label{my-label}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Accuracy on & \multicolumn{1}{c|}{Train} & \multicolumn{1}{c|}{Valid} & Test    \\ \hline
+50, 50, 50  & 96,73\%                    & 95.62\%                    & XXX     \\ \hline
+50, 70, 50  & 96.89\%                    & 95.90\%                    & 95.98\% \\ \hline
+\end{tabular}
+\caption{Accuracy for Neural Network with Extra Layer}
+\end{table}
+
 
 \section{Conclusion}
 
+As we can see, a rather simple neural network clearly outperforms both Naive Bayes and Logistic Regression for word tagging. If there is no possibilities to beat Naive Bayes in terms of run time, the Neural Network is as fast or even faster to train than Logistic Regression as in order to work for word tagging, the number of parameters to infer is much more important in the latter. We unfortunately did not succeed in improving the results by changing the architecture of the network but observed some major improvements by addind the word embeddings from \cite{pennington}.
 
-This assignement made us build three different linear models for a text classification task. Whereas the naive bayes is fast to train, the linear SVM and the logistic regression require an optimization algorithm (here stochastic gradient descent). However, the accuracy reached are pretty similar for the different models. We also realized the importance of the tuning part on the hyperparameters to improve our classification accuracy.
 
-There is still room for improvement if more time. First, we could build more features on our reviews. In the current models, we just considered each word separately and built a one-hot feature from it. We could also consider the sequence of consecutive words of a given size n, called also n-grams, to incorporate the relationships between the words to our features. We could also think of additional linear models.
 
 \bibliographystyle{apalike}
 \bibliography{HW1.bib}

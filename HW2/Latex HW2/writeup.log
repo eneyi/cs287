@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2016.2.2)  22 FEB 2016 11:46
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2016.2.2)  22 FEB 2016 20:35
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -372,24 +372,31 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 )
 \Hy@SectionHShift=\skip59
 )
-(./writeup.aux)
+(./writeup.aux
+
+LaTeX Warning: Label `my-label2' multiply defined.
+
+
+LaTeX Warning: Label `my-label' multiply defined.
+
+)
 \openout1 = `writeup.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 9.
-LaTeX Font Info:    ... okay on input line 9.
-LaTeX Font Info:    Try loading font information for OT1+ppl on input line 9.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 11.
+LaTeX Font Info:    ... okay on input line 11.
+LaTeX Font Info:    Try loading font information for OT1+ppl on input line 11.
  (/usr/local/texlive/2015/texmf-dist/tex/latex/psnfss/ot1ppl.fd
 File: ot1ppl.fd 2001/06/04 font definitions for OT1/ppl.
 )
@@ -398,6 +405,7 @@ Package caption Info: subfig package v1.3 is loaded.
 Package caption Info: float package is loaded.
 Package caption Info: hyperref package is loaded.
 Package caption Info: End \AtBeginDocument code.
+
 (/usr/local/texlive/2015/texmf-dist/tex/context/base/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count133
@@ -427,7 +435,7 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 \AtBeginShipoutBox=\box31
-Package hyperref Info: Link coloring OFF on input line 9.
+Package hyperref Info: Link coloring OFF on input line 11.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2012/10/27 v2.43 Cross-referencing by name of section
@@ -437,144 +445,139 @@ Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 )
 \c@section@level=\count139
 )
-LaTeX Info: Redefining \ref on input line 9.
-LaTeX Info: Redefining \pageref on input line 9.
-LaTeX Info: Redefining \nameref on input line 9.
+LaTeX Info: Redefining \ref on input line 11.
+LaTeX Info: Redefining \pageref on input line 11.
+LaTeX Info: Redefining \nameref on input line 11.
 
 (./writeup.out) (./writeup.out)
 \@outlinefile=\write4
 \openout4 = `writeup.out'.
 
-LaTeX Font Info:    Try loading font information for OML+zplm on input line 11.
+LaTeX Font Info:    Try loading font information for OML+zplm on input line 13.
 
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/psnfss/omlzplm.fd
 File: omlzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OML/zplm.
 )
-LaTeX Font Info:    Try loading font information for OMS+zplm on input line 11.
+LaTeX Font Info:    Try loading font information for OMS+zplm on input line 13.
 
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/psnfss/omszplm.fd
 File: omszplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMS/zplm.
 )
-LaTeX Font Info:    Try loading font information for OMX+zplm on input line 11.
+LaTeX Font Info:    Try loading font information for OMX+zplm on input line 13.
 
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/psnfss/omxzplm.fd
 File: omxzplm.fd 2002/09/08 Fontinst v1.914 font definitions for OMX/zplm.
 )
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 12.50409pt on input line 11.
+(Font)              scaled to size 12.50409pt on input line 13.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 9.37807pt on input line 11.
+(Font)              scaled to size 9.37807pt on input line 13.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 7.29405pt on input line 11.
+(Font)              scaled to size 7.29405pt on input line 13.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 12.50409pt on input line 11.
+(Font)              scaled to size 12.50409pt on input line 13.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 9.37807pt on input line 11.
+(Font)              scaled to size 9.37807pt on input line 13.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 7.29405pt on input line 11.
-LaTeX Font Info:    Try loading font information for OT1+zplm on input line 11.
+(Font)              scaled to size 7.29405pt on input line 13.
+LaTeX Font Info:    Try loading font information for OT1+zplm on input line 13.
 
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/psnfss/ot1zplm.fd
 File: ot1zplm.fd 2002/09/08 Fontinst v1.914 font definitions for OT1/zplm.
 )
 LaTeX Font Info:    Font shape `OT1/ppl/bx/n' in size <14.4> not available
-(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 12.
+(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 14.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 11.40997pt on input line 20.
+(Font)              scaled to size 11.40997pt on input line 22.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 8.33606pt on input line 20.
+(Font)              scaled to size 8.33606pt on input line 22.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 20.
+(Font)              scaled to size 6.25204pt on input line 22.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 11.40997pt on input line 20.
+(Font)              scaled to size 11.40997pt on input line 22.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 8.33606pt on input line 20.
+(Font)              scaled to size 8.33606pt on input line 22.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 6.25204pt on input line 20.
+(Font)              scaled to size 6.25204pt on input line 22.
 
-Underfull \hbox (badness 10000) in paragraph at lines 27--28
+Underfull \hbox (badness 10000) in paragraph at lines 29--30
 
  []
 
-LaTeX Font Info:    Try loading font information for OMS+ppl on input line 32.
+LaTeX Font Info:    Try loading font information for OMS+ppl on input line 34.
 (/usr/local/texlive/2015/texmf-dist/tex/latex/psnfss/omsppl.fd
 File: omsppl.fd 
 )
 LaTeX Font Info:    Font shape `OMS/ppl/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 32.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 34.
  [1
 
 {/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Font shape `OT1/ppl/bx/n' in size <12> not available
-(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 46.
-LaTeX Font Info:    Font shape `OT1/ppl/bx/n' in size <10.95> not available
 (Font)              Font shape `OT1/ppl/b/n' tried instead on input line 48.
+LaTeX Font Info:    Font shape `OT1/ppl/bx/n' in size <10.95> not available
+(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 50.
 
 
 Package natbib Warning: Citation `murphy2012machine' on page 2 undefined on inp
-ut line 48.
+ut line 50.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 48--50
+Underfull \hbox (badness 10000) in paragraph at lines 50--52
 
  []
 
 
-LaTeX Font Warning: Command \boldmath invalid in math mode on input line 50.
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 52.
 
 
-LaTeX Font Warning: Command \mathversion invalid in math mode on input line 50.
-
-
-
-LaTeX Font Warning: Command \boldmath invalid in math mode on input line 54.
-
-
-LaTeX Font Warning: Command \mathversion invalid in math mode on input line 54.
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 52.
 
 
 
-LaTeX Font Warning: Command \boldmath invalid in math mode on input line 58.
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 56.
 
 
-LaTeX Font Warning: Command \mathversion invalid in math mode on input line 58.
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 56.
 
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 66--67
+LaTeX Font Warning: Command \boldmath invalid in math mode on input line 60.
+
+
+LaTeX Font Warning: Command \mathversion invalid in math mode on input line 60.
+
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 68--69
 
  []
 
 [2]
-Underfull \hbox (badness 10000) in paragraph at lines 73--74
+Underfull \hbox (badness 10000) in paragraph at lines 75--76
 
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 79--80
-
- []
-
-
-Overfull \hbox (3.11536pt too wide) in paragraph at lines 81--82
-\OT1/ppl/m/n/10.95 passed through look-up ta-bles of di-men-sions dim(Vocabular
-y) x (hidden-parameter) and dim(Cap)
- []
-
-
-Overfull \hbox (9.52083pt too wide) in paragraph at lines 81--82
-\OT1/ppl/m/n/10.95 cate-nate cor-re-spond-ing ten-sors for a par-tic-u-lar win-
-dow to form a vec-tor of di-men-sion 1x(10$\OMS/zplm/m/n/10.95 ^^C$\OT1/ppl/m/n
-/10.95 hidden-
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 81--82
 
+ []
+
+
+Overfull \hbox (3.11536pt too wide) in paragraph at lines 83--84
+\OT1/ppl/m/n/10.95 passed through look-up ta-bles of di-men-sions dim(Vocabular
+y) x (hidden-parameter) and dim(Cap)
+ []
+
+
+Overfull \hbox (9.52083pt too wide) in paragraph at lines 83--84
+\OT1/ppl/m/n/10.95 cate-nate cor-re-spond-ing ten-sors for a par-tic-u-lar win-
+dow to form a vec-tor of di-men-sion 1x(10$\OMS/zplm/m/n/10.95 ^^C$\OT1/ppl/m/n
+/10.95 hidden-
  []
 
 
@@ -588,63 +591,108 @@ Underfull \hbox (badness 10000) in paragraph at lines 85--86
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 89--90
+Underfull \hbox (badness 10000) in paragraph at lines 87--88
 
  []
 
-[3]
+
 Underfull \hbox (badness 10000) in paragraph at lines 91--92
 
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 97--98
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 104--105
+[3]
+Underfull \hbox (badness 10000) in paragraph at lines 93--94
 
  []
 
+<logReg_err.png, id=82, 433.62pt x 282.05376pt>
+File: logReg_err.png Graphic file (type png)
+ <use logReg_err.png>
+Package pdftex.def Info: logReg_err.png used on input line 106.
+(pdftex.def)             Requested size: 270.30118pt x 175.82695pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 107--108
+<nn1.png, id=84, 503.8825pt x 405.515pt>
+File: nn1.png Graphic file (type png)
+ <use nn1.png>
+Package pdftex.def Info: nn1.png used on input line 130.
+(pdftex.def)             Requested size: 270.30118pt x 217.5331pt.
+ [4 <./logReg_err.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 146--147
 
  []
 
+[5 <./nn1.png>] <compa.png, id=99, 610.28pt x 529.98pt>
+File: compa.png Graphic file (type png)
+ <use compa.png>
+Package pdftex.def Info: compa.png used on input line 157.
+(pdftex.def)             Requested size: 225.4784pt x 195.80647pt.
 
-LaTeX Warning: `!h' float specifier changed to `!ht'.
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 157--158
+ [][] 
+ []
 
+<nn_embed.png, id=100, 616.3025pt x 529.98pt>
+File: nn_embed.png Graphic file (type png)
+ <use nn_embed.png>
+Package pdftex.def Info: nn_embed.png used on input line 162.
+(pdftex.def)             Requested size: 225.4784pt x 193.89798pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 122--123
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 162--163
+ [][] 
+ []
 
+<train_nn.png, id=101, 637.38126pt x 529.98pt>
+File: train_nn.png Graphic file (type png)
+ <use train_nn.png>
+Package pdftex.def Info: train_nn.png used on input line 172.
+(pdftex.def)             Requested size: 225.4784pt x 187.48512pt.
+
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 172--173
+ [][] 
+ []
+
+<valid_nn.png, id=102, 642.4pt x 529.98pt>
+File: valid_nn.png Graphic file (type png)
+ <use valid_nn.png>
+Package pdftex.def Info: valid_nn.png used on input line 177.
+(pdftex.def)             Requested size: 225.4784pt x 186.02141pt.
+
+Overfull \hbox (37.57925pt too wide) in paragraph at lines 177--178
+ [][] 
  []
 
 
-LaTeX Warning: `!h' float specifier changed to `!ht'.
+Underfull \hbox (badness 10000) in paragraph at lines 194--195
 
-[4] (./writeup.bbl)
+ []
+
+[6 <./compa.png> <./nn_embed.png> <./train_nn.png> <./valid_nn.png>]
+(./writeup.bbl)
 
 Package natbib Warning: There were undefined citations.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 151.
-[5]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 151.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 232.
+[7]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 232.
  (./writeup.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 151.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 151.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 232.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 232.
 Package rerunfilecheck Info: File `writeup.out' has not changed.
-(rerunfilecheck)             Checksum: EF82B665ACC065248A14762D2B08F7BE;468.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 151.
+(rerunfilecheck)             Checksum: ED86CFF1D78459115CD879A54E7CB005;659.
+
+
+LaTeX Warning: There were multiply-defined labels.
+
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 232.
  ) 
 Here is how much of TeX's memory you used:
- 8558 strings out of 493089
- 125665 string characters out of 6134843
- 213808 words of memory out of 5000000
- 11865 multiletter control sequences out of 15000+600000
+ 8608 strings out of 493089
+ 126367 string characters out of 6134843
+ 210808 words of memory out of 5000000
+ 11896 multiletter control sequences out of 15000+600000
  39782 words of font info for 112 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 43i,9n,40p,720b,326s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 43i,8n,40p,720b,349s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2015/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/t
 exlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/te
 xlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texl
@@ -656,10 +704,10 @@ exmf-dist/fonts/type1/public/mathpazo/fplmri.pfb></usr/local/texlive/2015/texmf
 onts/type1/urw/palatino/uplbi8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/t
 ype1/urw/palatino/uplr8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/ur
 w/palatino/uplri8a.pfb>
-Output written on writeup.pdf (5 pages, 114658 bytes).
+Output written on writeup.pdf (7 pages, 316094 bytes).
 PDF statistics:
- 122 PDF objects out of 1000 (max. 8388607)
- 103 compressed objects within 2 object streams
- 19 named destinations out of 1000 (max. 500000)
- 65 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 168 PDF objects out of 1000 (max. 8388607)
+ 135 compressed objects within 2 object streams
+ 31 named destinations out of 1000 (max. 500000)
+ 119 words of extra memory for PDF output out of 10000 (max. 10000000)
 
