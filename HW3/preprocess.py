@@ -147,6 +147,7 @@ def main(arguments):
         f['train'] = train_matrix
         f['valid'] = valid_matrix
         f['test'] = test_matrix
+        f['nwords'] = np.array([np.max(index2words.keys())])
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
