@@ -51,7 +51,7 @@ def valid_test_Ngram(filepath, words2index, N, test=False):
                     topredict = np.array([words2index[x] for x in lsplit[1:]])
                 if lsplit[0] == 'C':
                     l = np.append(
-                        np.repeat(words2index['<s>'], N-1), [words2index[x] for x in lsplit[1:]])
+                        np.repeat(words2index['<s>'], N-1), [words2index[x] for x in lsplit[1:-1]])
                     lastNgram = l[-N+1:]
                     results.append((lastNgram, topredict))
     else:
