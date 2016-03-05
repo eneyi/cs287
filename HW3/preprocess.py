@@ -111,11 +111,25 @@ def tomatrix(results, train=True):
 
         return tooutput.astype(int)
 
+def validation_kaggle(filepath):
+    it = 0
+    results = []
+    with open(filepath) as f:
+        for line in f:
+            if it == 0 :
+                it+=1
+            else:
+                lsplit = line.split(',')
+                l = [int(x.rstrip()) for x in lsplit[1:]]
+                results.append(l)
+    return np.array(results)
+
 
 FILE_PATHS = ("data/train.txt",
               "data/valid_blanks.txt",
               "data/test_blanks.txt",
-              "data/words.dict")
+              "data/words.dict",
+              "data/valid_kaggle.txt")
 args = {}
 
 
@@ -127,7 +141,7 @@ def main(arguments):
     parser.add_argument('--N', default=3, type=int, help='Ngram size')
     args = parser.parse_args(arguments)
     N = args.N
-    train, valid, test, word_dict = FILE_PATHS
+    train, valid, test, word_dict, kaggle = FILE_PATHS
 
     words2index = get_words2index(word_dict)
     index2words = get_index2words(word_dict)
@@ -142,10 +156,13 @@ def main(arguments):
     test_list = valid_test_Ngram(test, words2index, N, True)
     test_matrix = tomatrix(test_list, False)
 
+    valid_kaggle = validation_kaggle(kaggle)
+
     filename = str(N) + '-grams.hdf5'
     with h5py.File(filename, "w") as f:
         f['train'] = train_matrix
         f['valid'] = valid_matrix
+        f['valid_output'] = valid_kaggle
         f['test'] = test_matrix
         f['nwords'] = np.array([np.max(index2words.keys())])
 
