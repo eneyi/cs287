@@ -38,6 +38,7 @@ def get_index2words(filename):
     return index2words
 
 index2words = get_index2words('data/words.dict')
+index2words1000 = get_index2words('data/words.1000.dict')
 
 
 def valid_test_Ngram(filepath, words2index, N, test=False):
@@ -74,7 +75,7 @@ def train_get_ngram(filename, words2index, N):
     Generating N-grams
     '''
     results = []
-    with open('data/train.txt') as f:
+    with open(filename) as f:
         for line in f:
             lsplit = [words2index[x] for x in line.split()]
             l = np.append(np.repeat(words2index['<s>'], N-1), lsplit)
@@ -126,9 +127,11 @@ def validation_kaggle(filepath):
 
 
 FILE_PATHS = ("data/train.txt",
+			  "data/train.1000.txt",
               "data/valid_blanks.txt",
               "data/test_blanks.txt",
               "data/words.dict",
+              "data/words.1000.dict",
               "data/valid_kaggle.txt")
 args = {}
 
@@ -141,14 +144,17 @@ def main(arguments):
     parser.add_argument('--N', default=3, type=int, help='Ngram size')
     args = parser.parse_args(arguments)
     N = args.N
-    train, valid, test, word_dict, kaggle = FILE_PATHS
+    train, train1000, valid, test, word_dict, word_dict_1000, kaggle = FILE_PATHS
 
     words2index = get_words2index(word_dict)
+    words2index1000 = get_words2index(word_dict_1000)
     index2words = get_index2words(word_dict)
 
     train_list = train_get_ngram(train, words2index, N)
-    print(len(train_list))
     train_matrix = tomatrix(train_list)
+
+    train_list_1000 = train_get_ngram(train1000, words2index1000, N)
+    train_matrix_1000 = tomatrix(train_list_1000)
 
     valid_list = valid_test_Ngram(valid, words2index, N)
     valid_matrix = tomatrix(valid_list, False)
@@ -161,6 +167,7 @@ def main(arguments):
     filename = str(N) + '-grams.hdf5'
     with h5py.File(filename, "w") as f:
         f['train'] = train_matrix
+        f['train_1000'] = train_matrix_1000
         f['valid'] = valid_matrix
         f['valid_output'] = valid_kaggle
         f['test'] = test_matrix
