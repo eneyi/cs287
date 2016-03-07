@@ -179,11 +179,18 @@ def main(arguments):
     index2words = get_index2words(word_dict)
 
     train_list = train_get_ngram(train, words2index, N)
+<<<<<<< HEAD
     train_matrix_count = tomatrix(train_list)
     train_matrix = tomatrix(train_list,True,False)
 
     train_list_1000 = train_get_ngram(train1000, words2index1000, N)
     train_matrix_1000 = tomatrix(train_list_1000,True,False)
+=======
+    train_matrix = tomatrix(train_list)
+>>>>>>> f1b0d5e9128bf131a8b82d36aaf2a4aab1004f2d
+
+    train_list_1000 = train_get_ngram(train1000, words2index1000, N)
+    train_matrix_1000 = tomatrix(train_list_1000)
 
     valid_list = valid_test_Ngram(valid, words2index, N)
     valid_matrix = tomatrix(valid_list, False)
@@ -195,9 +202,14 @@ def main(arguments):
 
     filename = str(N) + '-grams.hdf5'
     with h5py.File(filename, "w") as f:
+<<<<<<< HEAD
         f['train'] = train_matrix_count
         f['train_1000'] = train_matrix_1000
         f['train_nocounts'] = train_matrix
+=======
+        f['train'] = train_matrix
+        f['train_1000'] = train_matrix_1000
+>>>>>>> f1b0d5e9128bf131a8b82d36aaf2a4aab1004f2d
         f['valid'] = valid_matrix
         f['valid_output'] = valid_kaggle
         f['test'] = test_matrix
