@@ -106,10 +106,10 @@ def tomatrix(results, train=True, count = True):
             return tooutput.astype(int)
 
         else:
-            tooutput = np.empty((len(results),N))
+            tooutput_ = np.empty((len(results),N))
             for i in range(len(results)):
-                tooutput[i,:] = np.append(results[i][0],results[i][1])
-            return tooutput
+                tooutput_[i,:] = np.append(results[i][0],results[i][1])
+            return tooutput_
 
     else:
         tooutput = np.empty((len(results), 50+N-1))
