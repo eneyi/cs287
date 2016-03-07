@@ -126,6 +126,27 @@ def validation_kaggle(filepath):
     return np.array(results)
 
 
+def get_prior(filepath, words2index):
+    '''
+    Case N=1: ie prior on the word distribution from the train text
+    '''
+    counter = Counter()
+    with open(filepath) as f:
+        lines = f.readlines()
+        for line in lines:
+            # Adding the end of line prediction
+            lsplit = line.split() + ['</s>']
+            counter.update(lsplit[1:])
+    # Build count matrix: (N_words, 2), col 1: word index, col2: word cout
+    count_matrix = np.zeros((len(counter), 2), dtype=int)
+    
+    for i,t in enumerate(counter.iteritems()):
+        k, v = t
+        count_matrix[i, 0] = words2index[k]
+        count_matrix[i, 1] = v
+    return count_matrix
+
+
 FILE_PATHS = ("data/train.txt",
 			  "data/train.1000.txt",
               "data/valid_blanks.txt",
