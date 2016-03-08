@@ -143,7 +143,7 @@ def get_prior(filepath, words2index):
         for line in lines:
             # Adding the end of line prediction
             lsplit = line.split() + ['</s>']
-            counter.update(lsplit[1:])
+            counter.update(lsplit)
     # Build count matrix: (N_words, 2), col 1: word index, col2: word cout
     count_matrix = np.zeros((len(counter), 2), dtype=int)
     
