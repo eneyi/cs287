@@ -2,53 +2,28 @@
 \documentclass[11pt]{article}
 
 \usepackage{common}
-\title{HW0: Sample Assignment}
-\author{Alexander Rush \\ srush@seas.harvard.edu \and Sam Wiseman \\ swiseman@seas.harvard.edu }
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\title{HW3: (Neural) Language Modeling}
+\author{Nicolas Drizard \\ nicolasdrizard@g.harvard.edu \and Virgile Audi \\ vaudi@g.harvard.edu }
 \begin{document}
 
 \maketitle{}
 \section{Introduction}
 
-This note lays out our expectation for a homework submission in
-\textit{CS287: Statistical Natural Language Processing}. While you do
-not have to follow this template to the letter, we do expect that
-write-ups have a very clear structure and cover all the elements
-described in this note. With this in mind, the burden is on the
-presenter to demonstrate why deviations from the standard are
-necessary.
-
-All write-ups should include a short introduction. In this section you
-should summarize the underlying problem in high-level language and
-describe the extensions that you have decided to propose in your
-implementation. When you describe these extensions you should
-carefully cite the papers of interest. For instance, it will often be
-useful to cite the work seen in class
-\citep{murphy2012machine}. Alternatively, you can also cite papers
-inline, for instance the work of \citet{berger1996maximum}.
+This assignment focuses on the task of language modeling, a crucial first-step for many natural language applications. In this report, we will present several count-based multinomial language models with different smoothing methods, an influential neural network based language model from the work of Bengio et al. (2003), and an extension to this language model which learns using noise contrastive estimation, as well as their implementation using Torch. We found this homework more challenging than the previous ones and encountered significant challenges that we will underline in this report. 
 
 
 \section{Problem Description}
 
-In general, homeworks will be specified using informal
-language. As part of the assignment, we expect you to write-out a
-definition of the problem and your model in formal language. For this
-class, we will use the following notation:
+The goal of the language models presented in this report is to learn a distributed representation for words as well as probability distribution for word sequences. Language models are usually represented as the probability of generating a new word conditioned on the preceeding words:
 
-\begin{itemize}
-\item $\boldb, \boldm$;  bold letters for vectors.
-\item $\boldB, \boldM$;  bold capital letters for matrices.
-\item $\mcB, \mcM$;  script-case for sets.
-\item $b_i, x_i$; lower case for scalars or indexing into vectors.
-\end{itemize}
+$$ P(\boldsymbol{w}_{1:n}) = \prod\limits_{i=1}^{n-1}P(w_{i+1}|w_i)$$
 
+\noindent To simplify the analysis, it is common to make the assumption that a word is influenced only by the $N$ words immediately preceeding it, which we call the context. Even with reasonably small values for $N$, building such models are extremely expensive computationally-wise as well as time-consuming if not ran on GPU. The joint proabibility of a sequence of 6 words taken from a vocabulary of 10 000 words could possibly imply training the model to fit up to $10^{4^6}-1 =10^{24}-1$ parameters.\\
 
-For instance in natural language processing, it is common to use
-discrete sets like $\mcV$ for the vocabulary of the language, or $\mcT$ for a
-tag set of the language.  We might also want one-hot vectors
-representing words. These will be of the type
-$\boldv \in \{0,1\}^{|\mcV|}$. In a note, it is crucial to define the
-types of all variables that are introduced. The problem description is the
-right place to do this.
+\noindent In this report, we tried implementing N-grams models in an efficient manner. Due to computational limitations (no access to GPUs...), we faced difficulties training the Neural Network and focused our efforts on building strong count-based models to solve the problem of language modeling.
 
 % NLP is also
 % full of sequences. For instance sentences, $w_1, \ldots, w_N$, where
