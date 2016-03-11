@@ -97,8 +97,18 @@ We now show the pseudo code for training these NNLMs using batch stochastic grad
 
 \subsubsection{Noise Contrastive Estimation}
 
+As mentioned earlier, training such model is extremely expensive in computation, especially on CPUs. The issue comes from the use of the softmax in the last layer of the model in order to obtain a distribution on a large vocabulary. In order to speed up the training time and reduce compution, we tried to implement NCE, which is a method used to fit unnomarlised method and therefore avoids using the last softmax layer.\\
 
+\noindent The principle behind NCE is to sample for every context in the training data K wrong words that do not appear next in the windows using a noise distribution such a multinomial of the vocabulary simplex. We then apply a log-bilinear model. For a given context $\boldsymbol{x}$ and target $y$, the probability of $y$ being a correct word for this context is given by:
+$$p(D = 1 | \boldsymbol{x,y}) =  \sigma(\log p(\boldsymbol{y}|D = 1,\boldsymbol{x})-\log Kp(\boldsymbol{y} | D = 0, \boldsymbol{x}))$$
+where $$p(D = 1|\boldsymbol{x}, \boldsymbol{y}) = \sigma(log p(\boldsymbol{y}|D = 1, \boldsymbol{x}) - log(Kp(\boldsymbol{y}|D = 0, \boldsymbol{x})))
+$$
+If the $p(y|D = 1, x)$ term still forces some normalisation in the model, thanks to the contribution of Mnih and Teh (2012), we can estimate the normalisation constant as a parameter in the model and even set to equal to 1. We can therefore replace this term by the score outpute by the linear model $z_{\boldsymbol{x_i},w_i}$. The objective function that needs to be minimised becomes:
 
+$$\mathcal{L}(\theta) = \sum\limits_{i} \log \sigma(z_{\boldsymbol{x_i},w_i}) - \log(K p_{ML}(w_i))) + \sum\limits_{k=1}^{K} \log(1-\sigma(z_{\boldsymbol{x_i},s_k}) - \log K p_{ML}(s_k)) $$
+
+where $p_{ML}$ is the pdf of the noise distribution, and $s_k$ for $k \in \{1,...,K\}$ are samples from the noise distribution.
+ 
 \section{Experiments}
 
 We now present the results of our experiments. We will first talk about the preprocessing and then continue with a comparison of the different models.
@@ -164,6 +174,10 @@ Before making a submission on kaggle, we decided to compare the encouraging resu
 \end{figure}
 
 \noindent As one can see, changing the learning rate negatively impacted the results. It plateaued but perplexity started decreasing again as soon as we re-up the learning rate. It also unclear how much improvement the skip-layer model brings compared to the original Bengio model, and this even without the change in learning rate. Based on these observation, we decided to submit to Kaggle the results of the simple model. We obtained:
+
+$$Perp^{test}_{nnlm} = 5.47$$
+
+\noindent Nevertheless, a final observation on the training of these NNLMs is that the models haven't seem to converge fully after 25 epochs. Running the algorithm for 5-10 extra epochs would most probably yielded better results and helped us reach the level of the count-base models.
 
 \subsection{NCE}
 
