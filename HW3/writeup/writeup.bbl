@@ -1,0 +1,13 @@
+\begin{thebibliography}{}
+
+\bibitem[Berger et~al., 1996]{berger1996maximum}
+Berger, A.~L., Pietra, V. J.~D., and Pietra, S. A.~D. (1996).
+\newblock A maximum entropy approach to natural language processing.
+\newblock {\em Computational linguistics}, 22(1):39--71.
+
+\bibitem[Murphy, 2012]{murphy2012machine}
+Murphy, K.~P. (2012).
+\newblock {\em Machine learning: a probabilistic perspective}.
+\newblock MIT press.
+
+\end{thebibliography}

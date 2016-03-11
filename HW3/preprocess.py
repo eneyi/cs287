@@ -156,6 +156,7 @@ def get_prior(filepath, words2index):
 
 FILE_PATHS = ("data/train.txt",
 			  "data/train.1000.txt",
+              "data/valid.txt",
               "data/valid_blanks.txt",
               "data/test_blanks.txt",
               "data/words.dict",
@@ -172,7 +173,7 @@ def main(arguments):
     parser.add_argument('--N', default=3, type=int, help='Ngram size')
     args = parser.parse_args(arguments)
     N = args.N
-    train, train1000, valid, test, word_dict, word_dict_1000, kaggle = FILE_PATHS
+    train, train1000, valid_txt, valid, test, word_dict, word_dict_1000, kaggle = FILE_PATHS
 
     words2index = get_words2index(word_dict)
     words2index1000 = get_words2index(word_dict_1000)
@@ -185,6 +186,9 @@ def main(arguments):
     train_list_1000 = train_get_ngram(train1000, words2index1000, N)
     train_matrix_1000_count = tomatrix(train_list_1000,True,False)
     train_matrix_1000 = tomatrix(train_list_1000)
+
+    valid_txt_list = train_get_ngram(valid_txt, words2index, N)
+    valid_txt_matrix= tomatrix(valid_txt_list,True,False)
 
     valid_list = valid_test_Ngram(valid, words2index, N)
     valid_matrix = tomatrix(valid_list, False)
@@ -201,6 +205,7 @@ def main(arguments):
         f['train_1000_nocounts'] = train_matrix_1000
         f['train_1000'] = train_matrix_1000_count
         f['train_nocounts'] = train_matrix
+        f['valid_txt'] = valid_txt_matrix
         f['valid'] = valid_matrix
         f['valid_output'] = valid_kaggle
         f['test'] = test_matrix
