@@ -76,7 +76,7 @@ The updated diagram is as follows:
 \end{center}
 \end{figure}
 
-We now show the pseudo code for training these NNLM using batch stochastic gradient descent:
+We now show the pseudo code for training these NNLMs using batch stochastic gradient descent:
   \begin{algorithmic}[1]
     \Procedure{$NNLM_i$}{$win_{1},...,win_{n}$,MaxEpoch,BatchSize,LearningRate}
     \For{epoch = 1,MaxEpoch}
@@ -117,6 +117,13 @@ To complete this homework, we were given 3 datasets, one for training, one for v
 \item and 3 361 words of the test set
 \end{itemize}
 
+\subsection{Evaluation}
+
+To evaluate the models, we will use the perplexity measure. For a set of $m$ $N$-grams, $\boldsymbol{w}_1,...,\boldsymbol{w}_m$, it is defined to be:
+
+$$ P(\boldsymbol{w}_1,...,\boldsymbol{w}_m) = \exp\left(-\frac{1}{m} \sum\limits_{i = 1}^{m} \log P(w_N^i|w_{N-1}^i,...,w_1^i)\right)$$
+
+\noindent In other words, the perplexity translates how likely is the predicted word given the previous N-1 words. In this report, we will evaluated perplexity both on the entire vocabulary but also on the reduced 50 words to predict from. Values between these two "different" perplexities wil range from 3 to 1000.
 \subsection{Count-based Models}
 
 \subsection{Neural Models}
@@ -140,7 +147,12 @@ We unfortunately did not succeed to implement a valid version of the Noise Contr
 
 End the write-up with a very short recap of the main experiments and the main results. Describe any challenges you may have faced, and what could have been improved in the model.
 
-\bibliographystyle{apalike}
-\bibliography{writeup}
+\section{References}
+\begin{itemize}
+\item Bengio, Y., Ducharme, R., Vincent, P., and Janvin, C. (2003). A neural probabilistic language model. \emph{Journal of Machine Learning Research}, 3:1137–1155.
 
+\item Mnih, A. and Kavukcuoglu, K. (2013). Learning word embeddings efficiently with noise- contrastive estimation. \emph{In Advances in Neural Information Processing Systems}, pages 2265–2273.
+
+\item Chen, S. and Goodman, J. (1998). An Empirical Study of Smo othing Techniques for Language. \emph{Technical Report TR-10-98}, Computer Science Group, Harvard University.
+\end{itemize}
 \end{document}
