@@ -130,7 +130,7 @@ $$ P(\boldsymbol{w}_1,...,\boldsymbol{w}_m) = \exp\left(-\frac{1}{m} \sum\limits
 
 The main issue we faced with Bengio's model was training time. Even we managed to have a working model with a smaller vocabulary, we struggled at first to get a code that ran fast enough to experiment extensively with different paremetrisations. Our original code ran one epoch in about one hour for the paremetrisation. While trying to code the NCE approximation, we nevertheless managed to cut the training time to about 14-15 minutes.\\
 
-We decided to train the more complex neural network i.e. the one with the skip-layer, with the parametrisation suggested by Bengio:
+We started to train the more simple neural network i.e. the one without the skip-layer, with the parametrisation suggested by Bengio:
 
 \begin{itemize}
 \item Window size: $d_{win} = 5$
@@ -139,9 +139,38 @@ We decided to train the more complex neural network i.e. the one with the skip-l
 \end{itemize}
 
 We summarize the results in the graphs below:
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{noskip_tr}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{noskip_val}
+  \end{minipage}
+\end{figure}
+
+Before making a submission on kaggle, we decided to compare the encouraging results with the Skip-Layer model. We ran the experiment 5 epochs at a time to give us control on the learning rate. We thought that after the 15 epochs, the model was close to convergence, and decided to decrease the learning rate from 0.01 to 0.001. We obtain the following results:
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{skip_tr}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{skip_val}
+  \end{minipage}
+\end{figure}
+
+\noindent As one can see, changing the learning rate negatively impacted the results. It plateaued but perplexity started decreasing again as soon as we re-up the learning rate. It also unclear how much improvement the skip-layer model brings compared to the original Bengio model, and this even without the change in learning rate. Based on these observation, we decided to submit to Kaggle the results of the simple model. We obtained:
+
 \subsection{NCE}
 
 We unfortunately did not succeed to implement a valid version of the Noise Contrastive Estimation. We did not managed to have a speed improvement and even worse observed that the perplexity on the validation was increasing instead of decreasing.
+
+\subsection{Mixtures of models}
+In order to increase our score, we decided to combine the differente approaches by averaging the results over the distributions outputted by various models.
 
 \section{Conclusion}
 
