@@ -34,6 +34,71 @@ We will now dive into more details of two types of models, i.e. count-based mode
 
 \subsection{Count-based Models}
 
+The first models we implemented are based on the count of N-gram features. The main idea is here to implement n-gram multinomial estimates of $p(w_i|w_{i-n+1}, \hdots, w_{i-1})$. We will use different smoothing methods and compare their performance.
+
+\paragraph{Maximum Likelihood Estimation}
+
+The first approach is just to compute the maximum likelihood estimation $p_{ML}(w|c)$ with c the context (ie N-1 gram) and w the word predicted. This is done by simply counting the frequency of the N-gram: c-w in the training.
+
+\[
+	p_{ML}(w|c) = \frac{F_{c,w}}{F_c} = \frac{F_{c,w}}{\sum_i F_{c,w_i}}
+\]
+
+with $ F_{c,w} = \sum_i \mathbb{1}(w_{i-n+1:i-1}=c, w_i=w)$.
+
+
+We applied this method up to 5-grams. But the results are not very impressive. First, the long tail in the words distribution is not properly represented as we consider the number of occurences of such words as the ground truth. Second, this method works for one context at a time but it should be more interesting to weight and combine them.
+
+\paragraph{Laplace smoohting}
+
+This approach handles the first issue where we want to have a better representation for the words in the tail. Here we simply add an off-set to each count $\hat{F}_{c,w} = F_{c,w} + \alpha $.
+
+We can use the validation set to tune the $\alpha$ parameter while optimizing its perplexity. We applied this pipeline on the validation set from Kaggle.
+
+\paragraph{Witten-Bell smoothing}
+
+Here we tackle the second issue of the MLE. The idea is to combine lower order models together to use as much information as possible. The global idea is to use recursivity: 
+
+\[
+	p(w|c) = \lambda p_{ML}(w|c) + (1 - \lambda)p(w|c')
+\]
+
+with c' the lower order context (if c is the N-1 gram, c' is the N-2 gram). We stop it when c' is empty and then use the prior on the words distribution from the train (ie the frequency of the word w only). 
+
+Witten and Bell suggested a way to compute the constant: $\lambda = \frac{N1_c}{F_c + N1_c}$ with $N1_c = |\{w: F_{c, w} = 1\}|$
+
+This method is usually called interpolation as we interpolate $p(w|c)$ with its MLE estimations at each lower order context. Another method is known as back-off where we use the lower order context only if $F_{w,c} = 0$. We applied a mixed of the two methods, ie we use interpolation and jumped directly to the lower order context if the count was 0. Also we applied an alpha smoothing for the 2-gram (ie the lowest order before the word prior). This was motivates by the need to smooth the importance of the 2-grams as the counts are higher for lower order context.
+
+\paragraph{Modified Kneser-Ney smoothing}
+
+This method uses also a mixed of interpolation and back-off but instead of using the MLE for the current context, it uses absolute discounting. The idea is that we would like to weight down the count $F_{w,c}$ but differently with regards to their value. As a result, we introduce a discounting parameter which takes discrete values with regards to $F_{w,c}$.
+
+\[
+	p(w|c) = \frac{F_{c,w} - D(F_{c,w})}{F_c} + \gamma(F_{c,w}) p(w|c)
+\]
+
+with :
+
+\[
+D(F_{c,w})
+    \begin{cases}
+      0, & \text{if}\ F_{c,w}=0 \\
+      D_1, & \text{if}\ F_{c,w}=1 \\
+      D_2, & \text{if}\ F_{c,w}=2 \\
+      D_3, & \text{if}\ F_{c,w} \geq 3 \\
+    \end{cases}
+\]
+\[
+\gamma(F_{c,w}) = \frac{D_1N1_c + D_2N2_c + D_3N3_c}{F_c}
+\]
+
+
+with $N2_c$ and $N3_c$ similarly defined as $N1_c$.
+
+
+
+In the original paper, they used the above definition with fixed $D1$, $D2$ and $D3$ and tuned parameters. We tried both approach and found even better results with manually tuned parameters.
+
 \subsection{Neural Networ Models}
 
 \subsubsection{Regular Models}
@@ -134,7 +199,67 @@ To evaluate the models, we will use the perplexity measure. For a set of $m$ $N$
 $$ P(\boldsymbol{w}_1,...,\boldsymbol{w}_m) = \exp\left(-\frac{1}{m} \sum\limits_{i = 1}^{m} \log P(w_N^i|w_{N-1}^i,...,w_1^i)\right)$$
 
 \noindent In other words, the perplexity translates how likely is the predicted word given the previous N-1 words. In this report, we will evaluated perplexity both on the entire vocabulary but also on the reduced 50 words to predict from. Values between these two "different" perplexities wil range from 3 to 1000.
+
 \subsection{Count-based Models}
+
+We evaluate the count-based models on the Kaggle development set with the perplexity.
+
+\paragraph{Maximum Likelihood Estimation}
+
+For this first model, the only hyperparameter is the number of N-grams in the feature. We applied this method on different N-gram models and provides the results. The computation time remains very low for each model; the only issue as we increase the size of the N-gram is the memory footprint.
+
+\paragraph{Laplace Smoothing}
+
+We studied the impact of the alpha parameter and the best value with regard to the perlexity on the Kaggle development set.
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{perp_mle}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{perp_alpha}
+  \end{minipage}
+\end{figure}
+
+
+\paragraph{Witten-Bell Smoothing}
+
+For the Witten-Bell Smoothing, we benchmarked both the alpha parameter and the context from which to start the interpolation.
+
+First, we applied a different normalization when we were using our model for the Kaggle dataset. For each entry in this dataset, we build a language model on a really small subset of the training dictionary (50 out of 10 001 words). As a result, only a small fraction of all the N-grams can be considered and we decided to compute the factor $N1$ and $F_c$ only among the output vocabulary (50 words). This change lead to better results, we directly applied it on the modified Kneser-Ney.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.45\textwidth]{perp_wb}
+\end{figure}
+
+This plots shows that the Witten-Bell smoothing does not manage to successfully balance the different orders of the models when they are too many. The best perplexity is always reached for the tri-grams. This may be cause by the fact that with large context (N>2), the probability may be disturbed by a lower order model very present even though the rest of the context is not (see the example of SAN FRANCISCO in the paper).
+
+Moreover, we see that the perplexity gets smaller as $\alpha$ increases. This is because we may want a strong smoothing of the lower order model (here we use alpha only on the lower order model computed). The relative differences are bigger in the lower order models as the contexts are there more frequent (because smaller) so large smoothing may decrease their influence and favorise the long tail.
+
+\paragraph{Modified Kneser-Ney}
+
+This model introduces different hyperparameters. The absolute discounting D induces 2 kinds of hyperparameters: the number of values it takes and the values. We first applied those suggested in the paper but also decided to tune them manually as the paper provides better results in that case. We also observed this result.
+
+We plot the results with a model with fixed parameters D as suggested in the paper. As with the Witten-Bell smoothing, we evaluated the models against different starting contexts. In that case, the best results were reached for the 3-grams.
+
+\begin{figure}[H]
+  \centering
+  \begin{minipage}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{perp_mkn}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.45\textwidth}
+    \includegraphics[width=\textwidth]{perp_mkn_norm}
+  \end{minipage}
+\end{figure}
+
+
+The best perplexity was reached with a manually tuned D (on the Kaggle development set with the perplexity). The perplexity reached is $\mathbb{3.476}$.
+
+
 
 \subsection{Neural Models}
 
@@ -186,6 +311,36 @@ We unfortunately did not succeed to implement a valid version of the Noise Contr
 \subsection{Mixtures of models}
 In order to increase our score, we decided to combine the differente approaches by averaging the results over the distributions outputted by various models.
 
+We managed to reach our best perplexity with a weigthed mean of the Witten-Bell smoothing, the modified Kneser-Kney with tuned parameters and local normalization and the Neural Network.
+
+Formallu, the output is built as follows:
+
+\[
+p(w|c) = \frac{2p_{WB}(w|c) + p_{mKN}(w|c) + p_{NN}(w|c)}{5}
+\]
+
+We reached on the Kaggle development set: $ \mathbb{perp_{Kaggle} = 3.36}$
+
+We provide here a summary of our models on the Kaggle development set:
+
+
+\begin{table}[]
+\centering
+\caption{My caption}
+\label{my-label}
+\begin{tabular}{|l|l|}
+\hline
+Model                          & Perplexity (dev Kaggle) \\ \hline
+MLE with Laplace smoothing     & 6.01                    \\ \hline
+Witten Bell (trigram)          & 3.52                    \\ \hline
+Modified Kneser Kney           & 3.47                    \\ \hline
+Neural Network                 & 5.68                    \\ \hline
+Neural Network with skip Layer & 5.66                    \\ \hline
+Ensemble (WB + mKN + NNsl)     & \textbf{3.36}                    \\ \hline
+\end{tabular}
+\end{table}
+
+
 \section{Conclusion}
 
 End the write-up with a very short recap of the main experiments and the main results. Describe any challenges you may have faced, and what could have been improved in the model.
@@ -196,6 +351,6 @@ End the write-up with a very short recap of the main experiments and the main re
 
 \item Mnih, A. and Kavukcuoglu, K. (2013). Learning word embeddings efficiently with noise- contrastive estimation. \emph{In Advances in Neural Information Processing Systems}, pages 2265–2273.
 
-\item Chen, S. and Goodman, J. (1998). An Empirical Study of Smo othing Techniques for Language. \emph{Technical Report TR-10-98}, Computer Science Group, Harvard University.
+\item Chen, S. and Goodman, J. (1998). An Empirical Study of Smoothing Techniques for Language. \emph{Technical Report TR-10-98}, Computer Science Group, Harvard University.
 \end{itemize}
 \end{document}
