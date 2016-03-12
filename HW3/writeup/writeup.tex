@@ -5,6 +5,9 @@
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{listings}
+\usepackage[toc,page]{appendix}
+
 
 \title{HW3: (Neural) Language Modeling}
 \author{Nicolas Drizard \\ nicolasdrizard@g.harvard.edu \and Virgile Audi \\ vaudi@g.harvard.edu }
@@ -353,4 +356,14 @@ End the write-up with a very short recap of the main experiments and the main re
 
 \item Chen, S. and Goodman, J. (1998). An Empirical Study of Smoothing Techniques for Language. \emph{Technical Report TR-10-98}, Computer Science Group, Harvard University.
 \end{itemize}
+
+\newpage
+
+\begin{appendices}
+\lstinputlisting{../preprocess.py}
+\lstinputlisting{../count_models.lua}
+\lstinputlisting{../bengio_nn.lua}
+\end{appendices}
+
 \end{document}
+
