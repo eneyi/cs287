@@ -14,6 +14,10 @@
 \begin{document}
 
 \maketitle{}
+
+\begin{center}
+Github: https://github.com/virgodi/cs287/HW3
+\end{center}
 \section{Introduction}
 
 This assignment focuses on the task of language modeling, a crucial first-step for many natural language applications. In this report, we will present several count-based multinomial language models with different smoothing methods, an influential neural network based language model from the work of Bengio et al. (2003), and an extension to this language model which learns using noise contrastive estimation, as well as their implementation using Torch. We found this homework more challenging than the previous ones and encountered significant challenges that we will underline in this report. 
@@ -37,26 +41,26 @@ We will now dive into more details of two types of models, i.e. count-based mode
 
 \subsection{Count-based Models}
 
-The first models we implemented are based on the count of N-gram features. The main idea is here to implement n-gram multinomial estimates of $p(w_i|w_{i-n+1}, \hdots, w_{i-1})$. We will use different smoothing methods and compare their performance.
+The first models we implemented are based on counts of N-gram features. The main idea is here to implement n-gram multinomial estimates for $p(w_i|w_{i-n+1}, \hdots, w_{i-1})$. We will use different smoothing methods and compare their performance.
 
 \paragraph{Maximum Likelihood Estimation}
 
-The first approach is just to compute the maximum likelihood estimation $p_{ML}(w|c)$ with c the context (ie N-1 gram) and w the word predicted. This is done by simply counting the frequency of the N-gram: c-w in the training.
+The first approach is just to compute the maximum likelihood estimation $p_{ML}(w|c)$ where $c$ is the context (i.e. N-1 gram) and $w$ the word predicted. This is done by simply counting the frequency of the N-gram: ($c-w$) in the training.
 
 \[
 	p_{ML}(w|c) = \frac{F_{c,w}}{F_c} = \frac{F_{c,w}}{\sum_i F_{c,w_i}}
 \]
 
-with $ F_{c,w} = \sum_i \mathbb{1}(w_{i-n+1:i-1}=c, w_i=w)$.
+with $ F_{c,w} = \sum_i \mathbb{1}(w_{i-n+1:i-1}=c, w_i=w)$.\\
 
 
 We applied this method up to 5-grams. But the results are not very impressive. First, the long tail in the words distribution is not properly represented as we consider the number of occurences of such words as the ground truth. Second, this method works for one context at a time but it should be more interesting to weight and combine them.
 
 \paragraph{Laplace smoohting}
 
-This approach handles the first issue where we want to have a better representation for the words in the tail. Here we simply add an off-set to each count $\hat{F}_{c,w} = F_{c,w} + \alpha $.
+This approach handles the first issue where we want to have a better representation for the words in the tail. Here we simply add an off-set to each count $\hat{F}_{c,w} = F_{c,w} + \alpha $.\\
 
-We can use the validation set to tune the $\alpha$ parameter while optimizing its perplexity. We applied this pipeline on the validation set from Kaggle.
+\noindent We can use the validation set to tune the $\alpha$ parameter while optimizing its perplexity. We applied this pipeline on the validation set from Kaggle.
 
 \paragraph{Witten-Bell smoothing}
 
@@ -66,15 +70,15 @@ Here we tackle the second issue of the MLE. The idea is to combine lower order m
 	p(w|c) = \lambda p_{ML}(w|c) + (1 - \lambda)p(w|c')
 \]
 
-with c' the lower order context (if c is the N-1 gram, c' is the N-2 gram). We stop it when c' is empty and then use the prior on the words distribution from the train (ie the frequency of the word w only). 
+\noindent with $c'$ the lower order context (if $c$ is the N-1 gram, $c'$ is the N-2 gram). We stop it when $c'$ is empty and then use the prior on the words distribution from the train (ie the frequency of the word w only). \\
 
-Witten and Bell suggested a way to compute the constant: $\lambda = \frac{N1_c}{F_c + N1_c}$ with $N1_c = |\{w: F_{c, w} = 1\}|$
+\noindent Witten and Bell suggested a way to compute the constant: $\lambda = \frac{N1_c}{F_c + N1_c}$ with $N1_c = |\{w: F_{c, w} = 1\}|$\\
 
-This method is usually called interpolation as we interpolate $p(w|c)$ with its MLE estimations at each lower order context. Another method is known as back-off where we use the lower order context only if $F_{w,c} = 0$. We applied a mixed of the two methods, ie we use interpolation and jumped directly to the lower order context if the count was 0. Also we applied an alpha smoothing for the 2-gram (ie the lowest order before the word prior). This was motivates by the need to smooth the importance of the 2-grams as the counts are higher for lower order context.
+\noindent This method is usually called interpolation as we interpolate $p(w|c)$ with its MLE estimations at each lower order context. Another method is known as back-off where we use the lower order context only if $F_{w,c} = 0$. We applied a mixed of the two methods, ie we use interpolation and jumped directly to the lower order context if the count was 0. Also we applied an alpha smoothing for the 2-gram (ie the lowest order before the word prior). This was motivates by the need to smooth the importance of the 2-grams as the counts are higher for lower order context.
 
 \paragraph{Modified Kneser-Ney smoothing}
 
-This method uses also a mixed of interpolation and back-off but instead of using the MLE for the current context, it uses absolute discounting. The idea is that we would like to weight down the count $F_{w,c}$ but differently with regards to their value. As a result, we introduce a discounting parameter which takes discrete values with regards to $F_{w,c}$.
+This method also uses a mixture of interpolation and back-off but instead of using the MLE for the current context, it uses absolute discounting. The idea is that we would like to weigh down the count $F_{w,c}$ but differently with regards to their value. As a result, we introduce a discounting parameter which takes discrete values with regards to $F_{w,c}$.
 
 \[
 	p(w|c) = \frac{F_{c,w} - D(F_{c,w})}{F_c} + \gamma(F_{c,w}) p(w|c)
@@ -91,16 +95,15 @@ D(F_{c,w})
       D_3, & \text{if}\ F_{c,w} \geq 3 \\
     \end{cases}
 \]
+
 \[
 \gamma(F_{c,w}) = \frac{D_1N1_c + D_2N2_c + D_3N3_c}{F_c}
 \]
 
 
-with $N2_c$ and $N3_c$ similarly defined as $N1_c$.
+with $N2_c$ and $N3_c$ similarly defined as $N1_c$.\\
 
-
-
-In the original paper, they used the above definition with fixed $D1$, $D2$ and $D3$ and tuned parameters. We tried both approach and found even better results with manually tuned parameters.
+\noindent In the original paper, they used the above definition with fixed $D1$, $D2$ and $D3$ and tuned parameters. We tried both approach and found even better results with manually tuned parameters.
 
 \subsection{Neural Networ Models}
 
@@ -139,7 +142,7 @@ where this time:
 The updated diagram is as follows:
 \begin{figure}[H]
 \begin{center}
-    \includegraphics[width=0.5\textwidth]{skip.png}
+    \includegraphics[width=0.45\textwidth]{skip.png}
     \caption{\underline{Skip-Layer Model}}
 \end{center}
 \end{figure}
@@ -205,7 +208,7 @@ $$ P(\boldsymbol{w}_1,...,\boldsymbol{w}_m) = \exp\left(-\frac{1}{m} \sum\limits
 
 \subsection{Count-based Models}
 
-We evaluate the count-based models on the Kaggle development set with the perplexity.
+We first present the results of the different count-based models:
 
 \paragraph{Maximum Likelihood Estimation}
 
@@ -260,7 +263,7 @@ We plot the results with a model with fixed parameters D as suggested in the pap
 \end{figure}
 
 
-The best perplexity was reached with a manually tuned D (on the Kaggle development set with the perplexity). The perplexity reached is $\mathbb{3.476}$.
+The best perplexity was reached with a manually tuned D (on the Kaggle development set with the perplexity). The perplexity reached is $3.476$.
 
 
 
@@ -312,24 +315,24 @@ $$Perp^{test}_{nnlm} = 5.47$$
 We unfortunately did not succeed to implement a valid version of the Noise Contrastive Estimation. We did not managed to have a speed improvement and even worse observed that the perplexity on the validation was increasing instead of decreasing.
 
 \subsection{Mixtures of models}
-In order to increase our score, we decided to combine the differente approaches by averaging the results over the distributions outputted by various models.
+In order to increase our score, we decided to combine the differente approaches by averaging the results over the distributions outputted by various models.\\
 
-We managed to reach our best perplexity with a weigthed mean of the Witten-Bell smoothing, the modified Kneser-Kney with tuned parameters and local normalization and the Neural Network.
+\noindent We managed to reach our best perplexity with a weigthed mean of the Witten-Bell smoothing, the modified Kneser-Kney with tuned parameters and local normalization and the Neural Network.\\
 
-Formallu, the output is built as follows:
+\noindent Formally, the output is built as follows:
 
 \[
 p(w|c) = \frac{2p_{WB}(w|c) + p_{mKN}(w|c) + p_{NN}(w|c)}{5}
 \]
 
-We reached on the Kaggle development set: $ \mathbb{perp_{Kaggle} = 3.36}$
+We reached on the Kaggle development set: $ perp_{Kaggle} = 3.36$
 
 We provide here a summary of our models on the Kaggle development set:
 
 
-\begin{table}[]
+\begin{table}[H]
 \centering
-\caption{My caption}
+\caption{Final Performances}
 \label{my-label}
 \begin{tabular}{|l|l|}
 \hline
@@ -346,7 +349,7 @@ Ensemble (WB + mKN + NNsl)     & \textbf{3.36}                    \\ \hline
 
 \section{Conclusion}
 
-End the write-up with a very short recap of the main experiments and the main results. Describe any challenges you may have faced, and what could have been improved in the model.
+In this homework we successfully build very efficient count-based Language models that yield great results. On the other hand, we were surprised to see that these models were beating in performance the model presented by Bengio which is much more elaborated. Nevertheless, we obtained the best results by taking a mixture of the two different types of results. These could be explained by the fact that the stochastic gradient descent may converge to different local minimums. 
 
 \section{References}
 \begin{itemize}
@@ -360,9 +363,12 @@ End the write-up with a very short recap of the main experiments and the main re
 \newpage
 
 \begin{appendices}
-\lstinputlisting{../preprocess.py}
-\lstinputlisting{../count_models.lua}
-\lstinputlisting{../bengio_nn.lua}
+\underline{Preprocessing:}
+\lstinputlisting[numbers=left, breaklines=true]{../preprocess.py}
+\underline{Count-Based Models:}
+\lstinputlisting[numbers=left, breaklines=true]{../count_models.lua}
+\underline{NNLM:}
+\lstinputlisting[numbers=left, breaklines=true]{../bengio_nn.lua}
 \end{appendices}
 
 \end{document}
