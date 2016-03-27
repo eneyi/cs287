@@ -1,0 +1,46 @@
+\begin{thebibliography}{}
+
+\bibitem[Caiming~Xiong, 2016]{dmnvqa}
+Caiming~Xiong, Stephen~Merity, R.~S. (2016).
+\newblock Dynamic memory networks for visual and textual question answering.
+
+\bibitem[Cho et~al., 2014]{gru}
+Cho, K., van Merrienboer, B., Bahdanau, D., and Bengio, Y. (2014).
+\newblock On the properties of neural machine translation: Encoder-decoder
+  approaches.
+\newblock {\em CoRR}, abs/1409.1259.
+
+\bibitem[Hochreiter and Schmidhuber, 1997]{lstm}
+Hochreiter, S. and Schmidhuber, J. (1997).
+\newblock Long short-term memory.
+
+\bibitem[Kumar et~al., 2015]{dmn}
+Kumar, A., Irsoy, O., Su, J., Bradbury, J., English, R., Pierce, B., Ondruska,
+  P., Gulrajani, I., and Socher, R. (2015).
+\newblock Ask me anything: Dynamic memory networks for natural language
+  processing.
+\newblock {\em CoRR}, abs/1506.07285.
+
+\bibitem[Pennington et~al., 2014]{glove}
+Pennington, J., Socher, R., and Manning, C.~D. (2014).
+\newblock Glove: Global vectors for word representation.
+\newblock In {\em Empirical Methods in Natural Language Processing (EMNLP)},
+  pages 1532--1543.
+
+\bibitem[Richardson et~al., ]{mctest}
+Richardson, M., Burges, C. J.~C., and Renshaw, E.
+\newblock Mctest: A challenge dataset for the open-domain machine comprehension
+  of text.
+
+\bibitem[Weston et~al., 2015]{aiqua}
+Weston, J., Bordes, A., Chopra, S., and Mikolov, T. (2015).
+\newblock Towards ai-complete question answering: {A} set of prerequisite toy
+  tasks.
+\newblock {\em CoRR}, abs/1502.05698.
+
+\bibitem[Weston et~al., 2014]{memnn}
+Weston, J., Chopra, S., and Bordes, A. (2014).
+\newblock Memory networks.
+\newblock {\em CoRR}, abs/1410.3916.
+
+\end{thebibliography}

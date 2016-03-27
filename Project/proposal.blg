@@ -1,0 +1,49 @@
+This is BibTeX, Version 0.99d (TeX Live 2015)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: proposal.aux
+The style file: apalike.bst
+Database file #1: proposal.bib
+Warning--empty journal in dmnvqa
+Warning--empty year in mctest
+You've used 8 entries,
+            1935 wiz_defined-function locations,
+            505 strings with 4848 characters,
+and the built_in function-call counts, 3051 in all, are:
+= -- 287
+> -- 168
+< -- 3
++ -- 58
+- -- 58
+* -- 247
+:= -- 560
+add.period$ -- 21
+call.type$ -- 8
+change.case$ -- 69
+chr.to.int$ -- 8
+cite$ -- 10
+duplicate$ -- 114
+empty$ -- 176
+format.name$ -- 68
+if$ -- 577
+int.to.chr$ -- 1
+int.to.str$ -- 0
+missing$ -- 6
+newline$ -- 40
+num.names$ -- 24
+pop$ -- 65
+preamble$ -- 1
+purify$ -- 69
+quote$ -- 0
+skip$ -- 95
+stack$ -- 0
+substring$ -- 136
+swap$ -- 16
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 48
+warning$ -- 2
+while$ -- 19
+width$ -- 0
+write$ -- 96
+(There were 2 warnings)

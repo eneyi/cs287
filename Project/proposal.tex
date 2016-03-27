@@ -1,0 +1,107 @@
+% No 'submit' option for the problems by themselves.
+%\documentclass{harvardml}
+% Use the 'submit' option when you submit your solutions.
+\documentclass[submit]{harvardml}
+
+% Put in your full name and email address.
+\name{Nicolas Drizard}
+\email{nicolasdrizard@g.harvard.edu}
+
+% List any people you worked with.
+\collaborators{%
+Virgile Audi\\
+vaudi@g.harvard.edu
+}
+
+% You don't need to change these.
+\course{CS 287}
+\duedate{March 25, 2016}
+
+\usepackage{url, enumitem}
+\usepackage{amsfonts}
+%\usepackage{listings}
+\usepackage{bm}
+\usepackage[procnames]{listings}
+\usepackage{color}
+\usepackage{multirow}
+\usepackage{graphicx, color}
+\usepackage[toc,page]{appendix}
+\usepackage{framed}
+\begin{document}
+
+\section*{Introduction}
+
+If we want to communicate and reason with a machine, then the machine will need to be able to ingest and understand the underlying logic of the sentences we communicate to it. Pick the Echo for instance, say you are to tell it that your mother just bought this great new phone on Amazon, and that it makes you jealous. Wouldn't it be great (or at least for Amazon) if the Echo understood that the answer to the question: "why am I jealous?" was the fact that you don't have the latest smartphone and replied by offering to order it for you immediately? This kind of tasks are called non-factoid question answering as they go beyond the scope of querying a knowledge base to answer a question such as "Who was the 1st President of the United States?". In this project, we would like to tackle the issue of non-factoid question answering by implementing the Dynamic Memory Network developped in \cite{dmn}.
+
+\section{Problem Formulation}
+
+The goal of this project to build a model capable of solving the following type of problem:
+
+\begin{enumerate}
+\item Read a set of sentences forming a story
+\item Given the story, the model answers a question by a word or a sentence itself
+\end{enumerate}
+An example of such problems could be:
+
+\begin{framed}
+\begin{center}
+Story: John is bored. John goes out in the garden.\\
+Q: Why is John in the garden?\\
+A: John was bored
+\end{center}
+\end{framed}
+
+The model we plan on implementing is supposed to successfully complete a set of 20 task presented in \cite{aiqua}.\\
+
+Such tasks include:
+\begin{itemize}
+\item A single supporting fact fact, potentially amongst a set of other irrelevant facts, provides the answer;
+\item Two or three supporting facts that require to be chained to answer;
+\item Positional and size reasoning;
+\item Time reasoning, etc.
+\end{itemize}
+
+We will use Facebook's \emph{bAbI} dataset which consists of 20 pairs of training and test sets of each 1000 questions.
+
+\section{Dynamic Memory Network}
+
+\subsection{Presentation}
+To solve our problem, we will implement a recent variant of memory network \cite{memnn} called Dynamic Memory Network (DMN). It is a neural network architecture which processes input sequences and questions, builds episodic memories and generates relevant answers. A question triggers an iterative attention process where the model will produce results while conditioning its attention on relevant information of the input to answer the question. The results are then reasoned over in a hierarchical recurrent sequence model to generate answers. This model can be used on several type of tasks: question answering, text classification for sentiment analysis  and sequence modeling for part-of-speech tagging. We will focused mainly of the first task but if time will compare its performance on the other tasks with the methods implemented in the class.
+
+\subsection{Structure}
+
+The DMN is made up of four following modules that we present briefly. More documentation is provided in the original paper \cite{dmn}
+
+\begin{itemize}
+	\item \textbf{Input Module}: Encodes raw text inputs (list of words or of sentences) into a vector representation;
+	\item \textbf{Question Module}: Encodes the raw question (list of words) into a vector representation.;
+	\item \textbf{Episodic Memory Module}: Uses an attention mechanism to choose which part of the inputs to focus on. It produces a "memory" vector representation taking into account the question as well as the previous memory; the memory is initialized to question. The iterative process gives the module the ability to retrieve new information, in the form of input representations, which were considered irrelevant in the previous iterations.
+	\item \textbf{Answer Module}: Generates an answer from the final memory vector of the memory module.
+\end{itemize}
+
+\subsection{Experimental Setup}
+
+Here we describe the implementation we plan to choose. First, each module uses a recurrent neural network to produce its output, built from the hidden states of the RNN. The paper mentions two alternatives to avoid suffering from the vanishing gradient problem: gated recurrent network \cite{gru} or long-short term memory \cite{lstm}. We will use the GRU as in the paper for computationnal reasons.Second, we will apply a transfer learning approach where we will initialize our embedding space to the pretrained GloVe \cite{glove}.Third, we will use the cross-entropy with an L2 regularization as the loss of our RNN.
+
+\section{Metric and Baseline}
+
+\subsection{Metric}
+The metric used to evaluate the quality of the model will be the accuracy on the 20 test sets of the Facebook's \emph{bAbI} dataset, as in the original paper. We will consider the project to be a success if we manage to reproduce the results presented in the paper, i.e. an average accuracy of 93.6\% of the 20 \emph{bAbi} tasks.
+
+\subsection{Baseline}
+
+A first baseline would be provided by a count based model using bag-of-words features from both the input and the question. We will try to use a simple LSTM which reads the paragraph text and a question,
+and outputs an answer word as another baseline also.
+
+\section{Possible Extension}
+
+One possible extension could be to apply our model on other dataset. The bAbI dataset has been built artificially and may lack of complexity. We could adapt our method to solve the QA tasks provided in the MCTest \cite{mctest}.\\
+Another possible extension is provided in the work of \cite{dmnvqa} where the DMN architecture is improved when supporting facts are not marked during training. 
+
+
+\bibliographystyle{apalike}
+\bibliography{proposal}
+
+\end{document}
+
+
