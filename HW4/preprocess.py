@@ -76,11 +76,11 @@ def main(arguments):
 
     filename = 'data_preprocessed/' + str(N) + '-grams.hdf5'
     with h5py.File(filename, "w") as f:
-        # Stores a matrix (num_records, n-1) with at each row
-        # the (n-1) grams appearing in the input data
+        # Stores a matrix (num_records, N-1) with at each row
+        # the (N-1) grams appearing in the input data
         f['input_matrix_train'] = input_matrix_train
         # Vector (num_records) storing the class of the next word
-        # after the (n-1- stored at the same index in input_matrix
+        # after the (N-1) gram stored at the same index in input_matrix
         # 1 is space; 2 is character
         f['output_matrix_train'] = output_matrix_train
         # Stores the list of consecutives character (or space) as their
