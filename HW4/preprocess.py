@@ -15,13 +15,13 @@ def get_input(filename, n, char_to_ind=None):
     # Contain the list of characters indices in the data
     # initialized with a padding
     if n > 2:
-        input_data = [1]*(n-2)
+        input_data = [2]*(n-2)
     else:
         input_data = []
     if char_to_ind is None:
         # Map each character to an index with
-        # Index of <space> set to 0
-        char_to_ind = {'<space>': 0, '</s>': 1}
+        # Index of <space> set to 1
+        char_to_ind = {'<space>': 1, '</s>': 2}
         count = 2
     with open(filename, 'r') as f:
         # Loop to index the char and store them inside the input
@@ -70,9 +70,11 @@ def main(arguments):
 
     # Valid
     input_data_valid, char_to_ind = get_input(valid, N, char_to_ind)
+    input_data_valid_nospace = filter(lambda a: a != 1, input_data_valid)
 
     # Test
     input_data_test, char_to_ind = get_input(test, N, char_to_ind)
+
 
     filename = 'data_preprocessed/' + str(N) + '-grams.hdf5'
     with h5py.File(filename, "w") as f:
@@ -87,6 +89,7 @@ def main(arguments):
         # index from the mapping char_to_ind
         f['input_data_train'] = np.array(input_data_train)
         f['input_data_valid'] = np.array(input_data_valid)
+        f['input_data_valid_nospace'] = np.array(input_data_valid_nospace)
         f['input_data_test'] = np.array(input_data_test)
 
 
