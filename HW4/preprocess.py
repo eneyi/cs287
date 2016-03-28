@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-
-"""Part-Of-Speech Preprocessing
-"""
-
 import numpy as np
 import h5py
 import argparse
@@ -10,16 +5,50 @@ import sys
 import re
 import codecs
 
-# Your preprocessing, features construction, and word2vec code.
+
+FILE_PATHS = ("data/train_chars.txt",
+              "data/valid_chars.txt",
+              "data/test_chars.txt")
 
 
+def get_input(filename, n, char_to_ind=None):
+    # Contain the list of characters indices in the data
+    # initialized with a padding
+    if n > 2:
+        input_data = [1]*(n-2)
+    else:
+        input_data = []
+    if char_to_ind is None:
+        # Map each character to an index with
+        # Index of <space> set to 0
+        char_to_ind = {'<space>': 0, '</s>': 1}
+        count = 2
+    with open(filename, 'r') as f:
+        # Loop to index the char and store them inside the input
+        for line in f:
+            for c in line[:-1].split(' '):
+                # Input data
+                if c in char_to_ind:
+                    input_data.append(char_to_ind[c])
+                else:
+                    char_to_ind[c] = count
+                    count += 1
+                    input_data.append(char_to_ind[c])
+    return input_data, char_to_ind
 
 
-FILE_PATHS = {"PTB": ("data/train.tags.txt",
-                      "data/dev.tags.txt",
-                      "data/test.tags.txt",
-                      "data/tags.dict")}
-args = {}
+def build_train_data(input_data, n=2):
+    # Build the input matrix: (num_records, n-1)
+    # and the output vector (num_records,1)
+    # which stores the output for the given (n-1)gram
+    input_matrix = np.zeros((len(input_data)-n, n-1))
+    output_matrix = np.zeros(len(input_data)-n)
+    for i in xrange(len(input_data)-n):
+        # Countext is a (n-1)gram
+        w = input_data[i:i+(n-1)]
+        input_matrix[i, :] = w
+        output_matrix[i] = (1 if input_data[i+(n-1)] == 0 else 2)
+    return input_matrix, output_matrix
 
 
 def main(arguments):
@@ -27,23 +56,38 @@ def main(arguments):
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('dataset', help="Data set",
-                        type=str)
-    args = parser.parse_args(arguments)
-    dataset = args.dataset
-    train, valid, test, tag_dict = FILE_PATHS[dataset]
 
-    filename = args.dataset + '.hdf5'
+    parser.add_argument('--N', default=2, type=int, help='Ngram size')
+    args = parser.parse_args(arguments)
+    N = args.N
+
+    train, valid, test = FILE_PATHS
+
+    # Train
+    input_data_train, char_to_ind = get_input(train, N)
+    input_matrix_train, output_matrix_train = build_train_data(
+        input_data_train, N)
+
+    # Valid
+    input_data_valid, char_to_ind = get_input(valid, N, char_to_ind)
+
+    # Test
+    input_data_test, char_to_ind = get_input(test, N, char_to_ind)
+
+    filename = 'data_preprocessed/' + str(N) + '-grams.hdf5'
     with h5py.File(filename, "w") as f:
-        f['train_input'] = train_input
-        f['train_output'] = train_output
-        if valid:
-            f['valid_input'] = valid_input
-            f['valid_output'] = valid_output
-        if test:
-            f['test_input'] = test_input
-        f['nfeatures'] = np.array([V], dtype=np.int32)
-        f['nclasses'] = np.array([C], dtype=np.int32)
+        # Stores a matrix (num_records, n-1) with at each row
+        # the (n-1) grams appearing in the input data
+        f['input_matrix_train'] = input_matrix_train
+        # Vector (num_records) storing the class of the next word
+        # after the (n-1- stored at the same index in input_matrix
+        # 1 is space; 2 is character
+        f['output_matrix_train'] = output_matrix_train
+        # Stores the list of consecutives character (or space) as their
+        # index from the mapping char_to_ind
+        f['input_data_train'] = np.array(input_data_train)
+        f['input_data_valid'] = np.array(input_data_valid)
+        f['input_data_test'] = np.array(input_data_test)
 
 
 if __name__ == '__main__':
