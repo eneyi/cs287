@@ -22,7 +22,7 @@ def get_input(filename, n, char_to_ind=None):
         # Map each character to an index with
         # Index of <space> set to 1
         char_to_ind = {'<space>': 1, '</s>': 2}
-        count = 2
+        count = 3
     with open(filename, 'r') as f:
         # Loop to index the char and store them inside the input
         for line in f:
