@@ -47,7 +47,7 @@ def build_train_data(input_data, n=2):
         # Countext is a (n-1)gram
         w = input_data[i:i+(n-1)]
         input_matrix[i, :] = w
-        output_matrix[i] = (1 if input_data[i+(n-1)] == 0 else 2)
+        output_matrix[i] = (1 if input_data[i+(n-1)] == 1 else 2)
     return input_matrix, output_matrix
 
 
