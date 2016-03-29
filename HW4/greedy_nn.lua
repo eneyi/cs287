@@ -12,7 +12,7 @@ train_output = data['output_matrix_train']
 
 nnlm1, crit = build_model(4, 49, 2, 16, 80)
 
-train_model(train_input, train_output, nnlm1, crit, 4, 2, 0.01, 1, 32)
+train_model(train_input, train_output, nnlm1, crit, 4, 2, 0.01, 15, 32)
 valid = data['input_data_valid_nospace']:clone()
 
 it = 1
@@ -37,3 +37,6 @@ while it<data['input_data_valid_nospace']:size(1)-3 do
 		i = i + 2
 	end 
 end
+
+print(valid:narrow(1,1,25))
+print(data['input_data_valid_nospace']:narrow(30))
