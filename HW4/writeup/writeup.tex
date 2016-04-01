@@ -9,12 +9,21 @@
 \maketitle{}
 \section{Introduction}
 
-The goal of this assignement is to implement reccurent neural networks for a word segmentation task. The idea is to identify the spaces in sentence based on the previous characters only. This could be particularly helpful for processing languages written without spaces such as Korean or Spanish
+The goal of this assignement is to implement reccurent neural networks for a word segmentation task. The idea is to identify the spaces in sentence based on the previous characters only. This could be particularly helpful for processing languages written without spaces such as Korean or Chinese.
 
 
 \section{Problem Description}
 
-Description of the task with example
+The problem that needs to be solve in this homework is the following: given a sequence of characters, predict where to insert spaces to make a valid sentence. For instance, consider the following sequence of character:
+\begin{center}
+I A M A STUDENT IN C S 2 8 7\\
+\end{center}
+the implemented algorithm should be capable of segmenting this sequence into valid words to give:
+\begin{center}
+I am a student in CS 287\\
+\end{center}
+
+\noindent To solve this problem, we will train different language models including count-based models, basic neural networks, and recurrent neural networks, combined with two search algorithms to predict the right position for spaces, i.e. a greedy search algorithm and the Viturbi algorithm. 
 
 
 
@@ -23,12 +32,38 @@ Description of the task with example
 \subsection{Count-based Model}
 
 \subsection{Neural Language Model}
+As a second baseline, we implemented a neural language model to predict whether the next character is a space or not. The model is similar to the Bengio model coded in HW3 but is adapted to characters. Similarly to what we did for word prediction, we imbed a window of characters in a higher dimension using a look-up table. We first apply a first linear model to the higher dimensional representation of the window of characters, followed by a hyperbolic tangent layer to extract non-linear features. A second linear layer is then applied followed by a softmax to get a probability distribution over the two possible outputs, i.e. a character or a space.\\
+\noindent We can summarize the model in the following formula: $$nnlm_1(x) = \tanh(\mathbf{xW}+\mathbf{b})\mathbf{W'}+\mathbf{b'}$$
+where we recall:
+\begin{itemize}
+\item $\boldsymbol{x}\in \Re^{d_{in}\cdot d_{win}}$ is the concatenated character embeddings
+\item $\boldsymbol{W}\in \Re^{(d_{in}\cdot d_{win})\times d_{hid}}$, and $\boldsymbol{b}\in \Re^{d_{hid}}$
+\item $\boldsymbol{W'}\in \Re^{d_{hid}\times 2}$, and $\boldsymbol{b'}\in \Re^{2}$.
+\end{itemize}
+
 
 \subsection{Algorithm to generate spaces sequences}
-\paragraph{Greedy}
+As mentioned in the problem description, in order to predict the position of a space, we will use two search algorithm. Both of these algorithm use the language models mentioned above to predict the next character or space given the prior context.
 
-\paragraph{Viterbi}
+\subsubsection{Greedy}
+The greedy algorithm implemented is an algorithm that chooses the locally optimum choice at every step in the sequence. This algorithm does not generally lead to a global maxium but has the advantage of being easilly implementable and efficient both in memory and complexity. The pseudo-code of the algorithm is presented below:
 
+ \begin{algorithmic}[1]
+    \Procedure{GreedySearch}{}
+    \State{s=0}
+    \State{$c\in \mathcal{C}^{n+1}$}
+    \State{$c_0 = \langle s \rangle$}
+    \For{i = 1 to n}
+    \State{Predict the distribution $\mathbf{\hat{y}}$ over the two classes given the previous context}
+    \State{Pick the next class that maximises the distribution $c_i \leftarrow \arg\max\limits_{c'_i}\mathbf{\hat{y}}(c_{i-1})_{c_i}$}
+    \State{Update the score of the chain: $s+\log\mathbf{\hat{y}(c_{i-1})}_{c_i}$}
+    \State{Update the chain/context by adding a space or the following character}
+    \EndFor{}
+	\Return{the chain and the score}
+    \EndProcedure{}
+  \end{algorithmic}
+\subsubsection{Viterbi}
+The second search algorithm that we implemented is the dynamic programming algorithm named after Andrew Viterbi. The main difference between t
 \subsection{Recurrent Neural Networks}
 
 \paragraph{Generic RNN Transducer}
