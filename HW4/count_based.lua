@@ -1,7 +1,7 @@
 -- Documentation:
 -- ---- How to call it from the command line?
 -- For example:
--- $ th HW1.lua -datafile SST1.hdf5 -classifier linear_svm
+-- $ th count_based.lua -N 5
 -- Other argument possible (see below)
 -- 
 -- ---- Is there an Output?
@@ -9,7 +9,6 @@
 
 -- Only requirements allowed
 require("hdf5")
-require("nn")
 require 'helper.lua';
 
 cmd = torch.CmdLine()
