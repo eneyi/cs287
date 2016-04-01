@@ -11,7 +11,6 @@ def main(arguments):
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument('pred', type=str, help='Filename with pred in h5')
-    parser.add_argument('--f', default='new_submission', type=str, help='Filename with predictions in csv')
     args = parser.parse_args(arguments)
     filename = args.pred
 
@@ -19,7 +18,7 @@ def main(arguments):
         data = hf.get('num_spaces')
         np_data = np.array(data, dtype=int)
 
-    np.savetxt("submission/{}.csv".format(args.f), np_data, delimiter=",",
+    np.savetxt("submission/{}.csv".format(filename), np_data, delimiter=",",
                fmt='%1d', header='ID,Count', comments='')
 
 if __name__ == '__main__':
