@@ -170,6 +170,46 @@ We implemented the greedy algorithm and the Viterbi one up to the trigram (so wi
 
 \subsection{Neural Language Model}
 
+Based on the results of the dynamic search on count-based models using bigram, we concluded that it was best to show results of the greedy algorithm with greater n-grams for the neural language model. In order to compare the results, we fixed the embedding size of the characters to 15, as well as the hidden dimension to 80 and the batch size to 20. We then train models for 3,4 and 5-grams, evaluate the loss on training, and use for validation the RMSE of the number of spaces predicted on each sentence of the validation set.\\
+
+We present the results:
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{train_nn}
+  \caption{Training Loss}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{rmse}
+  \caption{RMSE on Validation set}
+\end{minipage}
+\end{figure}
+
+As expected, performance increases with the size of the n-grams. We then tested the impact of the embedding size. 
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{train_nn_em}
+  \caption{Training Loss}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{rmse_em}
+  \caption{RMSE on Validation set}
+\end{minipage}
+\end{figure}
+
+If the losses on training are very similar, we observed that greater embedding dimension yield better results on the validation. We therefore submitted to Kaggle, results using the latter model trained on 20 epochs and obtained:
+
+$$RMSE_{nn} = \sqrt{13.37} = 3.65$$
+
+We then experimented with this model by assignment a space as the next prediction by using a threshhold instead of using argmax prediction.
+
 
 \subsection{Recurrent Neural Networks}
 
@@ -205,8 +245,6 @@ Choosing the right batch-size seems to be a tradeoff between performance and run
 \end{center}
 \end{figure}
 
-
-\subsection{Ensemble Method}
 
 \subsection{Model performance summary}
 
