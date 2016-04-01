@@ -23,3 +23,11 @@ function get_kaggle_format(predictions_test, N)
     end
     return num_spaces
 end
+
+function compute_rmse(true_kaggle, pred_kaggle)
+    local rmse = 0
+    for i=1,true_kaggle:size(1) do
+        rmse = rmse + math.pow(true_kaggle[{i,2}] - pred_kaggle[{i,2}], 2)
+    end
+    return(math.sqrt(rmse/ true_kaggle:size(1)))
+end
