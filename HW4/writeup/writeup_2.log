@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2016.2.2)  2 APR 2016 10:06
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.9.2)  2 APR 2016 11:12
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -575,17 +575,34 @@ File: perp_gru.png Graphic file (type png)
 Package pdftex.def Info: perp_gru.png used on input line 261.
 (pdftex.def)             Requested size: 211.38832pt x 128.72969pt.
  [9 <./perp_rnn.png> <./perp_lstm.png> <./perp_gru.png>]
+<gru_cutoff.png, id=69, 789.95125pt x 490.83376pt>
+File: gru_cutoff.png Graphic file (type png)
+ <use gru_cutoff.png>
+Package pdftex.def Info: gru_cutoff.png used on input line 274.
+(pdftex.def)             Requested size: 234.8775pt x 145.9406pt.
+
+<rnn_cutoff.png, id=70, 790.955pt x 503.8825pt>
+File: rnn_cutoff.png Graphic file (type png)
+ <use rnn_cutoff.png>
+Package pdftex.def Info: rnn_cutoff.png used on input line 279.
+(pdftex.def)             Requested size: 234.8775pt x 149.62819pt.
+
+Overfull \hbox (31.29181pt too wide) in paragraph at lines 296--308
+ [][] 
+ []
+
+[10 <./gru_cutoff.png> <./rnn_cutoff.png>]
 LaTeX Font Info:    Font shape `OT1/ppl/bx/n' in size <20.74> not available
-(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 299.
+(Font)              Font shape `OT1/ppl/b/n' tried instead on input line 317.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 21.61124pt on input line 300.
+(Font)              scaled to size 21.61124pt on input line 318.
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 15.0049pt on input line 300.
+(Font)              scaled to size 15.0049pt on input line 318.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 21.61124pt on input line 300.
+(Font)              scaled to size 21.61124pt on input line 318.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 15.0049pt on input line 300.
- (../preprocess.py [10]
+(Font)              scaled to size 15.0049pt on input line 318.
+ (../preprocess.py
 LaTeX Font Info:    Try loading font information for OML+ppl on input line 19.
 
 (/usr/local/texlive/2015/texmf-dist/tex/latex/psnfss/omlppl.fd
@@ -593,35 +610,35 @@ File: omlppl.fd
 )
 LaTeX Font Info:    Font shape `OML/ppl/m/n' in size <10.95> not available
 (Font)              Font shape `OML/cmm/m/it' tried instead on input line 19.
- [11] [12])
-(../count_based.lua [13] [14] [15] [16] [17] [18] [19] [20])
-(../NeuralNetwork.lua [21] [22] [23] [24] [25] [26] [27] [28]) [29] (../rnn.lua
-[30] [31] [32] [33] [34] [35] [36]) [37] (./writeup_2.aux) ) 
+ [11] [12]
+[13]) (../count_based.lua [14] [15] [16] [17] [18] [19] [20])
+(../NeuralNetwork.lua [21] [22] [23] [24] [25] [26] [27] [28] [29]) (../rnn.lua
+[30] [31] [32] [33] [34] [35] [36] [37]) [38] (./writeup_2.aux) ) 
 Here is how much of TeX's memory you used:
- 6472 strings out of 493089
- 93565 string characters out of 6134843
- 275740 words of memory out of 5000000
- 9773 multiletter control sequences out of 15000+600000
+ 6482 strings out of 493089
+ 93743 string characters out of 6134843
+ 270740 words of memory out of 5000000
+ 9781 multiletter control sequences out of 15000+600000
  48292 words of font info for 137 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  43i,10n,40p,770b,1443s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive
-/2015/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2015/texmf-dis
-t/fonts/type1/public/amsfonts/cm/cmbsy10.pfb></usr/local/texlive/2015/texmf-dis
-t/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2015/texmf-dist
-/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2015/texmf-dist/f
-onts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2015/texmf-dist/fo
-nts/type1/public/mathpazo/fplmbb.pfb></usr/local/texlive/2015/texmf-dist/fonts/
-type1/public/mathpazo/fplmr.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1
-/public/mathpazo/fplmri.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/urw
-/palatino/uplb8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/urw/palati
-no/uplbi8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/urw/palatino/upl
-r8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/urw/palatino/uplri8a.pf
-b>
-Output written on writeup_2.pdf (37 pages, 638443 bytes).
+{/usr/local/te
+xlive/2015/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/local/texlive/2015/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmbsy10.pfb></usr/local/texlive/2015/texm
+f-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2015/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2015/texmf-d
+ist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2015/texmf-di
+st/fonts/type1/public/mathpazo/fplmbb.pfb></usr/local/texlive/2015/texmf-dist/f
+onts/type1/public/mathpazo/fplmr.pfb></usr/local/texlive/2015/texmf-dist/fonts/
+type1/public/mathpazo/fplmri.pfb></usr/local/texlive/2015/texmf-dist/fonts/type
+1/urw/palatino/uplb8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/urw/p
+alatino/uplbi8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/urw/palatin
+o/uplr8a.pfb></usr/local/texlive/2015/texmf-dist/fonts/type1/urw/palatino/uplri
+8a.pfb>
+Output written on writeup_2.pdf (38 pages, 943174 bytes).
 PDF statistics:
- 198 PDF objects out of 1000 (max. 8388607)
- 120 compressed objects within 2 object streams
+ 205 PDF objects out of 1000 (max. 8388607)
+ 122 compressed objects within 2 object streams
  0 named destinations out of 1000 (max. 500000)
- 66 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 76 words of extra memory for PDF output out of 10000 (max. 10000000)
 
