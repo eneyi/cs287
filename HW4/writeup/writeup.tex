@@ -2,6 +2,8 @@
 \documentclass[11pt]{article}
 
 \usepackage{common}
+\usepackage{listings}
+\usepackage[toc,page]{appendix}
 \title{HW4: Word Segmentation}
 \author{Virgile Audi \\ vaudi@g.harvard.edu \\ Nicolas Drizard \\ nicolasdrizard@g.harvard.edu}
 \begin{document}
@@ -72,8 +74,30 @@ The greedy algorithm implemented is an algorithm that chooses the locally optimu
     \EndProcedure{}
   \end{algorithmic}
 \subsubsection{Viterbi}
-The second search algorithm that we implemented is the dynamic programming algorithm named after Andrew Viterbi. The main difference between t
+The second search algorithm that we implemented is the dynamic programming algorithm named after Andrew Viterbi. The main difference with the greedy algorithm is that it evaluates at every step and for every previous state, the best possible next step. This would guarantee a solution closer to the true optimal solution. In our case of predicting character or space, the algorithm keeps track of the best sequences that could lead to a character or a space at step i-1, and then evaluates both path for both class, i.e. space to space, space to character, character to space and character to character, using the language models. It then keeps the path that has the highest score for each of the 2 states. The pseudo-code of the algorithm is given by:\\
 
+\begin{algorithmic}
+    \Procedure{ViterbiWithBP}{}
+    \State{$\pi \in \reals^{ n+1 \times \mcC}$ initialized to $-\infty$ }
+    \State{$bp \in \mcC^{n \times \mcC}$ initialized to $\epsilon$ }
+    \State{$\pi[0, \langle s \rangle] = 0$}
+    \For{$i = 1$ to $n$ }
+    \For{$c_{i-1} \in \mcC$}
+    \State{compute $\hat{\boldy}(c_{i-1})$}
+    \For{$c_{i} \in \mcC$}
+    \State{$score = \pi[i-1, c_{i-1}] + \log \hat{\boldy}(c_{i-1})_{c_i} $}
+    \If{$score > \pi[i, c_i]$}
+    \State{$\pi[i, c_i] = score$}
+    \State{$bp[i, c_i] = c_{i-1}$}
+    \EndIf{}
+    \EndFor{}
+    \EndFor{}
+    \EndFor{}
+    \State{\Return{sequence from $bp$}}
+    \EndProcedure{}
+  \end{algorithmic}
+  
+ \noindent We implemented this algorithm for both bigram, and trigram models.
 \subsection{Recurrent Neural Networks}
 
 We implemented three different recurrent neural networks and benchmark their performance in our experiments. The main point is that we want to compute one output for each timestep and not only for the last one, that's why the generic structure of our networks is a tranducer.
@@ -155,6 +179,54 @@ We implemented the greedy algorithm and the Viterbi one up to the trigram (so wi
 
 \subsection{Neural Language Model}
 
+Based on the results of the dynamic search on count-based models using bigram, we concluded that it was best to show results of the greedy algorithm with greater n-grams for the neural language model. In order to compare the results, we fixed the embedding size of the characters to 15, as well as the hidden dimension to 80 and the batch size to 20. We then train models for 3,4 and 5-grams, evaluate the loss on training, and use for validation the RMSE of the number of spaces predicted on each sentence of the validation set.\\
+
+We present the results:
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.72\linewidth]{train_nn}
+  \caption{Training Loss}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=0.72\linewidth]{rmse}
+  \caption{RMSE on Validation set}
+\end{minipage}
+\end{figure}
+
+As expected, performance increases with the size of the n-grams. We then tested the impact of the embedding size. 
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.4\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{train_nn_em}
+  \caption{Training Loss}
+\end{minipage}%
+\begin{minipage}{.4\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{rmse_em}
+  \caption{RMSE on Validation set}
+\end{minipage}
+\end{figure}
+
+If the losses on training are very similar, we observed that greater embedding dimension yield better results on the validation. We therefore submitted to Kaggle, results using the latter model trained on 20 epochs and obtained:
+
+$$RMSE_{nn} = \sqrt{13.37} = 3.65$$
+
+We then experimented with this model by assignment a space as the next prediction by using a threshhold instead of using argmax prediction, which is equivalent to a cutoff of 0.5. But since, the ratio of spaces to character is relatively small, we might get better results by setting a cutoff smaller than 0.5, i.e. if the probability of generating a space is above that cutoff, which is itself smaller than 0.5, we assign a space as the next element. We present results for cutoffs ranging from 0.2 to 0.5:
+
+\begin{figure}[H]
+\begin{center}
+    \includegraphics[width=0.5\textwidth]{cutoff}
+    \caption{RMSE as a function of the cutoff}
+\end{center}
+\end{figure}
+
+By changing the cutoff, we improve drastically the results with an RMSE value that drops from 3.95 when using argmax prediction to 2.55 with a cutoff of 0.35 (35\% improvement).
 
 \subsection{Recurrent Neural Networks}
 
@@ -205,4 +277,16 @@ End the write-up with a very short recap of the main experiments and the main re
 \bibliographystyle{apalike}
 \bibliography{writeup}
 
+\begin{appendices}
+\textbf{\huge\underline{Preprocessing:}}
+\lstinputlisting[numbers=left, breaklines=true]{../peprocess.py}
+\textbf{\huge\underline{Helper:}}
+\lstinputlisting[numbers=left, breaklines=true]{../helper.lua}
+\textbf{\huge\underline{Count-Based Models:}}
+\lstinputlisting[numbers=left, breaklines=true]{../count_based.lua}
+\textbf{\huge\underline{NNLM:}}
+\lstinputlisting[numbers=left, breaklines=true]{../NeuralNetwork.lua}
+\textbf{\huge\underline{RNN:}}
+\lstinputlisting[numbers=left, breaklines=true]{../rnn.lua}
+\end{appendices}
 \end{document}

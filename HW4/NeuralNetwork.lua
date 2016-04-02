@@ -174,6 +174,74 @@ function predict_NN_greedy(gram_input, nnlm, N)
     return predictions:narrow(1,1,position)
 end   
 
+function predict_NN_greedy(gram_input, nnlm, N)
+    -- Next Position to fill in predictions
+    local position = N
+    -- We allocate the maximum of memory that could be needed
+    -- Default value is -1 (to know where predictions end afterwards)
+    local predictions = torch.ones(2*(gram_input:size(1) - N)):mul(-1)
+    -- Copy the first (N-1) gram
+    predictions:narrow(1,1,N-1):copy(gram_input:narrow(1,1,N-1))
+    local probability = torch.zeros(2)
+    local context = torch.zeros(N-1)
+
+    -- Build mapping
+    for i=1,gram_input:size(1)-N do
+        -- Compute proba for next char
+        context:copy(predictions:narrow(1,position-(N-1),N-1))
+        -- Line where the model appears
+        probability:copy(nnlm:forward(context))
+        m,a = probability:max(1)
+
+        -- Case space predicted
+        if (a[1] == 1) then
+            predictions[position] = 1
+            position = position +1
+        end
+
+        -- Copying next character
+        predictions[position] = gram_input[i+N-1]
+        position = position +1
+    end
+    -- Adding last character (</s>)
+    predictions[position] = gram_input[gram_input:size(1)]
+    -- Cutting the output
+    return predictions:narrow(1,1,position)
+end   
+
+function predict_NN_greedy_cutoff(gram_input, nnlm, N, cut)
+    -- Next Position to fill in predictions
+    local position = N
+    -- We allocate the maximum of memory that could be needed
+    -- Default value is -1 (to know where predictions end afterwards)
+    local predictions = torch.ones(2*(gram_input:size(1) - N)):mul(-1)
+    -- Copy the first (N-1) gram
+    predictions:narrow(1,1,N-1):copy(gram_input:narrow(1,1,N-1))
+    local probability = torch.zeros(2)
+    local context = torch.zeros(N-1)
+
+    -- Build mapping
+    for i=1,gram_input:size(1)-N do
+        -- Compute proba for next char
+        context:copy(predictions:narrow(1,position-(N-1),N-1))
+        -- Line where the model appears
+        probability:copy(nnlm:forward(context))
+        -- Case space predicted
+        if probability[1] > math.log(cut) then
+            predictions[position] = 1
+            position = position +1
+        end
+
+        -- Copying next character
+        predictions[position] = gram_input[i+N-1]
+        position = position +1
+    end
+    -- Adding last character (</s>)
+    predictions[position] = gram_input[gram_input:size(1)]
+    -- Cutting the output
+    return predictions:narrow(1,1,position)
+end   
+
 -- Viterbi algorithm to predict a sequence from gram_input with a count
 -- based probability model
 -- pi matrix format (col1: space; col2: char)
