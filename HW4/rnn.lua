@@ -247,7 +247,7 @@ function main()
 
     -- Reading file
     N = 2
-    loacal data = hdf5.open('../data_preprocessed/'..tostring(N)..'-grams.hdf5','r'):all()
+    local data = hdf5.open('../data_preprocessed/'..tostring(N)..'-grams.hdf5','r'):all()
     F_train = data['F_train']
     input_data_valid = data['input_data_valid']
     input_matrix_train = data['input_matrix_train']
@@ -284,28 +284,29 @@ function main()
 
     -- Training model
     train_model_with_perp(t_input_new, t_output_new, model, model_valid, params_valid,
-            params, grad_params, crit, eta, nEpochs, batch_size, len, n_new, input_data_valid, output_valid, 5)
+            params, grad_params, crit, eta, nEpochs, batch_size, len, n_new, input_data_valid, output_valid, step)
+    print('here')
 
-    -- Computing RMSE on valid
-    kaggle_true_valid = get_kaggle_format(input_data_valid,2)
+    -- -- Computing RMSE on valid
+    -- kaggle_true_valid = get_kaggle_format(input_data_valid,2)
 
-    timer = torch.Timer()
-    pred_valid = predict_rnn_greedy(input_data_valid_nospace:narrow(1,1,input_data_valid_nospace:size(1)), len, model_valid)
-    print('Greedy prediction on validation set (Time elasped : '..timer:time().real..' )')
-    kaggle_model_valid = get_kaggle_format(pred_valid,2)
-    print('RMSE')
-    rsme = compute_rmse(kaggle_true_valid, kaggle_model_valid)
-    print(rsme)
+    -- timer = torch.Timer()
+    -- pred_valid = predict_rnn_greedy(input_data_valid_nospace:narrow(1,1,input_data_valid_nospace:size(1)), len, model_valid)
+    -- print('Greedy prediction on validation set (Time elasped : '..timer:time().real..' )')
+    -- kaggle_model_valid = get_kaggle_format(pred_valid,2)
+    -- print('RMSE')
+    -- rsme = compute_rmse(kaggle_true_valid, kaggle_model_valid)
+    -- print(rsme)
 
-    -- Prediction on test
-    timer = torch.Timer()
-    size = input_data_test:size(1)
-    pred_test = predict_rnn_greedy(input_data_test:narrow(1,1,size), len, model_valid)
-    print('Greedy prediction on test set (Time elasped : '..timer:time().real..' )')
-    kaggle_test = get_kaggle_format(pred_test,2)
+    -- -- Prediction on test
+    -- timer = torch.Timer()
+    -- size = input_data_test:size(1)
+    -- pred_test = predict_rnn_greedy(input_data_test:narrow(1,1,size), len, model_valid)
+    -- print('Greedy prediction on test set (Time elasped : '..timer:time().real..' )')
+    -- kaggle_test = get_kaggle_format(pred_test,2)
 
-    -- Saving the Kaggle format output
-    myFile = hdf5.open('../submission/'..opt.f, 'w')
-    myFile:write('num_spaces', kaggle_test)
-    myFile:close()
+    -- -- Saving the Kaggle format output
+    -- myFile = hdf5.open('../submission/'..opt.f, 'w')
+    -- myFile:write('num_spaces', kaggle_test)
+    -- myFile:close()
 end
