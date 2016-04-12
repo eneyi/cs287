@@ -265,13 +265,30 @@ Choosing the right batch-size seems to be a tradeoff between performance and run
 
 The best results on the Kaggle were provided with the GRU after a large number of epochs (around 100).
 
+We also applied the cutoff trick on the GRU to refine the sequence generation for the Kaggle competition. Here the metric we care about is the RMSE on the number of spaces per sentence. We tuned the cutoff value on the validation set. We kept the cutoff value reaching the minimum of RMSE for both the GRU (0.325) and the RNN (0.275) and combined them with a weighted sum to obtain our best result on Kaggle.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{gru_cutoff}
+  \caption{RMSE on the validation with the GRU with cutoff}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{rnn_cutoff}
+  \caption{RMSE on the validation with the RNN with cutoff}
+\end{minipage}
+\end{figure}
+
+
 
 \subsection{Model performance summary}
 
 Here we summarize the performance of our different models. We reported the perplexity on the validation set computed from the model and the RMSE computed by Kaggle on the sequence predicted with our chosen algorithm.
 
 First, we observed that the count 5gram count based model still provides a better sequence generated with the greedy algorithm as the 3gram one generated with Viterbi.
-We also have a notable difference for the reccurent networks with the RMSE computed on Kaggle even though we have similar perplexity. We don't really know how to explain this difference.
+We also have a notable difference for the reccurent networks with the RMSE computed on Kaggle even though we have similar perplexity. The large value of RMSE on the validation could be decreased with an adaptive cutoff as we showed it for our best model.
 
 \begin{table}[H]
 \centering
@@ -286,6 +303,7 @@ NN with cutoff               & Greedy                           &       1.156   
 RNN               & Greedy                        & 1.1746                   & 33.13       \\ \hline
 LSTM              & Greedy                        & 1.1766                   & 18.95       \\ \hline
 GRU               & Greedy                        & 1.1513                   & 10.94       \\ \hline
+\textbf{GRU + RNN with cutoof}           & Greedy                        & -                  & \textbf{5.39}       \\ \hline
 \end{tabular}
 \end{table}
 
