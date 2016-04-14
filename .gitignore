@@ -1,4 +1,4 @@
-/.ipynb_checkpoints
+*.ipynb_checkpoints
 *.DS_Store
 /HW2/PTB.hdf5
 /HW2/nn1
