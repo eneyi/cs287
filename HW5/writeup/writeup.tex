@@ -66,7 +66,9 @@ p(x_i=(\delta(f_1), \delta(f_2))|y_i=\delta(c)) = p(x_i=\delta(f_1)|y_i=\delta(c
 
 \subsection{Maximum-Entropy Markov Model}
 
+Next, we implemented a Maximum-Entropy Markov Model. The objective of the MEMM is to evaluate at each time step a distribution over the possible tags using features of the current word, denoted as $feat(x_i)$ and the tag of the previous word, $c_{i-1}$, using multi-class logistic regression, i.e.
 
+$$p(\mathbf{y}_i | \mathbf{y}_{i-1}, feat(x_i)) = \text{softmax}([feat(x_i),c_{i-1}]\mathbf{W}+\mathbf{b})$$
 \subsection{Structured Perceptron}
 
 
@@ -138,11 +140,33 @@ There is only the smoothing parameter $\alpha$ and eventually feature selection 
 \end{minipage}
 \end{figure}
 
-We notice that the model is less sensitive to the changes of the smoothing parameter on the capitalization feature as on the word counts. This is pretty reasonable as the feature coutns are much higher in the capitalization feature than in the word counts. Tuning this parameter provides a model with a f-score of \textbf{0.808}. Using only the word counts features provide a best f-score of \textbf{0.764}
+We notice that the model is less sensitive to the changes of the smoothing parameter on the capitalization feature as on the word counts. This is pretty reasonable as the feature coutns are much higher in the capitalization feature than in the word counts. Tuning this parameter provides a model with a f-score of \textbf{0.808}. Using only the word counts features provide a best f-score of \textbf{0.764}.\\
 
+We obtained a Kaggle score on the test set of :
+
+$$K_{HMM} = 0.48365$$
 
 \subsection{Maximum-Entropy Markov Model}
 
+We coded the MEMM using the nn module and trained using stochastic gradient descent. We also used the Glove embedggins using a lookup table. As for the HMM, we used two different sets of features, i.e. the words and the words and capitalisation of the words. We observed that the training algorithm converges quite rapidely, and that if adding caps to the features helped decrease the loss, the impact was not as strong as expected. Nevertheless, we trained the model on 20 epochs in order to learn the embeddings for the $<$s$>$ and $<\setminus$s$>$ "words" added during pre-processing.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{loss_mem}
+\end{figure}
+
+We evaluated the performance of these two models using the f-score presented above:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{prf_cap}
+\end{figure}
+
+Adding caps yielded better results on both Precision and Recall and therefore on the f-score. But as we expected from the small differences in loss, we did not observe an important increase on the f-score. These results were later confirmed on the test set, as the kaggle score obtained for these two models were:
+
+$$K_{no caps} = 0.52057 \quad \text{and} \quad K_{caps} = 0.55482$$
+
+which are both slightly better than the results of the HMM.
 
 \subsection{Structured Perceptron}
 
