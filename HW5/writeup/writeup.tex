@@ -2,173 +2,163 @@
 \documentclass[11pt]{article}
 
 \usepackage{common}
-\title{HW0: Sample Assignment}
-\author{Alexander Rush \\ srush@seas.harvard.edu \and Sam Wiseman \\ swiseman@seas.harvard.edu }
+\usepackage{listings}
+\usepackage[toc,page]{appendix}
+\title{HW4: Word Segmentation}
+\author{Virgile Audi \\ vaudi@g.harvard.edu \\ Nicolas Drizard \\ nicolasdrizard@g.harvard.edu}
 \begin{document}
 
 \maketitle{}
 \section{Introduction}
 
-This note lays out our expectation for a homework submission in
-\textit{CS287: Statistical Natural Language Processing}. While you do
-not have to follow this template to the letter, we do expect that
-write-ups have a very clear structure and cover all the elements
-described in this note. With this in mind, the burden is on the
-presenter to demonstrate why deviations from the standard are
-necessary.
-
-All write-ups should include a short introduction. In this section you
-should summarize the underlying problem in high-level language and
-describe the extensions that you have decided to propose in your
-implementation. When you describe these extensions you should
-carefully cite the papers of interest. For instance, it will often be
-useful to cite the work seen in class
-\citep{murphy2012machine}. Alternatively, you can also cite papers
-inline, for instance the work of \citet{berger1996maximum}.
+The goal of this assignement is to tackle the NLP task of identifying and labeling contiguous segments of text. We will use sequence models and a dynamic programming method to find the best scoring sequence.
 
 
 \section{Problem Description}
 
-In general, homeworks will be specified using informal
-language. As part of the assignment, we expect you to write-out a
-definition of the problem and your model in formal language. For this
-class, we will use the following notation:
+The idea is here to label continuous sequence of words with BIO tagging of different entities. The entities are the following:
 
-\begin{itemize}
-\item $\boldb, \boldm$;  bold letters for vectors.
-\item $\boldB, \boldM$;  bold capital letters for matrices.
-\item $\mcB, \mcM$;  script-case for sets.
-\item $b_i, x_i$; lower case for scalars or indexing into vectors.
-\end{itemize}
+\begin{enumerate}
+	\item PER: a person
+	\item LOC: a location
+	\item ORG: an organization
+	\item MISC:
+\end{enumerate}
 
+Furthermore, this tagging method identifies the continuous group of words belonging to the same entity: the prefix B stop the current tag and begins a new one whereas the prefix I continues adding to the previous tag. However, in our solution we just cared about predicting the entity tag and then we were grouping the contiguous predictions into the same entity because the training text does not contain any B-tag.
 
-For instance in natural language processing, it is common to use
-discrete sets like $\mcV$ for the vocabulary of the language, or $\mcT$ for a
-tag set of the language.  We might also want one-hot vectors
-representing words. These will be of the type
-$\boldv \in \{0,1\}^{|\mcV|}$. In a note, it is crucial to define the
-types of all variables that are introduced. The problem description is the
-right place to do this.
-
-% NLP is also
-% full of sequences. For instance sentences, $w_1, \ldots, w_N$, where
-% here $N$ is a constant length and $w_i \in \mcV$ for all
-% $i \in \{1, \ldots N\}$. If we pretend sentences are all the same
-% length, we can have scoring function over sentences,
-% $s : \mcV^N \mapsto \reals$.  One might be defined as:
-
-% \[ s(w_1, \ldots, w_N) = \sum_{i = 1}^N p(w_i | w_{i-2}, w_{i-1}), \]
-
-% \noindent where $p$ is the bigram probability, which we will cover later in the class.
 
 \section{Model and Algorithms}
 
-Here you specify the model itself. This section should formally
-describe the model used to solve the task proposed in the previous
-section. This section should try to avoid introducing new vocabulary
-or notation, when possible use the notation from the previous section.
-Feel free to use the notation from class, but try to make the note
-understandable as a standalone piece of text.
+We used three different methods to solve this problem. The first two are the equivalent of first the Naive Bayes and second the logistic regression from text classification tasks. The last one introduces a customized way to train a neural architecture for this task.
 
-This section is also a great place to include other material that
-describes the underlying structure and choices of your model, for
-instance here are some example tables and algorithms from full
-research papers:
+\subsection{Hidden Markov Model}
+
+We implement here a standard first order hidden Markov Model. The hidden states are the tags and the observed states are the features we built (word counts, capitalization...). The model can be represented with the following graphical model and requires two distribution: emission and transition.
+
+\begin{figure}[H]
+\begin{center}
+    \includegraphics[width=0.5\textwidth]{hmm}
+    \caption{Graphical model of 1st order HMM with one feature}
+\end{center}
+\end{figure}
+
+We represent the two distrubitions with multinomial as they model feature counts. As a result, we can infer them simply with the maximum likelihood estimator:
+
+\[
+p(x_i=\delta(f)|y_i=\delta(c)) = \frac{F_{f,c}}{F_{.,c}}
+\]
+\[
+p(y_i=\delta(c_i)|y_{i-1}=\delta(c_{i-1})) = \frac{T_{c_{i-1},c_i}}{T_{c_{i-1},.}}
+\]
+
+with $T_{c_{i-1},c_i}$ the counts of class $c_{i-1}$ preceding class $c_i$ and $F_{f,c}$ the counts of emission f with class c.
+
+If we consider multiple features, then we still assume that the feature are indepent with each other (it's the main assumption in the Naive Bayes approach also). Only the emission distribution is changed and we can combine the probability together:
+
+\[
+p(x_i=(\delta(f_1), \delta(f_2))|y_i=\delta(c)) = p(x_i=\delta(f_1)|y_i=\delta(c)) p(x_i=\delta(f_2)|y_i=\delta(c)) =
+\frac{F_{f_1,c}}{F_{.,c}}  \frac{F_{f_2,c}}{F_{.,c}}
+\]
 
 
 
-\begin{itemize}
-\item diagrams of your model,
 
-  \begin{center}
-    \includegraphics[width=0.4\textwidth]{network}
-  \end{center}
-\item feature tables,
+\subsection{Maximum-Entropy Markov Model}
 
-  \begin{center}
-    \begin{tabular}{@{}lll@{}}
-      \toprule
-      &\multicolumn{2}{c}{Mention Features  } \\
-      & Feature & Value Set\\
-      \midrule
-      & Mention Head & $\mcV$ \\
-      & Mention First Word & $\mcV$ \\
-      & Mention Last Word & $\mcV$ \\
-      & Word Preceding Mention & $\mcV$ \\
-      & Word Following Mention & $\mcV$\\
-      & \# Words in Mention & $\{1, 2, \ldots \}$ \\
-      & Mention Type & $\mathcal{T}$ \\
-      \bottomrule
-    \end{tabular}
-  \end{center}
 
-\item pseudo-code,
+\subsection{Structured Perceptron}
 
-  \begin{algorithmic}[1]
-    \Procedure{Linearize}{$x_1\ldots x_N$, $K$, $g$}
-    \State{$B_0 \gets \langle (\langle \rangle, \{1, \ldots, N\}, 0, \boldh_0, \mathbf{0})  \rangle$}
-    \For{$m = 0, \ldots, M-1$ }
-    \For{$k = 1, \ldots, |B_m|$}
-    \For{$i \in \mcR$}
-    \State{$(y, \mcR, s, \boldh) \gets \mathrm{copy}(B_m^{(k)})$}
-    \For{word $w$ in phrase $x_i$}
-    \State{$y \gets y $ append $w$ }
-    \State{$s \gets s + \log q(w, \boldh) $ }
-    \State{$\boldh \gets \delta(w, \boldh)$}
+
+
+\subsection{Viterbi algorithm}
+
+The search algorithm that we implemented is the dynamic programming algorithm named after Andrew Viterbi. Its main difference with a greedy approach is that it evaluates at every step and for every previous state, the best possible next step. This guarantees a solution closer to the true optimal solution. The pseudo-code of the algorithm is given by:\\
+
+\begin{algorithmic}
+    \Procedure{ViterbiWithBP}{}
+    \State{$\pi \in \reals^{ n+1 \times \mcC}$ initialized to $-\infty$ }
+    \State{$bp \in \mcC^{n \times \mcC}$ initialized to $\epsilon$ }
+    \State{$\pi[0, \langle s \rangle] = 0$}
+    \For{$i = 1$ to $n$ }
+    \For{$c_{i-1} \in \mcC$}
+    \State{compute $\hat{\boldy}(c_{i-1})$}
+    \For{$c_{i} \in \mcC$}
+    \State{$score = \pi[i-1, c_{i-1}] + \log \hat{\boldy}(c_{i-1})_{c_i} $}
+    \If{$score > \pi[i, c_i]$}
+    \State{$\pi[i, c_i] = score$}
+    \State{$bp[i, c_i] = c_{i-1}$}
+    \EndIf{}
     \EndFor{}
-    \State{$B_{m+|w_i|} \gets B_{m+|w_i|} + (y, \mcR - i, s,   \boldh)$}
-    \State{keep top-$K$ of $B_{m+|w_i|}$ by $f(x, y) + g(\mcR)$}
     \EndFor{}
     \EndFor{}
-    \EndFor{}
-    \State{\Return{$B_{M}^{(k)}$}}
+    \State{\Return{sequence from $bp$}}
     \EndProcedure{}
   \end{algorithmic}
-
-\end{itemize}
 
 
 \section{Experiments}
 
-Finally we end with the experimental section. Each assignment will make clear the main experiments and baselines that you should run. For these experiments you should present a main results table. Here we give a sample Table~\ref{tab:results}. In addition to these results you should describe in words what the table shows and the relative performance of the models.
+\subsection{Feature Engineering}
 
-Besides the main results we will also ask you to present other results
-comparing particular aspects of the models. For instance, for word
-embedding experiments, we may ask you to show a chart of the projected
-word vectors. This experiment will lead to something like
-Figure~\ref{fig:clusters}. This should also be described within the
-body of the text itself.
+The original paper suggests several features to use. We focus on the word counts and a capitalization feature. We defined our capitalization feature as follow:
+\begin{enumerate}
+	\item 1 : word in low caps;
+	\item 2 : whole word in caps;
+	\item 3 : first letter in cap;
+	\item 4 : one cap in the word;
+	\item 5 : other
+\end{enumerate}
 
+We then produced an embedding of the word counts using a pre-trained version.
 
-\begin{table}[h]
+\subsection{Model Evaluation}
+
+As used in the Kaggle competition, we used the f-score with the precision and recall measure to evaluate our model while tuning the hyperparameters. A positive prediction stands for a label (in the notation of the task, everything which is not the \textbf{O} tag):
+
+\begin{enumerate}
+	\item recall: ratio of the true positive predictions among the positives tags in the correct sequence
+	\item precision: ratio of the true positive predictions among the positive predictions,
+	\item f-score (with $\beta = 1$): harmonic mean of the precision and the recall, i.e. $f_{1} = \frac{2pr}{p+r}$
+\end{enumerate}
+
+\subsection{Hidden Markov Model}
+
+There is only the smoothing parameter $\alpha$ and eventually feature selection here to tune here. We evaluate the impact of adding more features and run experiments with different alpha values to tune them . One important details is to make sure to use a specific smoothing parameter for each distribution, i.e a smoothing parameter may be applied to the transition matrix but also to the emission matricx of each different feature. Each of this distribution has a different tail and need a different smoothing. For instance, the transition matrix need a very small $\alpha$ (around 0.1) because we are pretty confident in it but the capitalizations feature need one much bigger (around 20) because the counts are already high.
+
+\begin{figure}[H]
 \centering
-\begin{tabular}{llr}
- \toprule
- Model &  & Acc. \\
- \midrule
- \textsc{Baseline 1} & & 0.45\\
- \textsc{Baseline 2} & & 2.59 \\
- \textsc{Model 1} & & 10.59  \\
- \textsc{Model 2} & &13.42 \\
- \textsc{Model 3} & & 7.49\\
- \bottomrule
-\end{tabular}
-\caption{\label{tab:results} Table with the main results.}
-\end{table}
-
-
-\begin{figure}
+\begin{minipage}{.5\textwidth}
   \centering
-  \includegraphics[width=6cm]{cluster_viz}
-  \caption{\label{fig:clusters} Sample qualitative chart.}
+  \includegraphics[width=1\linewidth]{cap_plot}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+  \centering
+  \includegraphics[width=1\linewidth]{wc_plot}
+\end{minipage}
 \end{figure}
+
+We notice that the model is less sensitive to the changes of the smoothing parameter on the capitalization feature as on the word counts. This is pretty reasonable as the feature coutns are much higher in the capitalization feature than in the word counts. Tuning this parameter provides a model with a f-score of \textbf{0.808}. Using only the word counts features provide a best f-score of \textbf{0.764}
+
+
+\subsection{Maximum-Entropy Markov Model}
+
+
+\subsection{Structured Perceptron}
 
 
 \section{Conclusion}
 
-End the write-up with a very short recap of the main experiments and the main results. Describe any challenges you may have faced, and what could have been improved in the model.
+This segmentation task gave us the opportunity to implement different recurrent neural network architectures but also to compare them with more traditionnal method. Whereas the count based and even the simple neural network models are pretty fast to train they still provide interesting results. The results provided by the three variants of RNN were interesting to illustrate the influence of gates and memory in such networks. The gated reccurent network ended as the best model on this task. One future work could be to stack more layers to our reccurent architecture or to implement a network with a dynamic memory part to give more flexibility in how the model uses the information it already processed.
 
-\bibliographystyle{apalike}
-\bibliography{writeup}
 
+
+\begin{appendices}
+\textbf{\huge\underline{Preprocessing:}}
+\lstinputlisting[numbers=left, breaklines=true]{../preprocess.py}
+\textbf{\huge\underline{Hidden Markov Model:}}
+\lstinputlisting[numbers=left, breaklines=true]{../hmm.lua}
+\textbf{\huge\underline{Helper:}}
+\lstinputlisting[numbers=left, breaklines=true]{../helper.lua}
+\end{appendices}
 \end{document}
