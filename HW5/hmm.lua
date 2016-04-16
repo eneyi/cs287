@@ -17,11 +17,13 @@ cmd = torch.CmdLine()
 cmd:option('-datafile', 'data/words_feature.hdf5',
            'Datafile with features in hdf5 format')
 cmd:option('-alpha_t', 0.1, 'Smoothing parameter alpha in the transition counts')
-cmd:option('-alpha_w', 1, 'Smoothing parameter alpha in the word counts')
-cmd:option('-alpha_c', 0.5, 'Smoothing parameter alpha in the caps counts')
+cmd:option('-alpha_w', 2, 'Smoothing parameter alpha in the word counts')
+cmd:option('-alpha_c', 20, 'Smoothing parameter alpha in the caps counts')
 cmd:option('-test', 0, 'Boolean (as int) to ask for a prediction on test, will be saved in submission in hdf5 format')
 cmd:option('-datafile_test', 'submission/v_seq_hmm', 'Smoothing parameter alpha in the word counts')
 cmd:option('-nfeatures', 2, 'Number of type of features to use')
+cmd:option('-cv', 0, 'Boolean (as int) to run a cross validation pipeline')
+
 
 
 -- Formating as log-probability and smoothing the input
@@ -110,6 +112,46 @@ function predict(observations, emissions, transition, alphas, nfeatures)
     return viterbi(observations, score_hmm, emissions_cleaned, transition_cleaned, nfeatures)
 end
 
+-- Cross validation pipeline
+function cross_validation(observations, emissions, transitions, true_classes,
+                          alphas_table, alpha_t)
+    -- alphas_table is a table of tensor with the range of parameters to use
+    -- Current implementation for 2 features only
+    -- alphas_table = {alpha_w_tensor, alpha_c_tensor}
+    -- Return a tensor with first columns the alpha value and last the score for each
+    local nfeatures = #alphas_table
+    local v_seq_dev, precision, recall, f
+    local alphas = torch.DoubleTensor(3)
+    local size1 = alphas_table[1]:size(1)
+    local size2 = alphas_table[2]:size(1)
+    local num_evaluations = size1*size2
+
+    -- Columns for 2 features are (alphas_w_value, alphas_c_value, f_score, precision, recall)
+    local scores = torch.DoubleTensor(num_evaluations, nfeatures+3)
+
+    for i=1,size1 do
+        alpha_w = alphas_table[1][i]
+        for k=1,size2 do
+            alpha_c = alphas_table[2][k]
+
+            alphas:copy(torch.Tensor({alpha_t, alpha_w, alpha_c}))
+            v_seq_dev = predict(observations, emissions, transition, alphas, nfeatures)
+            precision, recall = compute_score(v_seq_dev, true_classes)
+            f = f_score(precision, recall)
+
+            -- Filling the scores tensor
+            scores[{(i-1)*size2+k, 1}] = alpha_w
+            scores[{(i-1)*size2+k, 2}] = alpha_c
+            scores[{(i-1)*size2+k, 3}] = f
+            scores[{(i-1)*size2+k, 4}] = precision
+            scores[{(i-1)*size2+k, 5}] = recall
+        end
+    end
+
+    return scores
+end
+
+
 function main() 
     -- Parse input params
     opt = cmd:parse(arg)
@@ -150,6 +192,25 @@ function main()
     print('Precision is : '..precision)
     print('Recall is : '..recall)
     print('F score (beta = 1) is : '..f)
+
+    -- Cross validation
+    if (opt.cv == 1) then
+        alphas_table = {}
+        -- alpha_w
+        alphas_table[1] = torch.Tensor({0.05, 0.1, 0.2, 0.3, 0.5, 0.8})
+        -- alpha_c
+        alphas_table[2] = torch.Tensor({5, 8, 10, 12, 15, 20, 22})
+
+        scores = cross_validation(observations, emissions, transitions, true_classes,
+                                  alphas_table, opt.alpha_t)
+        print(scores)
+
+        -- Saving the score
+        myFile = hdf5.open('plot_scores.hdf5', 'w')
+        myFile:write('scores', scores)
+        myFile:close()
+        print('CV on dev saved in '..'plot_scores.hdf5')
+    end
 
     -- Prediction on test
     if (opt.test == 1) then 

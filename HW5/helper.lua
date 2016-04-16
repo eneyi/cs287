@@ -16,9 +16,10 @@ function compute_score(predicted_classes, true_classes)
             right_pred = right_pred + 1
         end
     end
-    print('positive_true: '..positive_true)
-    print('positive_pred: '..positive_pred)
-    print('right_pred: '..right_pred)
+    -- Verbose
+    -- print('positive_true: '..positive_true)
+    -- print('positive_pred: '..positive_pred)
+    -- print('right_pred: '..right_pred)
     local precision = right_pred/positive_pred
     local recall = right_pred/positive_true
     return precision, recall
