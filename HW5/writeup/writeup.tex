@@ -69,9 +69,6 @@ p(x_i=(\delta(f_1), \delta(f_2))|y_i=\delta(c)) = p(x_i=\delta(f_1)|y_i=\delta(c
 Next, we implemented a Maximum-Entropy Markov Model. The objective of the MEMM is to evaluate at each time step a distribution over the possible tags using features of the current word, denoted as $feat(x_i)$ and the tag of the previous word, $c_{i-1}$, using multi-class logistic regression, i.e.
 
 $$p(\mathbf{y}_i | \mathbf{y}_{i-1}, feat(x_i)) = \text{softmax}([feat(x_i),c_{i-1}]\mathbf{W}+\mathbf{b})$$
-\subsection{Structured Perceptron}
-
-
 
 \subsection{Viterbi algorithm}
 
@@ -98,7 +95,11 @@ The search algorithm that we implemented is the dynamic programming algorithm na
     \EndProcedure{}
   \end{algorithmic}
 
+\subsection{Structured Perceptron}
 
+The final model, we implemented is the structure perceptron train algorithm. The way the model is trained uses the Viterbi search algorithm, presented above. At each epoch, we uses Viterbi to predict the highest scored sequence given the state of the model. We can then find the timesteps where the actual sequence for the given sentence and the predicted one differ and compute at each of these time steps, the gradient of a hinge type loss. These gradients have a -1 entry on the true class for this given word, and a 1 on the predicted class by the model. We can then propagate these gradients in the network, and update the weights with a learning rate that can be tuned.\\
+
+The model itself is similar to the model of the MEMM without the final logsoftmax layer.
 \section{Experiments}
 
 \subsection{Feature Engineering}
@@ -112,7 +113,10 @@ The original paper suggests several features to use. We focus on the word counts
 	\item 5 : other
 \end{enumerate}
 
-We then produced an embedding of the word counts using a pre-trained version.
+We then produced an embedding of the word counts using a pre-trained version.\\
+
+We also used the Python "pattern.en" package to extract Part-of-Speach (PoS) features. The packages generates 41 features to which we added special feature for the opening and closing tabs $<$s$>$ and $<\setminus$s$>$.
+
 
 \subsection{Model Evaluation}
 
@@ -148,7 +152,7 @@ $$K_{HMM} = 0.48365$$
 
 \subsection{Maximum-Entropy Markov Model}
 
-We coded the MEMM using the nn module and trained using stochastic gradient descent. We also used the Glove embedggins using a lookup table. As for the HMM, we used two different sets of features, i.e. the words and the words and capitalisation of the words. We observed that the training algorithm converges quite rapidely, and that if adding caps to the features helped decrease the loss, the impact was not as strong as expected. Nevertheless, we trained the model on 20 epochs in order to learn the embeddings for the $<$s$>$ and $<\setminus$s$>$ "words" added during pre-processing.
+We coded the MEMM using the nn module and trained using stochastic gradient descent. We also used the Glove embedggins using a lookup table. As for the HMM, we used two different sets of features, i.e. the words and the words and capitalisation of the words. We also added the Part of Speech features that were evaluated using the python package "pattern.en" in order to gain some time. We observed that the training algorithm converges quite rapidely, and that if adding caps to the features helped decrease the loss, the impact was not as strong as expected. On the other hand, adding PoS features impacted greatly the loss. Nevertheless, we trained the model on 20 epochs in order to learn the embeddings for the $<$s$>$ and $<\setminus$s$>$ "words" added during pre-processing.
 
 \begin{figure}[H]
 \centering
@@ -162,9 +166,9 @@ We evaluated the performance of these two models using the f-score presented abo
 \includegraphics[width=0.6\linewidth]{prf_cap}
 \end{figure}
 
-Adding caps yielded better results on both Precision and Recall and therefore on the f-score. But as we expected from the small differences in loss, we did not observe an important increase on the f-score. These results were later confirmed on the test set, as the kaggle score obtained for these two models were:
+Adding extra features yielded better results on both Precision and Recall and therefore on the f-score. But as we expected from the small differences in loss, we did not observe an important increase on the f-score using cap features. We were nevertheless surprised to see that the impact on loss using PoS features did not translate on the f-score. These results were later confirmed on the test set, as the kaggle score obtained for these two models were:
 
-$$K_{no caps} = 0.52057 \quad \text{and} \quad K_{caps} = 0.55482$$
+$$K_{no caps} = 0.52057 \quad \text{and} \quad K_{caps} = 0.55482 \quad K_{PoS} = 0.57121$$
 
 which are both slightly better than the results of the HMM.
 
@@ -180,8 +184,13 @@ This segmentation task gave us the opportunity to implement different recurrent 
 \begin{appendices}
 \textbf{\huge\underline{Preprocessing:}}
 \lstinputlisting[numbers=left, breaklines=true]{../preprocess.py}
+
 \textbf{\huge\underline{Hidden Markov Model:}}
 \lstinputlisting[numbers=left, breaklines=true]{../hmm.lua}
+
+\textbf{\huge\underline{Max-Entropy Markov Model:}}
+\lstinputlisting[numbers=left, breaklines=true]{../MEMM.lua}
+
 \textbf{\huge\underline{Helper:}}
 \lstinputlisting[numbers=left, breaklines=true]{../helper.lua}
 \end{appendices}
