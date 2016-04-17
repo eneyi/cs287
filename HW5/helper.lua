@@ -16,15 +16,15 @@ function compute_score(predicted_classes, true_classes)
             right_pred = right_pred + 1
         end
     end
-    -- Verbose
-    -- print('positive_true: '..positive_true)
-    -- print('positive_pred: '..positive_pred)
-    -- print('right_pred: '..right_pred)
     local precision = right_pred/positive_pred
     local recall = right_pred/positive_true
     return precision, recall
 end
         
-function f_score(precision, recall)
-    return 2*precision*recall/(precision+recall)
+function f_score(predicted_classes, true_classes)
+    local p,r = compute_score(predicted_classes, true_classes)
+    print('Precision: '..p)
+    print ('Recall: '..r)
+    print ('f-score: '..2*p*r/(p+r))
+    return 2*p*r/(p+r)
 end
