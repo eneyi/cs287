@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2016.2.2)  17 APR 2016 16:20
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2016.2.2)  17 APR 2016 16:23
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -516,7 +516,7 @@ LaTeX Font Info:    Font shape `OML/ppl/m/n' in size <10.95> not available
 Here is how much of TeX's memory you used:
  6420 strings out of 493089
  92765 string characters out of 6134843
- 267740 words of memory out of 5000000
+ 267768 words of memory out of 5000000
  9735 multiletter control sequences out of 15000+600000
  46216 words of font info for 132 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
@@ -532,7 +532,7 @@ r/local/texlive/2015/texmf-dist/fonts/type1/urw/palatino/uplb8a.pfb></usr/local
 /texlive/2015/texmf-dist/fonts/type1/urw/palatino/uplbi8a.pfb></usr/local/texli
 ve/2015/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></usr/local/texlive/2015
 /texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on writeup.pdf (19 pages, 452574 bytes).
+Output written on writeup.pdf (19 pages, 452600 bytes).
 PDF statistics:
  118 PDF objects out of 1000 (max. 8388607)
  76 compressed objects within 1 object stream
