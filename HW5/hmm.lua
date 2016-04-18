@@ -17,8 +17,9 @@ cmd = torch.CmdLine()
 cmd:option('-datafile', 'data/words_feature.hdf5',
            'Datafile with features in hdf5 format')
 cmd:option('-alpha_t', 0.1, 'Smoothing parameter alpha in the transition counts')
-cmd:option('-alpha_w', 2, 'Smoothing parameter alpha in the word counts')
-cmd:option('-alpha_c', 20, 'Smoothing parameter alpha in the caps counts')
+cmd:option('-alpha_w', 0.1, 'Smoothing parameter alpha in the word counts')
+cmd:option('-alpha_c', 8, 'Smoothing parameter alpha in the caps counts')
+cmd:option('-alpha_p', 2, 'Smoothing parameter alpha in the pos counts')
 cmd:option('-test', 0, 'Boolean (as int) to ask for a prediction on test, will be saved in submission in hdf5 format')
 cmd:option('-datafile_test', 'submission/v_seq_hmm', 'Smoothing parameter alpha in the word counts')
 cmd:option('-nfeatures', 2, 'Number of type of features to use')
@@ -42,6 +43,8 @@ end
 function score_hmm(observations, i, emissions, transition, C, nfeatures)
     local observation_emission = torch.zeros(C)
     for k=1,nfeatures do
+        -- print(i,k)
+        -- print(emissions[k][observations[{i,k}]])
         observation_emission:add(emissions[k][observations[{i,k}]])
     end
     observation_emission = observation_emission:view(C, 1):expand(C, C)
@@ -161,8 +164,10 @@ function main()
     data = myFile:all()
     emission_w = data['emission_w']
     emission_c = data['emission_c']
+    emission_p = data['emission_p']
+    print(emission_p:size())
     -- Table of emission tensor (one tensor per feature)
-    emissions = {emission_w, emission_c}
+    emissions = {emission_w, emission_c, emission_p}
     -- Assertion on number of features
     nfeatures = opt.nfeatures
     if nfeatures > #emissions then
@@ -176,15 +181,16 @@ function main()
     myFile:close()
 
     -- Parameters:
-    true_classes = input_matrix_dev:narrow(2,5,1):clone():view(input_matrix_dev:size(1))
+    true_classes = input_matrix_dev:narrow(2,6,1):clone():view(input_matrix_dev:size(1))
     -- contain in each column feature observation
     -- (same order as the feature emission tensor in the emissoins table)
     observations = input_matrix_dev:narrow(2,3,nfeatures):clone()
     -- Alpha parameter
-    alphas = torch.Tensor({opt.alpha_t, opt.alpha_w, opt.alpha_c})
+    alphas = torch.Tensor({opt.alpha_t, opt.alpha_w, opt.alpha_c, opt.alpha_p})
 
     -- Prediction on dev
     v_seq_dev = predict(observations, emissions, transition, alphas, nfeatures)
+    print(v_seq_dev:size(1))
     precision, recall = compute_score(v_seq_dev, true_classes)
     f = f_score(precision, recall)
 

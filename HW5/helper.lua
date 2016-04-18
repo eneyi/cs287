@@ -1,6 +1,7 @@
 -- function to evaluate the predicted sequence
 -- need to compute precision and recall (class 1 stands for negative class)
 function compute_score(predicted_classes, true_classes)
+    print('here')
     local n = predicted_classes:size(1)
     local right_pred = 0
     local positive_true = 0
@@ -21,10 +22,6 @@ function compute_score(predicted_classes, true_classes)
     return precision, recall
 end
         
-function f_score(predicted_classes, true_classes)
-    local p,r = compute_score(predicted_classes, true_classes)
-    print('Precision: '..p)
-    print ('Recall: '..r)
-    print ('f-score: '..2*p*r/(p+r))
-    return 2*p*r/(p+r)
+function f_score(precision, recall)
+    return 2*precision*recall/(precision+recall)
 end
