@@ -174,9 +174,13 @@ which are both slightly better than the results of the HMM.
 
 \subsection{Structured Perceptron}
 
+We implemented the structured perceptron with the idea described in the model: weighting up the true edges in the lattice and down the incorrectly predicted. However we did not observe convincing results on our model, especially the f-score on the dev set was not increasing over the epochs but simply oscillating randomly around 0.72, which is not so bad but still less than what we obtained from the two other model.
+
+We first tried a simple training version (our first train function in sp.lua) where for each timestep with a wrong prediction we do one forward/backward. The input is the right tag and we use a gradient with -1 on the right tag and 1 on the wrong one. We also coded an advanced version which was treating the two wrong edges of the lattice for each error (in our second train function) but did not observe the expected result.
+
 
 \section{Conclusion}
-
+We were disappointed to not be able to get the performance of the structured perceptron to the levels of the hidden and maximum-entropy markov models on the task of finding and labeling named-entities in text. Due to the our difficulties at implementing the perceptron, we did not get the chance of implementing the NNMEM or add more features. Nevertheless, looking at the impact of the the few extra features implemented and the performance of the multi-class logistic regression, we believe that future work in that direction would yield better results.
 
 
 
@@ -189,6 +193,9 @@ which are both slightly better than the results of the HMM.
 
 \textbf{\huge\underline{Max-Entropy Markov Model:}}
 \lstinputlisting[numbers=left, breaklines=true]{../MEMM.lua}
+
+\textbf{\huge\underline{Structured Perceptron:}}
+\lstinputlisting[numbers=left, breaklines=true]{../sp.lua}
 
 \textbf{\huge\underline{Helper:}}
 \lstinputlisting[numbers=left, breaklines=true]{../helper.lua}
