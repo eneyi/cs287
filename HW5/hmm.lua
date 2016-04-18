@@ -119,15 +119,17 @@ end
 function cross_validation(observations, emissions, transitions, true_classes,
                           alphas_table, alpha_t)
     -- alphas_table is a table of tensor with the range of parameters to use
-    -- Current implementation for 2 features only
+    -- Current implementation for 3 features only
     -- alphas_table = {alpha_w_tensor, alpha_c_tensor}
     -- Return a tensor with first columns the alpha value and last the score for each
     local nfeatures = #alphas_table
     local v_seq_dev, precision, recall, f
-    local alphas = torch.DoubleTensor(3)
+    local alphas = torch.DoubleTensor(1+nfeatures)
     local size1 = alphas_table[1]:size(1)
     local size2 = alphas_table[2]:size(1)
-    local num_evaluations = size1*size2
+    local size3 = alphas_table[3]:size(1)
+    local num_evaluations = size1*size2*size3
+    local score_ind = 1
 
     -- Columns for 2 features are (alphas_w_value, alphas_c_value, f_score, precision, recall)
     local scores = torch.DoubleTensor(num_evaluations, nfeatures+3)
@@ -136,18 +138,21 @@ function cross_validation(observations, emissions, transitions, true_classes,
         alpha_w = alphas_table[1][i]
         for k=1,size2 do
             alpha_c = alphas_table[2][k]
-
-            alphas:copy(torch.Tensor({alpha_t, alpha_w, alpha_c}))
-            v_seq_dev = predict(observations, emissions, transition, alphas, nfeatures)
-            precision, recall = compute_score(v_seq_dev, true_classes)
-            f = f_score(precision, recall)
-
-            -- Filling the scores tensor
-            scores[{(i-1)*size2+k, 1}] = alpha_w
-            scores[{(i-1)*size2+k, 2}] = alpha_c
-            scores[{(i-1)*size2+k, 3}] = f
-            scores[{(i-1)*size2+k, 4}] = precision
-            scores[{(i-1)*size2+k, 5}] = recall
+            for j=1,size3 do
+                alpha_p = alphas_table[3][j]
+                alphas:copy(torch.Tensor({alpha_t, alpha_w, alpha_c, alpha_p}))
+                v_seq_dev = predict(observations, emissions, transition, alphas, nfeatures)
+                precision, recall = compute_score(v_seq_dev, true_classes)
+                f = f_score(precision, recall)
+                -- Filling the scores tensor
+                scores[{score_ind, 1}] = alpha_w
+                scores[{score_ind, 2}] = alpha_c
+                scores[{score_ind, 3}] = alpha_p
+                scores[{score_ind, 4}] = f
+                scores[{score_ind, 5}] = precision
+                scores[{score_ind, 6}] = recall
+                score_ind = score_ind + 1
+            end
         end
     end
 
@@ -203,9 +208,11 @@ function main()
     if (opt.cv == 1) then
         alphas_table = {}
         -- alpha_w
-        alphas_table[1] = torch.Tensor({0.05, 0.1, 0.2, 0.3, 0.5, 0.8})
+        alphas_table[1] = torch.Tensor({0.1, 0.2, 0.3, 0.4, 0.5})
         -- alpha_c
-        alphas_table[2] = torch.Tensor({5, 8, 10, 12, 15, 20, 22})
+        alphas_table[2] = torch.Tensor({5, 8, 10, 12})
+        -- alpha_p
+        alphas_table[3] = torch.Tensor({1, 2, 4, 6})
 
         scores = cross_validation(observations, emissions, transitions, true_classes,
                                   alphas_table, opt.alpha_t)

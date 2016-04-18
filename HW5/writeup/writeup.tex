@@ -146,9 +146,10 @@ There is only the smoothing parameter $\alpha$ and eventually feature selection 
 
 We notice that the model is less sensitive to the changes of the smoothing parameter on the capitalization feature as on the word counts. This is pretty reasonable as the feature coutns are much higher in the capitalization feature than in the word counts. Tuning this parameter provides a model with a f-score of \textbf{0.808}. Using only the word counts features provide a best f-score of \textbf{0.764}.\\
 
-We obtained a Kaggle score on the test set of :
+Adding the part-of-speech tagging feature increased the performance of the model. We got on the dev set a f-score of \textbf{0.843}
+We obtained a Kaggle score on the test set with the three different features of :
 
-$$K_{HMM} = 0.48365$$
+$$K_{HMM} = 0.54392$$
 
 \subsection{Maximum-Entropy Markov Model}
 
