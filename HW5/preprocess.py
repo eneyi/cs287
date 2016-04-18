@@ -89,7 +89,7 @@ def get_tokenized_sentences(filename, tags=True):
     return pattern.en.tag(' '.join(text))
 
 
-def build_input_matrix(filename, num_rows, tag2index, pos2index, tags=True, word2index=None):
+def build_input_matrix(filename, num_rows, tag2index, pos2index, tags=True, word2index=None, memm = False):
     # Building input matrix with columns: (id, id_in_sentence, id_word, id_caps, id_token, id_tag)
     # caps feature:
     # 1 - low caps; 2 - all caps; 3 - first cap; 4 - one cap; 5 - other
@@ -98,12 +98,16 @@ def build_input_matrix(filename, num_rows, tag2index, pos2index, tags=True, word
 
     # Features for starting/ending of sentence (3 last columns)
     # For the POS tag, we use the same as a point (index 36)
-    start = [1, 1, 36, 8]
-    end = [2, 1, 36, 9]
-
     # initialization
     input_matrix = np.zeros((num_rows, 6), dtype=int)
-    input_matrix[0] = [1, 1, 1, 1, 36, 8]
+  	if memm ==  False: 
+    	input_matrix[0] = [1, 1, 1, 1, 36, 8]
+    	start = [1, 1, 36, 8]
+    	end = [2, 1, 36, 9]
+    else:
+    	input_matrix[0] = [1,1,word2index['<s>'],1,36,8]
+    	start = [word2index['<s>'],1,36, 8]
+   		end = [word2index['<\s>'],1,36, 9]
     row = 1
 
     # Get the POS tokken
@@ -177,6 +181,28 @@ def build_input_matrix(filename, num_rows, tag2index, pos2index, tags=True, word
         return input_matrix, word2index
     else:
         return input_matrix[:, :5], word2index
+
+#Function that formats the output of the previous function in order to run MEMM:
+def input_mm_pos(matrix):
+    
+    nwords = matrix.shape[0]
+    
+    res = np.zeros((nwords,1 + 9 + 5 + 43 + 1),dtype = int)
+    
+    res[:,0] = matrix[:,2]
+    
+    for i in range(nwords):
+        tag_1_hot = np.zeros(9)
+        tag_1_hot[matrix[i,5]-1] = 1
+        tag_1_hot_cap = np.zeros(5)
+        tag_1_hot_cap[matrix[i,3]-1] = 1
+        tag_1_hot_pos = np.zeros(43)
+        tag_1_hot_pos[matrix[i,4]] = 1
+        res[i,1:10] = tag_1_hot
+        res[i,10:15] = tag_1_hot_cap
+        res[i,15:58] = tag_1_hot_pos
+    res[:,58] = matrix[:,5]
+    return res
 
 
 def train_hmm(input_matrix, num_features, num_pos, num_tags):
