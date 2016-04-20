@@ -1,13 +1,41 @@
+# README: How to use me?
+#
+# Pre process the question from the bAbI dataset.
+#
+# Arguments:
+#     [--tasks TASKS [TASKS ...]] list of tasks to pre process, if empty all tasks
+#     [--f F]: filename to save pre-processed data
+#     [--train TRAIN]: train data if 1, test ow
+#
+# Instructions example:
+# $ python preprocess.py --task 2 --f task2_train
+#
+#
+# Outputs: save all the preprocessed data on disk
+# (2 functions are defined in helper.py to read them,
+# with the same filename argument as this script)
+#
+#     with h5py.File(filename + '.hdf5', "w") as f:
+#     sentences: np.array (rows: num_sentences, columns: padded list of words index)
+#     questions: np.array (rows: num_questions, columns: padded list of words index)
+#     questions_sentences: np.array (rows: num_questions,
+#         columns: (start of sentences story, end of sentences story,
+#         list supporting facts))
+#     answers: np.array(rows: num_questions, cols: answers (singleton or list))
+
+
+
 import numpy as np
 import argparse
 import sys
 import pickle
 import h5py
 
-
 from os import listdir
 from os.path import isfile, join
 from collections import Counter
+
+from helper import *
 
 
 DATA_PATH = '../Data'
@@ -47,15 +75,16 @@ def build_sentences_mapping(filenames):
                 line_split = line[:-1].split('\t')
                 # Check if question
                 if len(line_split) > 1:
-                    # Answer word
-                    answer = line_split[1]
-                    if answer not in word2index:
-                        word2index[answer] = w
-                        w += 1
+                    # Answer list (in case of list of words as answer)
+                    answer = line_split[1].split(',')
+                    for aw in answer:
+                        if aw not in word2index:
+                            word2index[aw] = w
+                            w += 1
                     bow = line_split[0].rstrip('? ').split()[1:]
                     index2question[q] = bow
                     index2supportings[q] = [int(u) for u in line_split[2].split()]
-                    answers.append(word2index[answer])
+                    answers.append([word2index[aw] for aw in answer])
                     question_index2sentences_index[q] = [current_start, s-1]
                     q += 1
                 else:
@@ -75,6 +104,9 @@ def build_sentences_mapping(filenames):
         if word not in word2index:
             word2index[word] = w
             w += 1
+
+    # Convert answers to np.array
+    answers = np.array(answers)
 
     return Nw, word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers
 
@@ -109,7 +141,6 @@ def build_questions_sentences_array(index2supportings, question_index2sentences_
     return qs
 
 
-# TESTED
 def get_filenames(train=True, tasks=[]):
     '''
     Return filenames of the dataset in list of string.
@@ -152,9 +183,8 @@ def main(arguments):
                         help='Dataset to preprocess')
     args = parser.parse_args(arguments)
 
-    # Retrieve filename
+    # # Retrieve filename
     filenames = get_filenames(train=args.train, tasks=args.tasks)
-    print(filenames)
 
     # ###### STEP 1: mappings
     Nw, word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers = build_sentences_mapping(filenames)
@@ -171,12 +201,13 @@ def main(arguments):
 
     # Matrix in hdf5 format
     filename = DATA_PATH + '/preprocess/' + args.f
-    print(filename)
     with h5py.File(filename + '.hdf5', "w") as f:
         f['sentences'] = sentences
         f['questions'] = questions
         f['questions_sentences'] = questions_sentences
         f['answers'] = answers
+
+    print('Matrix saved in {}.hdf5'.format(filename))
 
     # Mapping as python object
     for f, obj in zip(['_word2index', '_index2sentence', '_index2question'],
@@ -184,7 +215,11 @@ def main(arguments):
         with open(filename + f, 'wb') as file:
             pickle.dump(obj, file)
 
+    print('Mapping pickled in {}'.format(filename))
+
+
     # Debugging
+    print('DEBUG print')
     print(len(index2word))
     print(sentences.shape)
     print(sentences[:5])
@@ -192,8 +227,8 @@ def main(arguments):
     print(questions[:5])
     print(questions_sentences.shape)
     print(questions_sentences[:5])
-    print(len(answers))
-    print([index2word[i] for i in answers[:5]])
+    print(answers.shape)
+    print([[index2word[aw] for aw in r] for r in answers[:5]])
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
