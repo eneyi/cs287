@@ -22,9 +22,6 @@
 #         columns: (start of sentences story, end of sentences story,
 #         list supporting facts))
 #     answers: np.array(rows: num_questions, cols: answers (singleton or list))
-
-
-
 import numpy as np
 import argparse
 import sys
@@ -33,7 +30,6 @@ import h5py
 
 from os import listdir
 from os.path import isfile, join
-from collections import Counter
 
 from helper import *
 
@@ -88,12 +84,15 @@ def build_sentences_mapping(filenames):
                     question_index2sentences_index[q] = [current_start, s-1]
                     q += 1
                 else:
-                    bow = line_split[0].rstrip('.').split()
-                    local_ind = int(bow[0])
+                    line_cleaned = line_split[0].rstrip('.').split()
+                    local_ind = int(line_cleaned[0])
+
+                    # Remove the local index
+                    bow = line_cleaned[1:]
                     # Restart current_start if new story
                     if local_ind == 1:
                         current_start = s
-                    index2sentence[s] = bow[1:]
+                    index2sentence[s] = bow
                     s += 1
                 words.update(set(bow))
     # Set the number of answer words
@@ -106,9 +105,16 @@ def build_sentences_mapping(filenames):
             w += 1
 
     # Convert answers to np.array
-    answers = np.array(answers)
+    # Compute the max number of answers for a question
+    max_number = 1
+    for a in answers:
+        if len(a) > max_number:
+            max_number = len(a)
+    answers_matrix = np.zeros((len(answers), max_number))
+    for i, a in enumerate(answers):
+        answers_matrix[i, :len(a)] = a
 
-    return Nw, word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers
+    return Nw, word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers_matrix
 
 
 def build_bow_array(index2question, word2index):
@@ -132,8 +138,11 @@ def build_bow_array(index2question, word2index):
 def build_questions_sentences_array(index2supportings, question_index2sentences_index):
     Nq = len(index2supportings)
 
+    # Counting the length max of supporting facts
+    max_num_supporting = max([len(v) for v in index2supportings.values()])
+
     # We assume at most 3 supporting facts
-    qs = np.zeros((Nq, 5), dtype=int)
+    qs = np.zeros((Nq, 2 + max_num_supporting), dtype=int)
     for i in xrange(1, Nq+1):
         qs[i-1, :2] = question_index2sentences_index[i]
         supportings = index2supportings[i]
@@ -176,7 +185,8 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('--tasks', default=0, type=int, nargs='+', help='Tasks list')
+    print(arguments)
+    parser.add_argument('--tasks', default=range(1, 21), type=int, nargs='+', help='Tasks list')
     parser.add_argument('--f', default='new', type=str,
                         help='Filename to save preprocess data in hdf5 format')
     parser.add_argument('--train', default=1, type=int,
@@ -200,6 +210,7 @@ def main(arguments):
     # ###### STEP 3: saving
 
     # Matrix in hdf5 format
+    print(answers.shape)
     filename = DATA_PATH + '/preprocess/' + args.f
     with h5py.File(filename + '.hdf5', "w") as f:
         f['sentences'] = sentences
@@ -219,16 +230,16 @@ def main(arguments):
 
 
     # Debugging
-    print('DEBUG print')
-    print(len(index2word))
-    print(sentences.shape)
-    print(sentences[:5])
-    print(questions.shape)
-    print(questions[:5])
-    print(questions_sentences.shape)
-    print(questions_sentences[:5])
-    print(answers.shape)
-    print([[index2word[aw] for aw in r] for r in answers[:5]])
+    # print('DEBUG print')
+    # print(len(index2word))
+    # print(sentences.shape)
+    # print(sentences[:5])
+    # print(questions.shape)
+    # print(questions[:5])
+    # print(questions_sentences.shape)
+    # print(questions_sentences[:5])
+    # print(answers.shape)
+    # print([[index2word[aw] for aw in r] for r in answers[:5]])
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
