@@ -10,7 +10,8 @@ import preprocess
 
 def train_question_vector(questions, answers, aw_number, alpha=0.1):
     '''
-    Build embeddings of the first word of the question.
+    Build embeddings of the first word of the question based on the
+    count of times each word is answer of the first question word.
     Output: dictionnary {q[0]: embeddings}
     '''
     # Build the embeddings
@@ -28,7 +29,7 @@ def train_question_vector(questions, answers, aw_number, alpha=0.1):
     return questions_embeddings
 
 
-def build_story_aw_distribution(facts, aw_number, alpha=0.1, decay=0.1):
+def build_story_aw_distribution(facts, aw_number, alpha=0.1, decay=0.15):
     '''
     Compute the count of answer words in the fact. Weight down the
     old words.
@@ -176,9 +177,18 @@ def main(arguments):
     # Select response (index start at 1)
     output = np.argmax(predictions, axis=1) + 1
 
-    # Compute accuracygit
+    # Compute global accuracy
     response = answers.flatten()
+    print(len(response))
     accuracy = np.sum(output == response)/(1.*len(output))
+
+    # Accuracy per tasks
+    for i, t in enumerate(tasks):
+        local_acc = np.sum(output[1000*i:1000*(i+1)] == response[1000*i:1000*(i+1)])/(1000.)
+        print('----------------------------------------')
+        print 'Results for task {}'.format(t)
+        print 'Average Accuracy is {}'.format(local_acc)
+        print('----------------------------------------')
 
     print('----------------------------------------')
     print('Number of possible answers {}'.format(aw_number))
