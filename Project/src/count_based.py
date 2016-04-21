@@ -10,16 +10,18 @@ import preprocess
 
 def train_question_vector(questions, answers, aw_number, alpha=0.1):
     '''
-    Build embeddings of the first word of the question.
+    Build embeddings of the first word of the question based on the
+    count of times each word is answer of the first question word.
     Output: dictionnary {q[0]: embeddings}
     '''
     # Build the embeddings
     questions_embeddings = {}
     for q, r in zip(questions, answers):
+        # q[0] is the task_id
         # Index starts at 1
-        if q[0] not in questions_embeddings:
-            questions_embeddings[q[0]] = alpha*np.ones(aw_number)
-        questions_embeddings[q[0]][r[0]-1] += 1
+        if q[1] not in questions_embeddings:
+            questions_embeddings[q[1]] = alpha*np.ones(aw_number)
+        questions_embeddings[q[1]][r[0]-1] += 1
 
     # Normalize
     for k in questions_embeddings.keys():
@@ -28,14 +30,15 @@ def train_question_vector(questions, answers, aw_number, alpha=0.1):
     return questions_embeddings
 
 
-def build_story_aw_distribution(facts, aw_number, alpha=0.1, decay=0.1):
+def build_story_aw_distribution(facts, aw_number, alpha=0.1, decay=0.15):
     '''
     Compute the count of answer words in the fact. Weight down the
     old words.
     Output: normalized count vector
     '''
     count_vector = alpha*np.ones(aw_number)
-    bow = facts.flatten()
+    # Removing task id from the facts
+    bow = facts[:, 1:].flatten()
     for i in xrange(len(bow)-1, -1, -1):
         b = bow[i]
         # check not padding and an answer word
@@ -57,7 +60,8 @@ def question_matching_feature(facts, question, aw_number, alpha=0.1):
     '''
     count_vector = alpha*np.ones(aw_number)
     question_set = set([q for q in question if q != 0])
-    for fact in facts:
+    for tup in facts:
+        task, fact = tup
         fact_set = set([q for q in fact if q != 0])
         intersection = question_set.intersection(fact_set)
         for i in intersection:
@@ -81,7 +85,7 @@ def batch_prediction(questions, questions_sentences, sentences, aw_number,
         facts = sentences[questions_sentences[qi][0]-1: questions_sentences[qi][1], :]
 
         # Features
-        f1 = np.log(questions_embeddings[q[0]])
+        f1 = np.log(questions_embeddings[q[1]])
         f2 = np.log(build_story_aw_distribution(facts, aw_number))
         # print(q)
         # print(facts)
@@ -176,9 +180,19 @@ def main(arguments):
     # Select response (index start at 1)
     output = np.argmax(predictions, axis=1) + 1
 
-    # Compute accuracygit
+    # Compute global accuracy
     response = answers.flatten()
+    print(len(response))
     accuracy = np.sum(output == response)/(1.*len(output))
+
+    # Accuracy per tasks
+    for i in xrange(len(tasks)):
+        task_id = questions[1000*i, 0]
+        local_acc = np.sum(output[1000*i:1000*(i+1)] == response[1000*i:1000*(i+1)])/(1000.)
+        print('----------------------------------------')
+        print 'Results for task {}'.format(task_id)
+        print 'Average Accuracy is {}'.format(local_acc)
+        print('----------------------------------------')
 
     print('----------------------------------------')
     print('Number of possible answers {}'.format(aw_number))
