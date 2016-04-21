@@ -8,7 +8,6 @@ from helper import *
 from sentences_matching import sentence_relevance
 import preprocess
 
-
 def train_question_vector(questions, answers, aw_number, alpha=0.1):
     '''
     Build embeddings of the first word of the question.
@@ -79,8 +78,9 @@ def batch_prediction(questions, questions_sentences, sentences, aw_number,
     # Go over each question
     for qi, q in enumerate(questions):
         # Facts
-        facts = sentence_relevance(sentences[questions_sentences[qi][0]-1: questions_sentences[qi][1], :], q, 1, [0, 21, 90])
 
+        facts_ = sentences[questions_sentences[qi][0]-1: questions_sentences[qi][1], :]
+        facts =  facts_[np.array(sentence_relevance(facts_, questions[qi], 2, [0, 20, 90]), dtype=int)-1,:]
         # Features
         f1 = np.log(questions_embeddings[q[0]])
         f2 = np.log(build_story_aw_distribution(facts, aw_number))
@@ -147,8 +147,16 @@ def main(arguments):
     # print 'Average Accuracy is {}'.format(np.mean(results[:,-1]))
     # print('----------------------------------------')
 
+    # Filter the tasks expecting more than one output
+    tasks = args.tasks
+    for t in [8, 19]:
+        if t in tasks:
+            tasks.remove(t)
+    # Wrap up in an argument
+    new_arguments = ['--task'] + [str(t) for t in tasks]
+
     # All in a row
-    preprocess.main(arguments)
+    preprocess.main(new_arguments)
 
     # Loading the data
     sentences, questions, questions_sentences, answers = read_preprocessed_matrix_data('new')
@@ -157,7 +165,6 @@ def main(arguments):
     # Count the answers words (indexed from 1 to len(answer_words))
     answer_words = set(answers.flatten())
     aw_number = len(answer_words)
-    print(aw_number)
 
     # Questions embeddings
     questions_embeddings = train_question_vector(questions, answers, aw_number,
@@ -170,12 +177,13 @@ def main(arguments):
     # Select response (index start at 1)
     output = np.argmax(predictions, axis=1) + 1
 
-    # Compute accuracygit 
+    # Compute accuracygit
     response = answers.flatten()
     accuracy = np.sum(output == response)/(1.*len(output))
 
     print('----------------------------------------')
-    print 'Results for {}'.format(arguments)
+    print('Number of possible answers {}'.format(aw_number))
+    print 'Results for {}'.format(tasks)
     print 'Average Accuracy is {}'.format(accuracy)
     print('----------------------------------------')
 
