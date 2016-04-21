@@ -146,8 +146,16 @@ def main(arguments):
     # print 'Average Accuracy is {}'.format(np.mean(results[:,-1]))
     # print('----------------------------------------')
 
+    # Filter the tasks expecting more than one output
+    tasks = args.tasks
+    for t in [8, 19]:
+        if t in tasks:
+            tasks.remove(t)
+    # Wrap up in an argument
+    new_arguments = ['--task'] + [str(t) for t in tasks]
+
     # All in a row
-    preprocess.main(arguments)
+    preprocess.main(new_arguments)
 
     # Loading the data
     sentences, questions, questions_sentences, answers = read_preprocessed_matrix_data('new')
@@ -156,7 +164,6 @@ def main(arguments):
     # Count the answers words (indexed from 1 to len(answer_words))
     answer_words = set(answers.flatten())
     aw_number = len(answer_words)
-    print(aw_number)
 
     # Questions embeddings
     questions_embeddings = train_question_vector(questions, answers, aw_number,
@@ -169,12 +176,13 @@ def main(arguments):
     # Select response (index start at 1)
     output = np.argmax(predictions, axis=1) + 1
 
-    # Compute accuracygit 
+    # Compute accuracygit
     response = answers.flatten()
     accuracy = np.sum(output == response)/(1.*len(output))
 
     print('----------------------------------------')
-    print 'Results for {}'.format(arguments)
+    print('Number of possible answers {}'.format(aw_number))
+    print 'Results for {}'.format(tasks)
     print 'Average Accuracy is {}'.format(accuracy)
     print('----------------------------------------')
 
