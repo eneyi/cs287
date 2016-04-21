@@ -37,7 +37,7 @@ from helper import *
 DATA_PATH = '../Data'
 
 
-def build_sentences_mapping(filenames):
+def build_sentences_mapping(filenames_tuples):
     '''
     Build several mappings:
         index2sentence: sentence index to bow of sentence
@@ -65,7 +65,8 @@ def build_sentences_mapping(filenames):
     words = set()
 
     # Loop over all the filenames (in the given order)
-    for filename in filenames:
+    for tup in filenames_tuples:
+        task_id, filename = tup
         with open(DATA_PATH + '/en/' + filename, 'r') as f:
             for line in f:
                 line_split = line[:-1].split('\t')
@@ -78,7 +79,8 @@ def build_sentences_mapping(filenames):
                             word2index[aw] = w
                             w += 1
                     bow = line_split[0].rstrip('? ').split()[1:]
-                    index2question[q] = bow
+                    # tuple (id_task, bow)
+                    index2question[q] = (task_id, bow)
                     index2supportings[q] = [int(u) for u in line_split[2].split()]
                     answers.append([word2index[aw] for aw in answer])
                     question_index2sentences_index[q] = [current_start, s-1]
@@ -92,7 +94,8 @@ def build_sentences_mapping(filenames):
                     # Restart current_start if new story
                     if local_ind == 1:
                         current_start = s
-                    index2sentence[s] = bow
+                    # tuple (id_task, bow)
+                    index2sentence[s] = (task_id, bow)
                     s += 1
                 words.update(set(bow))
     # Set the number of answer words
@@ -122,15 +125,18 @@ def build_bow_array(index2question, word2index):
 
     # Get max length
     max_len = 0
-    for bow in index2question.values():
+    for tup in index2question.values():
+        task_id, bow = tup
         if max_len < len(bow):
             max_len = len(bow)
-
-    questions = np.zeros((Nq, max_len), dtype=int)
+    questions = np.zeros((Nq, max_len + 1), dtype=int)
     for i in xrange(1, Nq+1):
-        bow = index2question[i]
+        task_id, bow = index2question[i]
         row = [word2index[w] for w in bow]
-        questions[i-1, :len(bow)] = row
+        # Stores task id
+        questions[i-1, 0] = task_id
+        # Stores bow
+        questions[i-1, 1:1+len(row)] = row
 
     return questions
 
@@ -165,18 +171,23 @@ def get_filenames(train=True, tasks=[]):
         onlyfiles = [f for f in onlyfiles if 'train' in f]
     else:
         onlyfiles = [f for f in onlyfiles if 'test' in f]
+    # Add the task number with the filename in the tuple
+    tuples_list = []
+    for f in onlyfiles:
+        task_number = int(f.split('_')[0][2:])
+        tuples_list.append((task_number, f))
+
     # Filter tasks
     if len(tasks):
         selection = []
-        for f in onlyfiles:
-            current_number = f.split('_')[0][2:]
-            if int(current_number) in tasks:
-                selection.append(f)
+        for tup in tuples_list:
+            if tup[0] in tasks:
+                selection.append(tup)
         if len(selection):
             return selection
         else:
             raise ValueError('Tasks not found {}'.format(tasks))
-    return onlyfiles
+    return tuples_list
 
 
 def main(arguments):
@@ -193,10 +204,10 @@ def main(arguments):
     args = parser.parse_args(arguments)
 
     # # Retrieve filename
-    filenames = get_filenames(train=args.train, tasks=args.tasks)
+    filenames_tuples = get_filenames(train=args.train, tasks=args.tasks)
 
     # ###### STEP 1: mappings
-    Nw, word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers = build_sentences_mapping(filenames)
+    Nw, word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers = build_sentences_mapping(filenames_tuples)
     index2word = {v: k for k, v in word2index.iteritems()}
 
     # ###### STEP 2: arrays
