@@ -185,7 +185,6 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    print(arguments)
     parser.add_argument('--tasks', default=range(1, 21), type=int, nargs='+', help='Tasks list')
     parser.add_argument('--f', default='new', type=str,
                         help='Filename to save preprocess data in hdf5 format')
@@ -210,7 +209,6 @@ def main(arguments):
     # ###### STEP 3: saving
 
     # Matrix in hdf5 format
-    print(answers.shape)
     filename = DATA_PATH + '/preprocess/' + args.f
     with h5py.File(filename + '.hdf5', "w") as f:
         f['sentences'] = sentences
