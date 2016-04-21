@@ -8,3 +8,4 @@
 /HW3/.DS_Store
 /HW5/data/glove.6B.50d.txt
 /Project/.DS_Store
+*.pyc
