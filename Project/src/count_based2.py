@@ -7,6 +7,39 @@ import h5py
 from helper import *
 from sentences_matching import sentence_relevance
 import preprocess
+import itertools
+
+
+def sentence_relevance(story, ques, n=1, stopwords=None):
+
+    nsentence, nword = story.shape
+
+    relevance = np.zeros(nsentence)
+    for i in range(nsentence):
+        for j in range(nword):
+            for w in ques:
+                if story[i, j] == w and w not in stopwords:
+                    relevance[i] += 1
+
+    if n == 1:
+        return np.argmax(relevance)
+    else:
+        res = list(np.arange(nsentence)[relevance.nonzero()]+1)
+        for i in list(np.arange(nsentence)[relevance.nonzero()]):
+            for ii in np.arange(nsentence):
+                if ii+1 in res:
+                    continue
+                else:
+                    count = 0
+                    for j in range(nword):
+                        for w in story[i, :]:
+                            if story[ii, j] == w and w not in stopwords:
+                                count += 1
+                    if count > 0:
+                        res.append(ii+1)
+
+        return sorted(res)
+
 
 def train_question_vector(questions, answers, aw_number, alpha=0.1):
     '''
