@@ -37,7 +37,7 @@ from helper import *
 DATA_PATH = '../Data'
 
 
-def build_sentences_mapping(filenames_tuples):
+def build_sentences_mapping(filenames_tuples, word2index=None):
     '''
     Build several mappings:
         index2sentence: sentence index to bow of sentence
@@ -58,8 +58,13 @@ def build_sentences_mapping(filenames_tuples):
     answers = []
     question_index2sentences_index = {}
     q = 1
-    word2index = {}
-    w = 1
+
+    if word2index is None:
+        pretrained = False
+        word2index = {}
+        w = 1
+    else:
+        pretrained = True
 
     # Set of unique words
     words = set()
@@ -74,10 +79,11 @@ def build_sentences_mapping(filenames_tuples):
                 if len(line_split) > 1:
                     # Answer list (in case of list of words as answer)
                     answer = line_split[1].split(',')
-                    for aw in answer:
-                        if aw not in word2index:
-                            word2index[aw] = w
-                            w += 1
+                    if not pretrained:
+                        for aw in answer:
+                            if aw not in word2index:
+                                word2index[aw] = w
+                                w += 1
                     bow = line_split[0].rstrip('? ').split()[1:]
                     # tuple (id_task, bow)
                     index2question[q] = (task_id, bow)
@@ -98,14 +104,13 @@ def build_sentences_mapping(filenames_tuples):
                     index2sentence[s] = (task_id, bow)
                     s += 1
                 words.update(set(bow))
-    # Set the number of answer words
-    Nw = len(word2index)
 
     # Complete the mapping word2index
-    for word in words:
-        if word not in word2index:
-            word2index[word] = w
-            w += 1
+    if not pretrained:
+        for word in words:
+            if word not in word2index:
+                word2index[word] = w
+                w += 1
 
     # Convert answers to np.array
     # Compute the max number of answers for a question
@@ -117,7 +122,7 @@ def build_sentences_mapping(filenames_tuples):
     for i, a in enumerate(answers):
         answers_matrix[i, :len(a)] = a
 
-    return Nw, word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers_matrix
+    return word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers_matrix
 
 
 def build_bow_array(index2question, word2index):
@@ -203,11 +208,23 @@ def main(arguments):
                         help='Dataset to preprocess')
     args = parser.parse_args(arguments)
 
+    # Filter out tasks with multiple anwsers expected
+    tasks = args.tasks
+    for t in [8, 19]:
+        if t in tasks:
+            tasks.remove(t)
+
     # # Retrieve filename
-    filenames_tuples = get_filenames(train=args.train, tasks=args.tasks)
+    filenames_tuples = get_filenames(train=args.train, tasks=tasks)
 
     # ###### STEP 1: mappings
-    Nw, word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers = build_sentences_mapping(filenames_tuples)
+    if args.train:
+        word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers = build_sentences_mapping(filenames_tuples)
+    else:
+        # Load the word2index from train
+        with open(DATA_PATH + '/preprocess/all_train_word2index', 'rb') as file:
+            word2index = pickle.load(file)
+        word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers = build_sentences_mapping(filenames_tuples, word2index=word2index)
     index2word = {v: k for k, v in word2index.iteritems()}
 
     # ###### STEP 2: arrays

@@ -6,6 +6,38 @@ import h5py
 
 from helper import *
 import preprocess
+import itertools
+
+
+def sentence_relevance(story, ques, n=1, stopwords=None):
+
+    nsentence, nword = story.shape
+
+    relevance = np.zeros(nsentence)
+    for i in range(nsentence):
+        for j in range(nword):
+            for w in ques:
+                if story[i, j] == w and w not in stopwords:
+                    relevance[i] += 1
+
+    if n == 1:
+        return np.argmax(relevance)
+    else:
+        res = list(np.arange(nsentence)[relevance.nonzero()]+1)
+        for i in list(np.arange(nsentence)[relevance.nonzero()]):
+            for ii in np.arange(nsentence):
+                if ii+1 in res:
+                    continue
+                else:
+                    count = 0
+                    for j in range(nword):
+                        for w in story[i, :]:
+                            if story[ii, j] == w and w not in stopwords:
+                                count += 1
+                    if count > 0:
+                        res.append(ii+1)
+
+        return sorted(res)
 
 
 def train_question_vector(questions, answers, aw_number, alpha=0.1):
@@ -37,8 +69,7 @@ def build_story_aw_distribution(facts, aw_number, alpha=0.1, decay=0.15):
     Output: normalized count vector
     '''
     count_vector = alpha*np.ones(aw_number)
-    # Removing task id from the facts
-    bow = facts[:, 1:].flatten()
+    bow = facts.flatten()
     for i in xrange(len(bow)-1, -1, -1):
         b = bow[i]
         # check not padding and an answer word
@@ -51,25 +82,8 @@ def build_story_aw_distribution(facts, aw_number, alpha=0.1, decay=0.15):
     return count_vector
 
 
-def question_matching_feature(facts, question, aw_number, alpha=0.1):
-    '''
-    Indicator feature on the set of possible answer words to indicate
-    if a question word is inside the same sentence as an answer word
-    in the facts.
-    Output: normalized count vector.
-    '''
-    count_vector = alpha*np.ones(aw_number)
-    question_set = set([q for q in question if q != 0])
-    for tup in facts:
-        task, fact = tup
-        fact_set = set([q for q in fact if q != 0])
-        intersection = question_set.intersection(fact_set)
-        for i in intersection:
-            pass
-
-
 def batch_prediction(questions, questions_sentences, sentences, aw_number,
-                     questions_embeddings):
+                     questions_embeddings, word2index, relevance=False):
     '''
     Predict the answer to all the questions in the batch as a distribution on
     the possible answer words.
@@ -82,7 +96,16 @@ def batch_prediction(questions, questions_sentences, sentences, aw_number,
     # Go over each question
     for qi, q in enumerate(questions):
         # Facts
-        facts = sentences[questions_sentences[qi][0]-1: questions_sentences[qi][1], :]
+        # Removing task id from the facts
+        facts = sentences[
+            questions_sentences[qi][0]-1: questions_sentences[qi][1], 1:]
+
+        if relevance:
+            facts_ = sentences[
+                questions_sentences[qi][0]-1: questions_sentences[qi][1], 1:]
+            the = word2index['the']
+            to = word2index['to']
+            facts = facts_[np.array(sentence_relevance(facts_, q[1:], 1, [0, the, to]), dtype=int)-1, :]
 
         # Features
         f1 = np.log(questions_embeddings[q[1]])
@@ -91,6 +114,7 @@ def batch_prediction(questions, questions_sentences, sentences, aw_number,
         # print(facts)
         # print(f1)
         # print(f2)
+        # break
 
         predictions[qi, :] = np.exp(f1+f2)
         predictions[qi, :] /= np.sum(predictions[qi, :])
@@ -106,92 +130,100 @@ def main(arguments):
 
     parser.add_argument('--f', default='new', type=str,
                         help='Filename to save preprocess data in hdf5 format')
-    parser.add_argument('--tasks', default=range(1, 21), type=int, nargs='+', help='Tasks list')
+    parser.add_argument(
+        '--tasks', default=range(1, 21), type=int, nargs='+', help='Tasks list')
     args = parser.parse_args(arguments)
-
-    # # Storing the results (task number, num possible responses, accuracy)
-    # results = np.zeros((len(args.tasks), 3))
-
-    # # Looping over the tasks
-    # for i, task in enumerate(args.tasks):
-    #     # Pre-processing the data
-    #     arguments = ['--task', str(task)]
-    #     preprocess.main(arguments)
-
-    #     # Loading the data
-    #     sentences, questions, questions_sentences, answers = read_preprocessed_matrix_data('new')
-    #     word2index, index2sentence, index2question = read_preprocessed_mapping('new')
-
-    #     # Count the answers words (indexed from 1 to len(answer_words))
-    #     answer_words = set(answers.flatten())
-    #     aw_number = len(answer_words)
-
-    #     # Questions embeddings
-    #     questions_embeddings = train_question_vector(questions, answers, aw_number,
-    #                                                  alpha=0.1)
-
-    #     # Batch predictions
-    #     predictions = batch_prediction(questions, questions_sentences, sentences,
-    #                                    aw_number, questions_embeddings)
-    #     # Select response (index start at 1)
-    #     output = np.argmax(predictions, axis=1) + 1
-
-    #     # Compute accuracy
-    #     response = answers.flatten()
-    #     accuracy = np.sum(output == response)/(1.*len(output))
-
-    #     # Storing result
-    #     results[i, :] = [task, aw_number, accuracy]
-
-    # # VERBOSE
-    # print(results)
-    # print('----------------------------------------')
-    # print 'Results for {}'.format(args.tasks)
-    # print 'Average Accuracy is {}'.format(np.mean(results[:,-1]))
-    # print('----------------------------------------')
 
     # Filter the tasks expecting more than one output
     tasks = args.tasks
     for t in [8, 19]:
         if t in tasks:
             tasks.remove(t)
+
     # Wrap up in an argument
     new_arguments = ['--task'] + [str(t) for t in tasks]
 
-    # All in a row
-    preprocess.main(new_arguments)
-
     # Loading the data
-    sentences, questions, questions_sentences, answers = read_preprocessed_matrix_data('new')
-    word2index, index2sentence, index2question = read_preprocessed_mapping('new')
+    sentences_train, questions_train, questions_sentences_train, answers_train = read_preprocessed_matrix_data(
+        'all_train')
+    with open('../Data/preprocess/all_train_word2index', 'rb') as file:
+        word2index = pickle.load(file)
 
+    # ###### Training the questions embeddings
     # Count the answers words (indexed from 1 to len(answer_words))
-    answer_words = set(answers.flatten())
+    answer_words = set(answers_train.flatten())
     aw_number = len(answer_words)
 
     # Questions embeddings
-    questions_embeddings = train_question_vector(questions, answers, aw_number,
-                                                 alpha=0.1)
+    questions_embeddings_train = train_question_vector(questions_train, answers_train,
+                                                 aw_number, alpha=0.1)
 
+    # ##### Predictions
+    # ##### Train
     # Batch predictions
-    predictions = batch_prediction(questions, questions_sentences, sentences,
-                                   aw_number, questions_embeddings)
+    predictions_train = batch_prediction(questions_train, questions_sentences_train, sentences_train,
+                                   aw_number, questions_embeddings_train, word2index)
 
     # Select response (index start at 1)
-    output = np.argmax(predictions, axis=1) + 1
+    output = np.argmax(predictions_train, axis=1) + 1
 
     # Compute global accuracy
-    response = answers.flatten()
+    response = answers_train.flatten()
     print(len(response))
     accuracy = np.sum(output == response)/(1.*len(output))
 
-    # Accuracy per tasks
+    # Accuracy per tasks on train
+    results_train = np.ones((len(tasks), 2))
     for i in xrange(len(tasks)):
-        task_id = questions[1000*i, 0]
-        local_acc = np.sum(output[1000*i:1000*(i+1)] == response[1000*i:1000*(i+1)])/(1000.)
+        task_id = questions_train[1000*i, 0]
+        local_acc = np.sum(
+            output[1000*i:1000*(i+1)] == response[1000*i:1000*(i+1)])/(1000.)
+        results_train[i, 0] = task_id
+        results_train[i, 1] = local_acc
+
+    print('---------------TRAIN------------------')
+
+    for i in xrange(len(tasks)):
+        print 'Results for task {}'.format(results_train[i, 0])
+        print 'Average Accuracy is {}'.format(results_train[i, 1])
         print('----------------------------------------')
-        print 'Results for task {}'.format(task_id)
-        print 'Average Accuracy is {}'.format(local_acc)
+
+    print('----------------------------------------')
+    print('Number of possible answers {}'.format(aw_number))
+    print 'Results for {}'.format(tasks)
+    print 'Average Accuracy is {}'.format(accuracy)
+    print('----------------------------------------')
+
+    # ##### Test
+    sentences_test, questions_test, questions_sentences_test, answers_test = read_preprocessed_matrix_data(
+        'all_test')
+
+    # Batch predictions
+    predictions_test = batch_prediction(questions_test, questions_sentences_test, sentences_test,
+                                        aw_number, questions_embeddings_train, word2index)
+
+    # Select response (index start at 1)
+    output = np.argmax(predictions_test, axis=1) + 1
+
+    # Compute global accuracy
+    response = answers_test.flatten()
+    print(len(response))
+    accuracy = np.sum(output == response)/(1.*len(output))
+
+    # Accuracy per tasks on train
+    results_test = np.ones((len(tasks), 2))
+    for i in xrange(len(tasks)):
+        task_id = questions_test[1000*i, 0]
+        local_acc = np.sum(
+            output[1000*i:1000*(i+1)] == response[1000*i:1000*(i+1)])/(1000.)
+        results_test[i, 0] = task_id
+        results_test[i, 1] = local_acc
+
+    print('---------------TEST------------------')
+
+    for i in xrange(len(tasks)):
+        print 'Results for task {}'.format(results_test[i, 0])
+        print 'Average Accuracy is {}'.format(results_test[i, 1])
         print('----------------------------------------')
 
     print('----------------------------------------')
