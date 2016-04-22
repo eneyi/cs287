@@ -1,0 +1,10 @@
+\begin{thebibliography}{}
+
+\bibitem[Kumar et~al., 2015]{dmn}
+Kumar, A., Irsoy, O., Su, J., Bradbury, J., English, R., Pierce, B., Ondruska,
+  P., Gulrajani, I., and Socher, R. (2015).
+\newblock Ask me anything: Dynamic memory networks for natural language
+  processing.
+\newblock {\em CoRR}, abs/1506.07285.
+
+\end{thebibliography}
