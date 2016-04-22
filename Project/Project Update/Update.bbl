@@ -7,4 +7,17 @@ Kumar, A., Irsoy, O., Su, J., Bradbury, J., English, R., Pierce, B., Ondruska,
   processing.
 \newblock {\em CoRR}, abs/1506.07285.
 
+\bibitem[Richardson and Renshaw, 2013]{mct}
+Richardson, B. and Renshaw, E. (2013).
+\newblock Mctest: A challenge dataset for the open-domain machine comprehension
+  of text.
+\newblock {\em Conference on Empirical Methods in Natural Language Processing}.
+
+\bibitem[Sukhbaatar et~al., 2015]{mem}
+Sukhbaatar, S., szlam, a., Weston, J., and Fergus, R. (2015).
+\newblock End-to-end memory networks.
+\newblock In Cortes, C., Lawrence, N.~D., Lee, D.~D., Sugiyama, M., and
+  Garnett, R., editors, {\em Advances in Neural Information Processing Systems
+  28}, pages 2440--2448. Curran Associates, Inc.
+
 \end{thebibliography}
