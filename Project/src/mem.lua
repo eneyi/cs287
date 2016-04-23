@@ -69,7 +69,7 @@ function buildmodel(hid, nans)
 	model:add(nn.Linear(hid, nans, false));
 
 	-- Applying a softmax function to obtain a distribution over the possible answers
-	model:add(nn.SoftMax());
+	model:add(nn.LogSoftMax());
 
 	return model
 end
@@ -81,9 +81,15 @@ f = myFile:all()
 sentences = f['sentences'] + 1
 questions = f['questions'] + 1
 questions_sentences = f['questions_sentences']
-answers = f['answers']
+answers = f['answers']+1
 myFile:close()
 
 model = buildmodel(5,6)
+criterion = nn.ClassNLLCriterion()
 
-print(model:forward({{{questions[1],sentences:narrow(1,1,2)},sentences:narrow(1,1,2)},questions[1]}))
+input = {{{questions[1], sentences:narrow(1,1,2)}, sentences:narrow(1,1,2)}, questions[1]}
+preds = model:forward(input)
+L = criterion:forward(preds, answers[1])
+dL = criterion:backward(preds, answers[1])
+model:backward(input, dL)
+
