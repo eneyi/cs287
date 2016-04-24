@@ -1,6 +1,8 @@
 require 'hdf5';
 require 'nn';
 require 'torch';
+require 'xlua';
+require 'randomkit'
 
 
 -- README:
@@ -11,9 +13,6 @@ require 'torch';
 -- This is because without nngraph, we need to use mutliple paralleltable at different step.
 
 function buildmodel(hid, nans)
-	--Lookup dimension:
-	hid = 5
-	nans = 6
 
 	-- Initialise the 3 lookup tables:
 	question_embedding = nn.Sequential();
@@ -74,6 +73,75 @@ function buildmodel(hid, nans)
 	return model
 end
 
+function accuracy(sentences, questions, questions_sentences, answers, model)
+	local acc = 0
+	for i = 1, questions:size(1) do
+		xlua.progress(i, questions:size(1))
+		story = sentences:narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
+        input = {{{questions[i], story}, story}, questions[i]}
+		pred = model:forward(input)
+		m, a = pred:view(7,1):max(1)
+		if a[1][1] == answers[i][1] then
+			acc = acc + 1
+		end
+	end
+	return acc/questions:size(1)
+end
+
+
+function train_model(sentences, questions, questions_sentences, answers, model, criterion, eta, nEpochs)
+    -- Train the model with a SGD
+    -- standard parameters are
+    -- nEpochs = 1
+    -- eta = 0.01
+
+    -- To store the loss
+    av_L = 0
+
+    for i = 1, nEpochs do
+        -- timing the epoch
+        timer = torch.Timer()
+        av_L = 0
+        if i % 25 == 0 and i < 100 then
+        	eta = eta/2
+        end
+        -- mini batch loop
+        for t = 1, questions:size(1) do
+        	-- Display progess
+            xlua.progress(t, questions:size(1))
+            -- define input:
+            story = sentences:narrow(1,questions_sentences[t][1], questions_sentences[t][2]-questions_sentences[t][1]+1)
+            input = {{{questions[t], story}, story}, questions[t]}
+
+            -- reset gradients
+            model:zeroGradParameters()
+            --gradParameters:zero()
+
+            -- Forward pass (selection of inputs_batch in case the batch is not full, ie last batch)
+            pred = model:forward(input)
+            -- Average loss computation
+            f = criterion:forward(pred, answers[t])
+            av_L = av_L +f
+
+            -- Backward pass
+            df_do = criterion:backward(pred, answers[t])
+            model:backward(input, df_do)
+            model:updateParameters(eta)
+            
+        end
+        acc = accuracy(sentences, questions, questions_sentences, answers, model)
+        print('Epoch '..i..': '..timer:time().real)
+       	print('\n')
+        print('Average Loss: '..av_L/questions:size(1))
+        print('\n')
+        print('Training accuracy: '..acc)
+        print('\n')
+        print('***************************************************')
+       
+    end
+
+end
+
 -- Sanity check:
 
 myFile = hdf5.open('../Data/preprocess/task2_train.hdf5','r')
@@ -84,12 +152,17 @@ questions_sentences = f['questions_sentences']
 answers = f['answers']+1
 myFile:close()
 
-model = buildmodel(5,6)
+model = buildmodel(50,7)
+parameters, gradParameters = model:getParameters()
+randomkit.normal(parameters, 0, 0.1)
 criterion = nn.ClassNLLCriterion()
 
-input = {{{questions[1], sentences:narrow(1,1,2)}, sentences:narrow(1,1,2)}, questions[1]}
-preds = model:forward(input)
-L = criterion:forward(preds, answers[1])
-dL = criterion:backward(preds, answers[1])
-model:backward(input, dL)
+-- i = 1
+-- story = sentences:narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
+-- input = {{{questions[i], story}, story}, questions[i]}
+-- pred = model:forward(input)
+-- m, a = pred:view(7,1):max(1)
+-- print(a)
+
+train_model(sentences, questions, questions_sentences, answers, model, criterion, 0.01, 100)
 
