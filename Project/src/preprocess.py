@@ -51,6 +51,7 @@ def build_sentences_mapping(filenames_tuples, word2index=None):
 
     Indexes always start at 1 (for lua)
     '''
+    
     index2sentence = {}
     s = 1
     index2question = {}
@@ -59,6 +60,12 @@ def build_sentences_mapping(filenames_tuples, word2index=None):
     question_index2sentences_index = {}
     q = 1
 
+    # helper mapping for the supporting fact
+    # Map the local index of the sentences in a story
+    # to their global index
+    localindex2globalindex = {}
+
+    # Indexes start at 1, padding will be added to the end of the mapping
     if word2index is None:
         pretrained = False
         word2index = {}
@@ -87,7 +94,7 @@ def build_sentences_mapping(filenames_tuples, word2index=None):
                     bow = line_split[0].rstrip('? ').split()[1:]
                     # tuple (id_task, bow)
                     index2question[q] = (task_id, bow)
-                    index2supportings[q] = [int(u) for u in line_split[2].split()]
+                    index2supportings[q] = [localindex2globalindex[int(u)] for u in line_split[2].split()]
                     answers.append([word2index[aw] for aw in answer])
                     question_index2sentences_index[q] = [current_start, s-1]
                     q += 1
@@ -100,8 +107,11 @@ def build_sentences_mapping(filenames_tuples, word2index=None):
                     # Restart current_start if new story
                     if local_ind == 1:
                         current_start = s
+                        # Restart mapping
+                        localindex2globalindex = {}
                     # tuple (id_task, bow)
                     index2sentence[s] = (task_id, bow)
+                    localindex2globalindex[local_ind] = s
                     s += 1
                 words.update(set(bow))
 
@@ -125,7 +135,7 @@ def build_sentences_mapping(filenames_tuples, word2index=None):
     return word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers_matrix
 
 
-def build_bow_array(index2question, word2index):
+def build_bow_array(index2question, word2index, padding_index):
     Nq = len(index2question)
 
     # Get max length
@@ -134,16 +144,16 @@ def build_bow_array(index2question, word2index):
         task_id, bow = tup
         if max_len < len(bow):
             max_len = len(bow)
-    questions = np.zeros((Nq, max_len + 1), dtype=int)
+    bows = padding_index*np.ones((Nq, max_len + 1), dtype=int)
     for i in xrange(1, Nq+1):
         task_id, bow = index2question[i]
         row = [word2index[w] for w in bow]
         # Stores task id
-        questions[i-1, 0] = task_id
+        bows[i-1, 0] = task_id
         # Stores bow
-        questions[i-1, 1:1+len(row)] = row
+        bows[i-1, 1:1+len(row)] = row
 
-    return questions
+    return bows
 
 
 def build_questions_sentences_array(index2supportings, question_index2sentences_index):
@@ -167,6 +177,8 @@ def get_filenames(train=True, tasks=[]):
     ARGS:
         train: boolean
         tasks: list of integers, to specify tasks (if empty all tasks)
+    OUTPUTS:
+        selection: list [(task_number, filename)]
     '''
     # Get filenames
     path = DATA_PATH + '/en/'
@@ -188,11 +200,13 @@ def get_filenames(train=True, tasks=[]):
         for tup in tuples_list:
             if tup[0] in tasks:
                 selection.append(tup)
-        if len(selection):
-            return selection
-        else:
-            raise ValueError('Tasks not found {}'.format(tasks))
-    return tuples_list
+    else:
+        selection = tuples_list
+
+    # Order the filename list by task
+    selection.sort(key=lambda x: x[0])
+
+    return selection
 
 
 def main(arguments):
@@ -204,8 +218,6 @@ def main(arguments):
     parser.add_argument('--tasks', default=range(1, 21), type=int, nargs='+', help='Tasks list')
     parser.add_argument('--f', default='new', type=str,
                         help='Filename to save preprocess data in hdf5 format')
-    parser.add_argument('--train', default=1, type=int,
-                        help='Dataset to preprocess')
     args = parser.parse_args(arguments)
 
     # Filter out tasks with multiple anwsers expected
@@ -214,58 +226,77 @@ def main(arguments):
         if t in tasks:
             tasks.remove(t)
 
-    # # Retrieve filename
-    filenames_tuples = get_filenames(train=args.train, tasks=tasks)
+    # ###### STEP 0: retrieving filenames
+    # Train
+    filenames_tuples_train = get_filenames(train=True, tasks=tasks)
+    # Test
+    filenames_tuples_test = get_filenames(train=False, tasks=tasks)
 
     # ###### STEP 1: mappings
-    if args.train:
-        word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers = build_sentences_mapping(filenames_tuples)
-    else:
-        # Load the word2index from train
-        with open(DATA_PATH + '/preprocess/all_train_word2index', 'rb') as file:
-            word2index = pickle.load(file)
-        word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers = build_sentences_mapping(filenames_tuples, word2index=word2index)
+    # Train
+    word2index, index2sentence_train, index2question_train, index2supportings_train, question_index2sentences_index_train, answers_train = build_sentences_mapping(filenames_tuples_train)
     index2word = {v: k for k, v in word2index.iteritems()}
+    # Test: use word2index from train
+    word2index, index2sentence_test, index2question_test, index2supportings_test, question_index2sentences_index_test, answers_test = build_sentences_mapping(filenames_tuples_test, word2index=word2index)
 
     # ###### STEP 2: arrays
-
-    questions = build_bow_array(index2question, word2index)
-    sentences = build_bow_array(index2sentence, word2index)
-    questions_sentences = build_questions_sentences_array(index2supportings,
-                                                          question_index2sentences_index)
+    # Train
+    padding_index = len(word2index) + 1
+    questions_train = build_bow_array(index2question_train, word2index, padding_index)
+    sentences_train = build_bow_array(index2sentence_train, word2index, padding_index)
+    questions_sentences_train = build_questions_sentences_array(index2supportings_train,
+                                                                question_index2sentences_index_train)
+    # Test
+    questions_test = build_bow_array(index2question_test, word2index, padding_index)
+    sentences_test = build_bow_array(index2sentence_test, word2index, padding_index)
+    questions_sentences_test = build_questions_sentences_array(index2supportings_test,
+                                                                question_index2sentences_index_test)
 
     # ###### STEP 3: saving
 
     # Matrix in hdf5 format
-    filename = DATA_PATH + '/preprocess/' + args.f
+    # Train
+    filename = DATA_PATH + '/preprocess/' + args.f + '_train'
     with h5py.File(filename + '.hdf5', "w") as f:
-        f['sentences'] = sentences
-        f['questions'] = questions
-        f['questions_sentences'] = questions_sentences
-        f['answers'] = answers
+        f['sentences'] = sentences_train
+        f['questions'] = questions_train
+        f['questions_sentences'] = questions_sentences_train
+        f['answers'] = answers_train
+    print('Matrix Train saved in {}.hdf5'.format(filename))
 
-    print('Matrix saved in {}.hdf5'.format(filename))
+    # Test
+    filename = DATA_PATH + '/preprocess/' + args.f + '_test'
+    with h5py.File(filename + '.hdf5', "w") as f:
+        f['sentences'] = sentences_test
+        f['questions'] = questions_test
+        f['questions_sentences'] = questions_sentences_test
+        f['answers'] = answers_test
 
-    # Mapping as python object
-    for f, obj in zip(['_word2index', '_index2sentence', '_index2question'],
-                      [word2index, index2sentence, index2question]):
-        with open(filename + f, 'wb') as file:
-            pickle.dump(obj, file)
+    print('Matrix Test saved in {}.hdf5'.format(filename))
 
-    print('Mapping pickled in {}'.format(filename))
+    # Mapping as python object (we save only the word mapping)
+    # for f, obj in zip(['_word2index', '_index2sentence', '_index2question'],
+    #                   [word2index, index2sentence, index2question]):
+    #     with open(filename + f, 'wb') as file:
+    #         pickle.dump(obj, file)
+
+    with open(filename + '_word2index', 'wb') as file:
+        pickle.dump(word2index, file)
+
+    print('Mapping of words from train pickled in {}'.format(filename))
 
 
     # Debugging
-    # print('DEBUG print')
-    # print(len(index2word))
-    # print(sentences.shape)
-    # print(sentences[:5])
-    # print(questions.shape)
-    # print(questions[:5])
-    # print(questions_sentences.shape)
-    # print(questions_sentences[:5])
-    # print(answers.shape)
-    # print([[index2word[aw] for aw in r] for r in answers[:5]])
+    print('DEBUG print')
+    print(len(index2word))
+    print(sentences_train.shape)
+    print(sentences_train[:5])
+    print(questions_train.shape)
+    print(questions_train[:5])
+    print(questions_sentences_train.shape)
+    print(questions_sentences_train[:5])
+    print(answers_train.shape)
+    print([[index2word[aw] for aw in r] for r in answers_train[:5]])
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
