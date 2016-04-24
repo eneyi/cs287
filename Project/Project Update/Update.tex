@@ -55,9 +55,9 @@
 
 \title{	
 \normalfont \normalsize 
-\textsc{John A. Paulson School of Engineering and Applied Sciences} \\ [25pt] % Your university, school and/or department name(s)
+\textsc{CS 287 - John A. Paulson School of Engineering and Applied Sciences} \\ [25pt] % Your university, school and/or department name(s)
 \horrule{0.5pt} \\[0.4cm] % Thin top horizontal rule
-\huge Project Update - CS287 \\ % The assignment title
+\huge Project Update - Memory Networks For Question Answering \\ % The assignment title
 \horrule{2pt} \\[0.5cm] % Thick bottom horizontal rule
 }
 
@@ -75,47 +75,156 @@ nicolas.drizard@g.harvard.edu\quad vaudi@g.harvard.edu} % Your name
 
 \section*{Introduction}
 
-The focus of this final project is about non-factoid question answering. To solve the problem on non-factoid QA, we chose to implement memory network type of models and in particular the dynamic memory network presented in \cite{dmn}. For this first project update, we mainly worked on pre-processing the data form the bAbi dataset, implement a count-base baseline as well as looking at a one hop memory weakly supervised memory network.
+The focus of this final project is about non-factoid question answering. To tackle this problem, we chose to implement memory network type of models and in particular the dynamic memory network presented in \cite{dmn}. For this project update, we mainly worked on pre-processing the data from the bAbi dataset, implementing a count-base baseline as well as looking at a one hop memory weakly supervised memory network.
 
 
 %------------------------------------------------
 
-\section{Pre-processing}
+\section{Data Pre-processing}
 
-The goal of testing the created models on the bAbi dataset is to be able to have a model that works on all 20 pre-defined tasks without having to fine tune the prediction step. This constrain impacted the choice of pre-processing we adopted for this project. We wanted to create a pre-processing script that given a set of tasks and their respective training and test sets, would output a unique format of input and output data.\\
+Our goal is to build a robust model, i.e. working on any kind of task of question answering. The bAbI dataset created by Facebook \cite{aiqua} provides us relevant tasks. We ore-processed it in several steps:
 
-The first step of the pre-processing was to create a mapping between words present in the training and test sets and an index, and vice-versa. A particularity of the bAbi dataset is that even though it is not a Multiple Choice QA dataset, the number of possible answers is not infinite. We therefore decided to create mappings that given a set of tasks to solve, would start by indexing the words that appear as answers followed by the other words present in training and test stories and questions.\\
+First, we mapped each word to an index. We know that every answer word from the test set is used as anwser in the test set, so this index is built only on the train set but used for both train and test set.
 
-Given the tasks and the mappings mentioned above, the pre-processing script returns four matrices. The first matrix contains the sentences of the different stories using a bag of words representation, as well as the index of the task it belongs to. In this matrix, we concatenate the stories from all the inputed tasks, and sentences are therefore globally indexed and the index of a sentence in a story is disregarded. Using a similar trick as the one used in homework 1, we introduced padding in order to get a standard sentence size equal to the length of the longest sentence in training and testing.\\
+Second, we pre-process each sentence as a bag og words, i.e. we convert it to a vector of word indexes of fixed length (the maximum length over the sentences), using a padding index of 0 at the end. We separate in two different array the sentences and the questions, both are indexed globally in the given dataset.
 
-We used the same construction for the second matrix that corresponds to the bag of words representation of the questions. We also output a vector that contains the index of the answers of the question. Finally we created a fourth matrix that maps the questions to the relevant sentences in the stories matrix. Each row of this matrix contains:
+Third, we encoded in one array the links between the questions and the sentences. Each row corresponds to the question with the corresponding global index in the dataset and contains: index of the first and last sentences of the story and the indexes of its supporting facts. This later is a fixed size list, with a 0 padding for question with less supporting facts.
 
-\begin{itemize}
-\item the index of the first sentence of the corresponding story in the stories matrix,
-\item the index of the last sentence of the corresponding story for this particular questions, 
-\item the indices of the supporting facts in the stories matrix
-\end{itemize}
-The number of supporting facts might vary from task to task, and has a maximum of 3. If we are dealing with less than 3 facts, we fill the row with 0 entries.
+Finally, we store in one vector the word index of the answer for each question. This matrix may have multiple columns with a 0 padding if some questions contain several answers.
 
-\section{Count-Base Baseline}
-\subsection{Model Presentation}
 
-\paragraph{Question/Word embedding}
-\paragraph{???}
+\section*{Baseline}
+As a baseline, we decided to apply a count based approach. We developped two main features and also tried to introduce a first step to narrow the story to only the relevant facts given the question
+
+\subsection*{Count Based Model}
+\paragraph{Answer words counts in the story}
+The first feature evaluate the presence of each answer word in the story, weighted with a decay depending on when it occurs in the story. The idea is basically to count the decayed occurrences of each possible answer word in the story and then to normalize it. It's a simple function taking as input a story, i.e. sequence of facts seen as a bag of words, and return a distribution over the possible answer words. (We know that all the answer words in the test questions have been answer word in the train).
+
+
+We use a simple affine function for the decay with a smoothing parameter $\alpha_1$ to be more resilient:
+\[
+\tilde{f}_1(x_i) = \alpha_1 \sum_k^{|AW|}\delta_1(x_i = aw_k)(1 + \beta * i)
+\]
+with $x_i$ the word of index i in the story, $AW$ the set of possible answer words and $\delta_1(x_i = aw_k)$ a one hot vector of size $|AW|$ with a one on the $k^{th}$ if $x_i = aw_k$. We used in the experiments: $\alpha_1 = 0.1$ and $\beta = 0.15$.
+
+
+For a given story $X=(x_1, ..., x_S)$, we have the corresponding $f_1$ feature:
+
+\[
+f_1(X) = \sum_{i=1}^S\tilde{f}_1(x_i)
+\]
+
+This feature is easy to build for a baseline but contains a lot of drawbacks. First, we just apply a dummy decay over the time. For instance if the answer of a question relies in the first sentence of a story and then comes several sentences without any extra information relative to the question but with possible answer words these wil get a higher score than the real answer. Furthermore, we are not using the question in this feature. Moreover, this feature is just extracted on the fly from the input and we don't take advantage of the train test we have. 
+
+\paragraph{Question embeddings}
+
+This feature aims to use the question, especially the kind of answers it expects: yes/no question, locations, activity, person... This information relies mainly in the question word. As a result, we just extract the first word of the question and embedd it as a vector of size $|AW|$. This embedding is learned at train time and corresponds to the occurences of each answer words as answer to a question with this specific answer words (with a smoothing $\alpha_2$). It will provide a prior information on the expected answer given the question word.
+
+For a given question $Q = (q_1, ..., q_{|Q|}))$:
+
+\[
+f_2(Q) = \tilde{f}_2(q_1) = \alpha_2 + \sum_{i = 1}^{N_{train}} \mathbb{1}(q_1^{(i)}=q_1) \delta_2(q_1, aw_i)
+\]
+
+with $q_1^{(i)}$ the first word of the $i_{th}$ question fromt the train set and $\delta_2(aw_i)$ a one hot vector of size $|AW|$ with a one on the $i^{th}$ . We use in the experiments $\alpha_2 = 0.1$ 
+
+This feature takes advantage of the train set and uses part of a question on contrary to the first feature. We could still extend it while using the rest of the question also. 
+
+\paragraph{Prediction}
+
+The input of the model is a tuple story, question $(X,Q)$. We treat the feature as independant probability distribution as in the Naive Bayes approach so we just simply combine the feature witha product. In the experiment we treat them in the log space for computational purpose and take the argmax of the vector coordinates
+
+Concretely
+
+\[
+\hat{y}(X,Q) = argmax(\log(f_1(X)) + \log(f_2(Q)))
+\]
+
+
 \paragraph{Sentence Matching}
 
-The count-model worked rather well just using the previous features. We felt never the less that implementing a first sentence matching step could help improve results. The goal of this step was to restrict the number of sentences in which we could find the answer to a given question. To do so, we used co-occurences of words in the questions with words in the sentences of the story. This is similar to the algorithm presented in the MCtest paper \cite{mct}. This step allows to look for one or more supporting facts. If the desired number of facts is one, the function outputs the highest scoring sentence on account of word co-occurences. Consider the following example:\\
+Here, we introduce a preliminary step to restrict the number of sentences of a given story given the question, i.e. looking for the supporing facts. A first idea, inspired by \cite{mct}, is to use occurences of words in the questions in the story. We can then decide to output one of several supporting facts.
+
+Moreover,if we consider the following example:\\
 \begin{center}
 Mary picked up the football.\\
 Mary went to the garden.\\
 John walked to the garden.\\
 Where is the football?
 \end{center}
-If we look for more than one supporting fact, then word counts would not help us answer the question, as the only scoring sentence (if we disregard stop words such as the) would be the first sentence. So the function we coded uses an iterative approach to narrow the search for supporting facts. It then looks for sentences that have co-occurences with the sentences that scored in the first question/sentence matching. The fact that "Mary" appears both in the first and second sentence will allow us to return the relevant facts to answering the question.\\
 
-A potential downside to this method is that it will most of the time find more than three supporting facts which is the maximum amount of supporting facts needed to answer questions of any tasks. Nevertheless, this step would only be necessary for the count-base model. And since the use of this model was just to act as a baseline to the memory networks, we decided that the model performed sufficiently well to leave it to that.
+Here, simple occurences are not enough. We need to look for sentences that have other co-occurences with the sentences that scored in the first question/sentence matching. The word "Mary" then enables to return the relevant facts to answer the question.\\
+
+One drawback is on the returned number of supporting facts. The maximum number should be less than three as in the data set but more sentence may match. Nevertheless, this step would only be necessary for the count-base model. And since the use of this model was just to act as a baseline to the memory networks, we decided that the model performed sufficiently well to leave it to that.
 
 \subsection{Results}
+
+We applied the two models on the train and test set, the feature $f_1$ is computed on the fly and $f_2$ was learned on the train set. We obtained fairly good results, even better than those provided in \cite{aiqua} on average. We provided the size of the output space $|AW|$ for each question to have an idea of a model with random guess. But we trained all the tasks globaly, ie with an output vector in the global output space. We are not able to provide results on tasks 8 and 19 as they expect outputs with different sizes (List and Path finding). We chose not to focus on these ones but will try to adapt our memory network to them.
+
+For instance, it seems to provide acceptable results on the first three tasks, as usually the answer appears always at the end of the story; or at least it's the last word in the set of expected words given the question word. (For instance last location words for a \textit{Where}). On the contrary, on Yes/no tasks (6, 17, 18) the results are almost random (around 50\% of accuracy) as the answer Yes/no do not appear in the story.
+
+\begin{figure}[H]
+\centering
+\begin{minipage}{.5\textwidth}
+\centering
+\caption{Results on TRAIN}
+\label{my-label}
+\begin{tabular}{|l|l|l|}
+\hline
+Task & \ |AW| & Accuracy \\ \hline
+1    & 6                   & 54       \\ \hline
+2    & 6                   & 38       \\ \hline
+3    & 6                   & 29       \\ \hline
+4    & 6                   & 33       \\ \hline
+5    & 7                   & 54       \\ \hline
+6    & 2                   & 49       \\ \hline
+7    & 4                   & 49       \\ \hline
+8    & -                   & 0        \\ \hline
+9    & 2                   & 63       \\ \hline
+10   & 3                   & 47       \\ \hline
+11   & 6                   & 62       \\ \hline
+12   & 6                   & 58       \\ \hline
+13   & 6                   & 71       \\ \hline
+14   & 6                   & 28       \\ \hline
+15   & 4                   & 16       \\ \hline
+16   & 4                   & 51       \\ \hline
+17   & 2                   & 50       \\ \hline
+18   & 2                   & 50       \\ \hline
+19   & 4                   & 0        \\ \hline
+20   & 7                   & 56       \\ \hline
+\end{tabular}
+\end{minipage}%
+\begin{minipage}{.5\textwidth}
+\centering
+\caption{Results on TEST}
+\label{my-label}
+\begin{tabular}{|l|l|l|}
+\hline
+Task & |AW| & Accuracy \\ \hline
+1    & 6                   & 50       \\ \hline
+2    & 6                   & 40       \\ \hline
+3    & 6                   & 26       \\ \hline
+4    & 6                   & 34       \\ \hline
+5    & 7                   & 48       \\ \hline
+6    & 2                   & 50       \\ \hline
+7    & 4                   & 49       \\ \hline
+8    & -                   & 0        \\ \hline
+9    & 2                   & 64       \\ \hline
+10   & 3                   & 44       \\ \hline
+11   & 6                   & 63       \\ \hline
+12   & 6                   & 60       \\ \hline
+13   & 6                   & 68       \\ \hline
+14   & 6                   & 29       \\ \hline
+15   & 4                   & 14       \\ \hline
+16   & 4                   & 52       \\ \hline
+17   & 2                   & 48       \\ \hline
+18   & 2                   & 53       \\ \hline
+19   & 4                   & 0        \\ \hline
+20   & 7                   & 52       \\ \hline
+\end{tabular}
+\end{minipage}
+\end{figure}
+
 \section{Memory Network}
 
 If we didn't have sufficient time to implement a first memory network, we wanted to present the first memory network we will implement. The model was introduced in \cite{mem} and can be summarised in the following graphical representation:

@@ -20,4 +20,10 @@ Sukhbaatar, S., szlam, a., Weston, J., and Fergus, R. (2015).
   Garnett, R., editors, {\em Advances in Neural Information Processing Systems
   28}, pages 2440--2448. Curran Associates, Inc.
 
+\bibitem[Weston et~al., 2015]{aiqua}
+Weston, J., Bordes, A., Chopra, S., and Mikolov, T. (2015).
+\newblock Towards ai-complete question answering: {A} set of prerequisite toy
+  tasks.
+\newblock {\em CoRR}, abs/1502.05698.
+
 \end{thebibliography}
