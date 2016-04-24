@@ -2,17 +2,18 @@ require 'hdf5';
 require 'nn';
 require 'torch';
 require 'xlua';
-require 'randomkit'
+require 'randomkit';
 
 
 -- README:
 -- Function to define the 1-hop memory model
 -- Inputs: hidden dimension of the lookup table and number of potential answer to predict on
 -- Structure is kind of tricky, when calling forward inputs needs to be in the following format:
--- {{{question, story}, story}, question}
+-- {{{question, {memory, torch.linspace(1,memsize,memsize):type('torch.LongTensor')},
+-- 							{memory,torch.linspace(1,memsize,memsize):type('torch.LongTensor')}, question}
 -- This is because without nngraph, we need to use mutliple paralleltable at different step.
 
-function buildmodel(hid, nans)
+function buildmodel(hid, nans, memsize)
 
 	-- Initialise the 3 lookup tables:
 	question_embedding = nn.Sequential();
@@ -20,19 +21,35 @@ function buildmodel(hid, nans)
 	question_embedding:add(nn.Sum(1));
 	question_embedding:add(nn.View(1, hid));
 
+	sent_input_embedding_time = nn.Sequential();
+	sent_input_pt = nn.ParallelTable();
 	sent_input_embedding = nn.Sequential();
 	sent_input_embedding:add(nn.LookupTable(torch.max(sentences), hid));
 	sent_input_embedding:add(nn.Sum(2));
+	TA = nn.LookupTable(memsize,hid);
+	sent_input_pt:add(sent_input_embedding);
+	sent_input_pt:add(TA);
+	sent_input_embedding_time:add(sent_input_pt);
+	sent_input_embedding_time:add(nn.CAddTable());
 
+
+	sent_output_embedding_time = nn.Sequential();
+	sent_output_pt = nn.ParallelTable();
 	sent_output_embedding = nn.Sequential();
 	sent_output_embedding:add(nn.LookupTable(torch.max(sentences), hid));
 	sent_output_embedding:add(nn.Sum(2));
+	TC = nn.LookupTable(memsize,hid);
+	sent_output_pt:add(sent_output_embedding);
+	sent_output_pt:add(TC);
+	sent_output_embedding_time:add(sent_output_pt);
+	sent_output_embedding_time:add(nn.CAddTable());
+
 
 	-- Define the inner product + softmax between input and question:
 	inner_prod = nn.Sequential();
 	PT = nn.ParallelTable();
 	PT:add(question_embedding);
-	PT:add(sent_input_embedding);
+	PT:add(sent_input_embedding_time);
 	inner_prod:add(PT);
 	inner_prod:add(nn.MM(false, true));
 	inner_prod:add(nn.SoftMax());
@@ -44,7 +61,7 @@ function buildmodel(hid, nans)
 	model_inner = nn.Sequential();
 	model_pt_inner = nn.ParallelTable();
 	model_pt_inner:add(inner_prod);
-	model_pt_inner:add(sent_output_embedding);
+	model_pt_inner:add(sent_output_embedding_time);
 
 	model_inner:add(model_pt_inner);
 	model_inner:add(weighted_sum);
@@ -73,12 +90,17 @@ function buildmodel(hid, nans)
 	return model
 end
 
-function accuracy(sentences, questions, questions_sentences, answers, model)
+function accuracy(sentences, questions, questions_sentences, answers, model, memsize)
 	local acc = 0
+	local memsize_range = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
+	local memory = torch.ones(memsize, sentences:size(2))
 	for i = 1, questions:size(1) do
-		xlua.progress(i, questions:size(1))
-		story = sentences:narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
-        input = {{{questions[i], story}, story}, questions[i]}
+		-- xlua.progress(i, questions:size(1))
+		memory:fill(1)
+        story = sentences:narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
+        memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
+
+        input = {{{questions[i], {memory, memsize_range}}, {memory, memsize_range}}, questions[i]}
 		pred = model:forward(input)
 		m, a = pred:view(7,1):max(1)
 		if a[1][1] == answers[i][1] then
@@ -89,18 +111,24 @@ function accuracy(sentences, questions, questions_sentences, answers, model)
 end
 
 
-function train_model(sentences, questions, questions_sentences, answers, model, criterion, eta, nEpochs)
+function train_model(sentences, questions, questions_sentences, answers, model, memsize, criterion, eta, nEpochs)
     -- Train the model with a SGD
     -- standard parameters are
     -- nEpochs = 1
     -- eta = 0.01
 
     -- To store the loss
-    loss = torch.zeros(nEpochs)
-    accuracy = torch.zeros(nEpochs)
-    av_L = 0
+    local loss = torch.zeros(nEpochs)
+    local accuracy_ = torch.zeros(nEpochs)
+    local av_L = 0
+
+    local memsize_range = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
+    local memory = torch.ones(memsize, sentences:size(2))
 
     for i = 1, nEpochs do
+    	-- Display progess
+        xlua.progress(i, nEpochs)
+
         -- timing the epoch
         timer = torch.Timer()
         av_L = 0
@@ -109,11 +137,11 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         end
         -- mini batch loop
         for t = 1, questions:size(1) do
-        	-- Display progess
-            xlua.progress(t, questions:size(1))
             -- define input:
+            memory:fill(1)
             story = sentences:narrow(1,questions_sentences[t][1], questions_sentences[t][2]-questions_sentences[t][1]+1)
-            input = {{{questions[t], story}, story}, questions[t]}
+            memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
+            input = {{{questions[t], {memory, memsize_range}}, {memory, memsize_range}}, questions[t]}
 
             -- reset gradients
             model:zeroGradParameters()
@@ -131,13 +159,13 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
             model:updateParameters(eta)
             
         end
-        accuracy[i] = accuracy(sentences, questions, questions_sentences, answers, model)
+        accuracy_[i] = accuracy(sentences, questions, questions_sentences, answers, model, memsize)
         loss[i] = av_L/questions:size(1)
         print('Epoch '..i..': '..timer:time().real)
        	print('\n')
         print('Average Loss: '.. loss[i])
         print('\n')
-        print('Training accuracy: '.. accuracy[i])
+        print('Training accuracy: '.. accuracy_[i])
         print('\n')
         print('***************************************************')
        
@@ -156,7 +184,7 @@ answers = f['answers']+1
 myFile:close()
 
 -- Building the model
-model = buildmodel(50, 7)
+model = buildmodel(50, 7, 60)
 
 -- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
@@ -166,5 +194,5 @@ randomkit.normal(parameters, 0, 0.1)
 criterion = nn.ClassNLLCriterion()
 
 -- Training
-loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers, model, criterion, 0.01, 100)
+loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers, model, 60, criterion, 0.01, 100)
 
