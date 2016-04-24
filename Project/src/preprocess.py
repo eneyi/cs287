@@ -271,6 +271,7 @@ def main(arguments):
         f['questions'] = questions_test
         f['questions_sentences'] = questions_sentences_test
         f['answers'] = answers_test
+        f['voc_size'] = np.array([len(word2index) + 1])
 
     print('Matrix Test saved in {}.hdf5'.format(filename))
 
