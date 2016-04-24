@@ -96,6 +96,8 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
     -- eta = 0.01
 
     -- To store the loss
+    loss = torch.zeros(nEpochs)
+    accuracy = torch.zeros(nEpochs)
     av_L = 0
 
     for i = 1, nEpochs do
@@ -129,17 +131,18 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
             model:updateParameters(eta)
             
         end
-        acc = accuracy(sentences, questions, questions_sentences, answers, model)
+        accuracy[i] = accuracy(sentences, questions, questions_sentences, answers, model)
+        loss[i] = av_L/questions:size(1)
         print('Epoch '..i..': '..timer:time().real)
        	print('\n')
-        print('Average Loss: '..av_L/questions:size(1))
+        print('Average Loss: '.. loss[i])
         print('\n')
-        print('Training accuracy: '..acc)
+        print('Training accuracy: '.. accuracy[i])
         print('\n')
         print('***************************************************')
        
     end
-
+    return loss, accuracy
 end
 
 -- Sanity check:
@@ -152,17 +155,16 @@ questions_sentences = f['questions_sentences']
 answers = f['answers']+1
 myFile:close()
 
-model = buildmodel(50,7)
+-- Building the model
+model = buildmodel(50, 7)
+
+-- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
 randomkit.normal(parameters, 0, 0.1)
+
+-- Criterion
 criterion = nn.ClassNLLCriterion()
 
--- i = 1
--- story = sentences:narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
--- input = {{{questions[i], story}, story}, questions[i]}
--- pred = model:forward(input)
--- m, a = pred:view(7,1):max(1)
--- print(a)
-
-train_model(sentences, questions, questions_sentences, answers, model, criterion, 0.01, 100)
+-- Training
+loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers, model, criterion, 0.01, 100)
 
