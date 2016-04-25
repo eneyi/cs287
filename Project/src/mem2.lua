@@ -1,5 +1,5 @@
 require 'hdf5';
-require 'nn';
+require 'nngraph';
 require 'torch';
 require 'xlua';
 require 'randomkit'
@@ -73,14 +73,38 @@ function buildmodel(hid, nans)
 	return model
 end
 
+function graph_model(dim_hidden, num_answer, voca_size)
+    print(dim_hidden, num_answer, voca_size)
+    -- Inputs
+    local story = nn.Identity()()
+    local question = nn.Identity()()
+
+    -- Embedding
+    local question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.LookupTable(voca_size, dim_hidden)(question)));
+    local sent_input_embedding = nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story));
+    local sent_output_embedding = nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story));
+
+    -- Components
+    local weights = nn.SoftMax()(nn.MM(false, true)({question_embedding, sent_input_embedding}))
+    local o = nn.MM()({weights, sent_output_embedding})
+    local output = nn.SoftMax()(nn.Linear(dim_hidden, num_answer)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
+
+    -- Model
+    local model = nn.gModule({story, question}, {output})
+
+    return model
+end
+
+
 function accuracy(sentences, questions, questions_sentences, answers, model)
 	local acc = 0
 	for i = 1, questions:size(1) do
-		xlua.progress(i, questions:size(1))
+		-- xlua.progress(i, questions:size(1))
 		story = sentences:narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
-        input = {{{questions[i], story}, story}, questions[i]}
+        input = {story, questions[i]}
 		pred = model:forward(input)
-		m, a = pred:view(7,1):max(1)
+        -- print(pred:size())
+		m, a = pred:view(pred:size(1),1):max(1)
 		if a[1][1] == answers[i][1] then
 			acc = acc + 1
 		end
@@ -89,7 +113,8 @@ function accuracy(sentences, questions, questions_sentences, answers, model)
 end
 
 
-function train_model(sentences, questions, questions_sentences, answers, model, criterion, eta, nEpochs)
+function train_model(sentences, questions, questions_sentences, answers, model, par, gradPar,
+                     criterion, eta, nEpochs)
     -- Train the model with a SGD
     -- standard parameters are
     -- nEpochs = 1
@@ -110,10 +135,11 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         -- mini batch loop
         for t = 1, questions:size(1) do
         	-- Display progess
-            xlua.progress(t, questions:size(1))
+            -- xlua.progress(t, questions:size(1))
             -- define input:
-            story = sentences:narrow(1,questions_sentences[t][1], questions_sentences[t][2]-questions_sentences[t][1]+1)
-            input = {{{questions[t], story}, story}, questions[t]}
+            local story = sentences:narrow(1,questions_sentences[t][1], questions_sentences[t][2]-questions_sentences[t][1]+1)
+
+            local input = {story, questions[t]}
 
             -- reset gradients
             model:zeroGradParameters()
@@ -128,10 +154,10 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
             -- Backward pass
             df_do = criterion:backward(pred, answers[t])
             model:backward(input, df_do)
-            model:updateParameters(eta)
+            --model:updateParameters(eta)
+            par:add(gradPar:mul(-eta))
             
         end
-        print('here')
         accuracy_tensor[i] = accuracy(sentences, questions, questions_sentences, answers, model)
         loss[i] = av_L/questions:size(1)
         print('Epoch '..i..': '..timer:time().real)
@@ -150,22 +176,25 @@ end
 
 myFile = hdf5.open('../Data/preprocess/task2_train.hdf5','r')
 f = myFile:all()
-sentences = f['sentences'] + 1
-questions = f['questions'] + 1
+sentences = f['sentences']
+questions = f['questions']
 questions_sentences = f['questions_sentences']
-answers = f['answers']+1
+answers = f['answers']
+voca_size = f['voc_size'][1]
 myFile:close()
 
 -- Building the model
-model = buildmodel(50, 7)
+model = graph_model(50, torch.max(answers), voca_size)
 
 -- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
-randomkit.normal(parameters, 0, 0.1)
+print(parameters:size())
+--randomkit.normal(parameters, 0, 0.1)
 
 -- Criterion
 criterion = nn.ClassNLLCriterion()
 
 -- Training
-loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers, model, criterion, 0.01, 100)
+loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers,
+                                         model, parameters, gradParameters, criterion, 0.01, 150)
 
