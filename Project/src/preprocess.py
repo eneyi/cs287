@@ -262,7 +262,7 @@ def main(arguments):
         f['questions'] = questions_train
         f['questions_sentences'] = questions_sentences_train
         f['answers'] = answers_train
-        f['voc_size'] = np.array([len(word2index) + 1])
+        f['voc_size'] = np.array([len(word2index) + 1], dtype=np.int32)
     print('Matrix Train saved in {}.hdf5'.format(filename))
 
     # Test
@@ -272,7 +272,7 @@ def main(arguments):
         f['questions'] = questions_test
         f['questions_sentences'] = questions_sentences_test
         f['answers'] = answers_test
-        f['voc_size'] = np.array([len(word2index) + 1])
+        f['voc_size'] = np.array([len(word2index) + 1], dtype=np.int32)
 
     print('Matrix Test saved in {}.hdf5'.format(filename))
 
