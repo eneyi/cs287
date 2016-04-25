@@ -262,6 +262,7 @@ def main(arguments):
         f['questions'] = questions_train
         f['questions_sentences'] = questions_sentences_train
         f['answers'] = answers_train
+        f['voc_size'] = np.array([len(word2index) + 1])
     print('Matrix Train saved in {}.hdf5'.format(filename))
 
     # Test
