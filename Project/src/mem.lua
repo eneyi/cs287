@@ -101,14 +101,20 @@ function accuracy(sentences, questions, questions_sentences, answers, model, mem
 		-- xlua.progress(i, questions:size(1))
 		memory:fill(nvoc)
         story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
+        
+        -- ONLY TAKES UP TO THE LAST memsize FACTS:
 		if story:size(1) < memsize then 
         	memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
         else
         	memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
-        end        q = questions:narrow(2,2,questions:size(2)-1)[i]
+        end 
+
+        q = questions:narrow(2,2,questions:size(2)-1)[i]
         input = {{{q, {memory, memsize_range}}, {memory, memsize_range}}, q}
+
 		pred = model:forward(input)
 		m, a = pred:view(nans,1):max(1)
+
 		if a[1][1] == answers[i][1] then
 			acc = acc + 1
 			acc_task[questions[i][1]] = acc_task[questions[i][1]] + 1.
@@ -147,12 +153,15 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         for t = 1, questions:size(1) do
             -- define input:
             memory:fill(nvoc)
+
             story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[t][1], questions_sentences[t][2]-questions_sentences[t][1]+1)
+            -- ONLY TAKES UP TO THE LAST memsize FACTS:
             if story:size(1) < memsize then 
             	memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
             else
             	memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
             end
+            
             q = questions:narrow(2,2,questions:size(2)-1)[t]
             input = {{{q, {memory, memsize_range}}, {memory, memsize_range}}, q}
 
