@@ -13,18 +13,18 @@ require 'randomkit';
 -- 							{memory,torch.linspace(1,memsize,memsize):type('torch.LongTensor')}, question}
 -- This is because without nngraph, we need to use mutliple paralleltable at different step.
 
-function buildmodel(hid, nans, memsize)
+function buildmodel(hid, nvoc, nans, memsize)
 
 	-- Initialise the 3 lookup tables:
 	question_embedding = nn.Sequential();
-	question_embedding:add(nn.LookupTable(torch.max(sentences), hid));
+	question_embedding:add(nn.LookupTable(nvoc, hid));
 	question_embedding:add(nn.Sum(1));
 	question_embedding:add(nn.View(1, hid));
 
 	sent_input_embedding_time = nn.Sequential();
 	sent_input_pt = nn.ParallelTable();
 	sent_input_embedding = nn.Sequential();
-	sent_input_embedding:add(nn.LookupTable(torch.max(sentences), hid));
+	sent_input_embedding:add(nn.LookupTable(nvoc, hid));
 	sent_input_embedding:add(nn.Sum(2));
 	TA = nn.LookupTable(memsize,hid);
 	sent_input_pt:add(sent_input_embedding);
@@ -36,7 +36,7 @@ function buildmodel(hid, nans, memsize)
 	sent_output_embedding_time = nn.Sequential();
 	sent_output_pt = nn.ParallelTable();
 	sent_output_embedding = nn.Sequential();
-	sent_output_embedding:add(nn.LookupTable(torch.max(sentences), hid));
+	sent_output_embedding:add(nn.LookupTable(nvoc, hid));
 	sent_output_embedding:add(nn.Sum(2));
 	TC = nn.LookupTable(memsize,hid);
 	sent_output_pt:add(sent_output_embedding);
@@ -90,28 +90,36 @@ function buildmodel(hid, nans, memsize)
 	return model
 end
 
-function accuracy(sentences, questions, questions_sentences, answers, model, memsize)
+function accuracy(sentences, questions, questions_sentences, answers, model, memsize, nvoc, nans)
+
+	local acc_task = torch.zeros(sentences:narrow(2,1,1):max())
+	local task_count = torch.zeros(sentences:narrow(2,1,1):max())
 	local acc = 0
 	local memsize_range = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
-	local memory = torch.ones(memsize, sentences:size(2))
+	local memory = torch.ones(memsize, sentences:size(2)-1)*nvoc
 	for i = 1, questions:size(1) do
 		-- xlua.progress(i, questions:size(1))
-		memory:fill(1)
-        story = sentences:narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
-        memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
-
-        input = {{{questions[i], {memory, memsize_range}}, {memory, memsize_range}}, questions[i]}
+		memory:fill(nvoc)
+        story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
+		if story:size(1) < memsize then 
+        	memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
+        else
+        	memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
+        end        q = questions:narrow(2,2,questions:size(2)-1)[i]
+        input = {{{q, {memory, memsize_range}}, {memory, memsize_range}}, q}
 		pred = model:forward(input)
-		m, a = pred:view(7,1):max(1)
+		m, a = pred:view(nans,1):max(1)
 		if a[1][1] == answers[i][1] then
 			acc = acc + 1
+			acc_task[questions[i][1]] = acc_task[questions[i][1]] + 1.
 		end
+		task_count[questions[i][1]] = task_count[questions[i][1]] + 1.
 	end
-	return acc/questions:size(1)
+	return acc/questions:size(1), acc_task:cdiv(task_count)
 end
 
 
-function train_model(sentences, questions, questions_sentences, answers, model, memsize, criterion, eta, nEpochs)
+function train_model(sentences, questions, questions_sentences, answers, model, nvoc, nans, memsize, criterion, eta, nEpochs)
     -- Train the model with a SGD
     -- standard parameters are
     -- nEpochs = 1
@@ -123,7 +131,7 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
     local av_L = 0
 
     local memsize_range = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
-    local memory = torch.ones(memsize, sentences:size(2))
+    local memory = torch.ones(memsize, sentences:size(2)-1)*nvoc
 
     for i = 1, nEpochs do
     	-- Display progess
@@ -138,10 +146,15 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         -- mini batch loop
         for t = 1, questions:size(1) do
             -- define input:
-            memory:fill(1)
-            story = sentences:narrow(1,questions_sentences[t][1], questions_sentences[t][2]-questions_sentences[t][1]+1)
-            memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
-            input = {{{questions[t], {memory, memsize_range}}, {memory, memsize_range}}, questions[t]}
+            memory:fill(nvoc)
+            story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[t][1], questions_sentences[t][2]-questions_sentences[t][1]+1)
+            if story:size(1) < memsize then 
+            	memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
+            else
+            	memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
+            end
+            q = questions:narrow(2,2,questions:size(2)-1)[t]
+            input = {{{q, {memory, memsize_range}}, {memory, memsize_range}}, q}
 
             -- reset gradients
             model:zeroGradParameters()
@@ -159,7 +172,8 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
             model:updateParameters(eta)
             
         end
-        accuracy_[i] = accuracy(sentences, questions, questions_sentences, answers, model, memsize)
+
+        accuracy_[i], task_acc = accuracy(sentences, questions, questions_sentences, answers, model, memsize, nvoc, nans)
         loss[i] = av_L/questions:size(1)
         print('Epoch '..i..': '..timer:time().real)
        	print('\n')
@@ -168,23 +182,28 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         print('Training accuracy: '.. accuracy_[i])
         print('\n')
         print('***************************************************')
-       
+       	
     end
-    return loss, accuracy
+
+    return loss, accuracy, task_acc
 end
 
 -- Sanity check:
 
-myFile = hdf5.open('../Data/preprocess/task2_train.hdf5','r')
+myFile = hdf5.open('../Data/preprocess/all_train.hdf5','r')
 f = myFile:all()
-sentences = f['sentences'] + 1
-questions = f['questions'] + 1
+sentences = f['sentences']
+questions = f['questions']
 questions_sentences = f['questions_sentences']
-answers = f['answers']+1
+answers = f['answers']
+nvoc = f['voc_size'][1]
 myFile:close()
+nans = answers:max()
 
 -- Building the model
-model = buildmodel(50, 7, 60)
+hid = 50
+memsize = 50
+model = buildmodel(hid, nvoc, nans, memsize)
 
 -- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
@@ -194,5 +213,9 @@ randomkit.normal(parameters, 0, 0.1)
 criterion = nn.ClassNLLCriterion()
 
 -- Training
-loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers, model, 60, criterion, 0.01, 100)
+eta = 0.01
+nEpochs = 50
+loss_train, accuracy_train, accuracy_train_task = train_model(sentences, questions, questions_sentences, answers, model, nvoc, nans, memsize, criterion, eta, nEpochs)
+print('Detailed accuracies:')
+print(accuracy_train_task)
 
