@@ -296,7 +296,7 @@ def main(arguments):
     print(questions_train[:5])
     print(questions_sentences_train.shape)
     print(questions_sentences_train[:5])
-    print(answers_train.shape)
+    print(answers_train[:5])
     print([[index2word[aw] for aw in r] for r in answers_train[:5]])
 
 if __name__ == '__main__':
