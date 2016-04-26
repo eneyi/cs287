@@ -161,7 +161,7 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
             else
             	memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
             end
-            
+
             q = questions:narrow(2,2,questions:size(2)-1)[t]
             input = {{{q, {memory, memsize_range}}, {memory, memsize_range}}, q}
 
@@ -223,8 +223,17 @@ criterion = nn.ClassNLLCriterion()
 
 -- Training
 eta = 0.01
-nEpochs = 50
+nEpochs = 100
+
+print('MODEL 1:')
 loss_train, accuracy_train, accuracy_train_task = train_model(sentences, questions, questions_sentences, answers, model, nvoc, nans, memsize, criterion, eta, nEpochs)
+print('Detailed accuracies:')
+print(accuracy_train_task)
+
+print('MODEL 2:')
+
+model2 = buildmodel(hid, nvoc, nans, memsize)
+loss_train, accuracy_train, accuracy_train_task = train_model(sentences, questions, questions_sentences, answers, model2, nvoc, nans, memsize, criterion, eta, nEpochs)
 print('Detailed accuracies:')
 print(accuracy_train_task)
 
