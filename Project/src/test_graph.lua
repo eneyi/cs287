@@ -16,7 +16,7 @@ myFile:close()
 i = 1
 memsize = 50
 story_input = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
-question_input = questions:narrow(1,i,1)
+question_input = questions:narrow(2,2,questions:size(2)-1)[i]
 time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
 story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
 story_memory:narrow(1,memsize - story_input:size(1)+1,story_input:size(1)):copy(story_input)
@@ -40,7 +40,7 @@ time = nn.Identity()()
 -- L1 = nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story_in_memory))
 -- L2 = nn.LookupTable(memsize, dim_hidden)(time)
 -- Embedding
-question_embedding = nn.View(1, dim_hidden)(nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(question)));
+question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.LookupTable(voca_size, dim_hidden)(question)));
 sent_input_embedding = (nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story_in_memory)),
                                        nn.LookupTable(memsize, dim_hidden)(time)}));
 sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story_in_memory)),
@@ -49,7 +49,7 @@ sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_
 -- Components
 weights = nn.SoftMax()(nn.MM(false, true)({question_embedding, sent_input_embedding}))
 o = nn.MM()({weights, sent_output_embedding})
-output = nn.SoftMax()(nn.Linear(dim_hidden, num_answer)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
+output = nn.SoftMax()(nn.Linear(dim_hidden, num_answer, false)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
 
 -- Model
 model = nn.gModule({story_in_memory, question, time}, {output})
@@ -69,8 +69,8 @@ randomkit.normal(parameters, 0, 0.1)
 -- model_output = model_test:updateOutput({story_memory, time_input})
 -- print(model_output:size())
 
-print(story_input:size(), question_input:size())
 model_output = model:updateOutput({story_memory, question_input, time_input})
+print('Output with NNgraph')
 print(model_output)
 
 -- backward
@@ -155,7 +155,7 @@ function buildmodel(hid, nvoc, nans, memsize)
     model:add(nn.Linear(hid, nans, false));
 
     -- Applying a softmax function to obtain a distribution over the possible answers
-    model:add(nn.LogSoftMax());
+    model:add(nn.SoftMax());
 
     return model
 end
@@ -167,8 +167,10 @@ model = buildmodel(dim_hidden, voca_size, num_answer, memsize)
 parameters, gradParameters = model:getParameters()
 torch.manualSeed(0)
 randomkit.normal(parameters, 0, 0.1)
+print(parameters:size())
 
 
 input = {{{question_input, {story_memory, time_input}}, {story_memory, time_input}}, question_input}
 pred = model:forward(input)
+print('Output with NN')
 print(pred)

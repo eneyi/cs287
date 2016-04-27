@@ -91,7 +91,7 @@ function graph_model(dim_hidden, num_answer, voca_size, memsize)
     -- Components
     local weights = nn.SoftMax()(nn.MM(false, true)({question_embedding, sent_input_embedding}))
     local o = nn.MM()({weights, sent_output_embedding})
-    local output = nn.SoftMax()(nn.Linear(dim_hidden, num_answer)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
+    local output = nn.SoftMax()(nn.Linear(dim_hidden, num_answer, false)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
 
     -- Model
     local model = nn.gModule({story_in_memory, question, time}, {output})
@@ -107,6 +107,7 @@ function accuracy(sentences, questions, questions_sentences, answers, model, mem
 
 	for i = 1, questions:size(1) do
 		-- xlua.progress(i, questions:size(1))
+        story_memory:fill(voca_size)
         local story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[i][1],
                                                                      questions_sentences[i][2]-questions_sentences[i][1]+1)
         local question_input = questions:narrow(2,2,questions:size(2)-1)[i]
@@ -154,6 +155,7 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         	-- Display progess
             -- xlua.progress(t, questions:size(1))
             -- define input:
+            story_memory:fill(voca_size)
             local story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[t][1],
                                                                          questions_sentences[t][2]-questions_sentences[t][1]+1)
             local question_input = questions:narrow(2,2,questions:size(2)-1)[t]
@@ -196,7 +198,7 @@ end
 
 -- Sanity check:
 
-myFile = hdf5.open('../Data/preprocess/task2_train.hdf5','r')
+myFile = hdf5.open('../Data/preprocess/task1_train.hdf5','r')
 f = myFile:all()
 sentences = f['sentences']
 questions = f['questions']
@@ -212,7 +214,6 @@ model = graph_model(50, torch.max(answers), voca_size, memsize)
 -- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
 print(parameters:size())
-torch.manualSeed(0)
 randomkit.normal(parameters, 0, 0.1)
 
 -- Criterion
