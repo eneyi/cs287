@@ -73,35 +73,50 @@ function buildmodel(hid, nans)
 	return model
 end
 
-function graph_model(dim_hidden, num_answer, voca_size)
+function graph_model(dim_hidden, num_answer, voca_size, memsize)
     print(dim_hidden, num_answer, voca_size)
     -- Inputs
-    local story = nn.Identity()()
+    local story_in_memory = nn.Identity()()
     local question = nn.Identity()()
+    local time = nn.Identity()()
+
 
     -- Embedding
     local question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.LookupTable(voca_size, dim_hidden)(question)));
-    local sent_input_embedding = nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story));
-    local sent_output_embedding = nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story));
+    local sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story_in_memory)),
+                                           nn.LookupTable(memsize, dim_hidden)(time)});
+    local sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story_in_memory)),
+                                           nn.LookupTable(memsize, dim_hidden)(time)});
 
     -- Components
     local weights = nn.SoftMax()(nn.MM(false, true)({question_embedding, sent_input_embedding}))
     local o = nn.MM()({weights, sent_output_embedding})
-    local output = nn.SoftMax()(nn.Linear(dim_hidden, num_answer)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
+    local output = nn.SoftMax()(nn.Linear(dim_hidden, num_answer, false)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
 
     -- Model
-    local model = nn.gModule({story, question}, {output})
+    local model = nn.gModule({story_in_memory, question, time}, {output})
 
     return model
 end
 
 
-function accuracy(sentences, questions, questions_sentences, answers, model)
+function accuracy(sentences, questions, questions_sentences, answers, model, memsize, voca_size)
 	local acc = 0
+    local time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
+    local story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
+
 	for i = 1, questions:size(1) do
 		-- xlua.progress(i, questions:size(1))
-		story = sentences:narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
-        input = {story, questions[i]}
+        story_memory:fill(voca_size)
+        local story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[i][1],
+                                                                     questions_sentences[i][2]-questions_sentences[i][1]+1)
+        local question_input = questions:narrow(2,2,questions:size(2)-1)[i]
+        if story:size(1) < memsize then 
+            story_memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
+        else
+            story_memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
+        end
+        input = {story_memory, question_input, time_input}
 		pred = model:forward(input)
         -- print(pred:size())
 		m, a = pred:view(pred:size(1),1):max(1)
@@ -114,7 +129,7 @@ end
 
 
 function train_model(sentences, questions, questions_sentences, answers, model, par, gradPar,
-                     criterion, eta, nEpochs)
+                     criterion, eta, nEpochs, memsize, voca_size)
     -- Train the model with a SGD
     -- standard parameters are
     -- nEpochs = 1
@@ -124,6 +139,9 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
     loss = torch.zeros(nEpochs)
     accuracy_tensor = torch.zeros(nEpochs)
     av_L = 0
+
+    local time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
+    local story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
 
     for i = 1, nEpochs do
         -- timing the epoch
@@ -137,10 +155,16 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         	-- Display progess
             -- xlua.progress(t, questions:size(1))
             -- define input:
-            local story = sentences:narrow(1,questions_sentences[t][1], questions_sentences[t][2]-questions_sentences[t][1]+1)
-
-            local input = {story, questions[t]}
-
+            story_memory:fill(voca_size)
+            local story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[t][1],
+                                                                         questions_sentences[t][2]-questions_sentences[t][1]+1)
+            local question_input = questions:narrow(2,2,questions:size(2)-1)[t]
+            if story:size(1) < memsize then 
+                story_memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
+            else
+                story_memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
+            end
+            input = {story_memory, question_input, time_input}
             -- reset gradients
             model:zeroGradParameters()
             --gradParameters:zero()
@@ -154,11 +178,11 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
             -- Backward pass
             df_do = criterion:backward(pred, answers[t])
             model:backward(input, df_do)
-            --model:updateParameters(eta)
-            par:add(gradPar:mul(-eta))
+            model:updateParameters(eta)
+            --par:add(gradPar:mul(-eta))
             
         end
-        accuracy_tensor[i] = accuracy(sentences, questions, questions_sentences, answers, model)
+        accuracy_tensor[i] = accuracy(sentences, questions, questions_sentences, answers, model, memsize, voca_size)
         loss[i] = av_L/questions:size(1)
         print('Epoch '..i..': '..timer:time().real)
        	print('\n')
@@ -174,7 +198,7 @@ end
 
 -- Sanity check:
 
-myFile = hdf5.open('../Data/preprocess/task2_train.hdf5','r')
+myFile = hdf5.open('../Data/preprocess/task1_train.hdf5','r')
 f = myFile:all()
 sentences = f['sentences']
 questions = f['questions']
@@ -184,17 +208,18 @@ voca_size = f['voc_size'][1]
 myFile:close()
 
 -- Building the model
-model = graph_model(50, torch.max(answers), voca_size)
+memsize = 50
+model = graph_model(50, torch.max(answers), voca_size, memsize)
 
 -- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
 print(parameters:size())
---randomkit.normal(parameters, 0, 0.1)
+randomkit.normal(parameters, 0, 0.1)
 
 -- Criterion
 criterion = nn.ClassNLLCriterion()
 
 -- Training
 loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers,
-                                         model, parameters, gradParameters, criterion, 0.01, 150)
+                                         model, parameters, gradParameters, criterion, 0.01, 100, memsize, voca_size)
 
