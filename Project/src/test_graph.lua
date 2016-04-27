@@ -49,7 +49,7 @@ sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_
 -- Components
 weights = nn.SoftMax()(nn.MM(false, true)({question_embedding, sent_input_embedding}))
 o = nn.MM()({weights, sent_output_embedding})
-output = nn.SoftMax()(nn.Linear(dim_hidden, num_answer, false)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
+output = nn.LogSoftMax()(nn.Linear(dim_hidden, num_answer, false)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
 
 -- Model
 model = nn.gModule({story_in_memory, question, time}, {output})
@@ -155,7 +155,7 @@ function buildmodel(hid, nvoc, nans, memsize)
     model:add(nn.Linear(hid, nans, false));
 
     -- Applying a softmax function to obtain a distribution over the possible answers
-    model:add(nn.SoftMax());
+    model:add(nn.LogSoftMax());
 
     return model
 end

@@ -91,7 +91,7 @@ function graph_model(dim_hidden, num_answer, voca_size, memsize)
     -- Components
     local weights = nn.SoftMax()(nn.MM(false, true)({question_embedding, sent_input_embedding}))
     local o = nn.MM()({weights, sent_output_embedding})
-    local output = nn.SoftMax()(nn.Linear(dim_hidden, num_answer, false)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
+    local output = nn.LogSoftMax()(nn.Linear(dim_hidden, num_answer, false)(nn.Sum(1)(nn.JoinTable(1)({o, question_embedding}))))
 
     -- Model
     local model = nn.gModule({story_in_memory, question, time}, {output})
