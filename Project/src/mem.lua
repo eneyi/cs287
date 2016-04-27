@@ -231,10 +231,10 @@ loss_train, accuracy_train, accuracy_train_task = train_model(sentences, questio
 print('Detailed accuracies:')
 print(accuracy_train_task)
 
-print('MODEL 2:')
+-- print('MODEL 2:')
 
-model2 = buildmodel(hid, nvoc, nans, memsize)
-loss_train, accuracy_train, accuracy_train_task = train_model(sentences, questions, questions_sentences, answers, model2, nvoc, nans, memsize, criterion, eta, nEpochs)
-print('Detailed accuracies:')
-print(accuracy_train_task)
+-- model2 = buildmodel(hid, nvoc, nans, memsize)
+-- loss_train, accuracy_train, accuracy_train_task = train_model(sentences, questions, questions_sentences, answers, model2, nvoc, nans, memsize, criterion, eta, nEpochs)
+-- print('Detailed accuracies:')
+-- print(accuracy_train_task)
 
