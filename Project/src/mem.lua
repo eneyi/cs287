@@ -194,7 +194,7 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
        	
     end
 
-    return loss, accuracy, task_acc
+    return loss, accuracy_, task_acc
 end
 
 -- Sanity check:
@@ -230,11 +230,4 @@ print('MODEL 1:')
 loss_train, accuracy_train, accuracy_train_task = train_model(sentences, questions, questions_sentences, answers, model, nvoc, nans, memsize, criterion, eta, nEpochs)
 print('Detailed accuracies:')
 print(accuracy_train_task)
-
--- print('MODEL 2:')
-
--- model2 = buildmodel(hid, nvoc, nans, memsize)
--- loss_train, accuracy_train, accuracy_train_task = train_model(sentences, questions, questions_sentences, answers, model2, nvoc, nans, memsize, criterion, eta, nEpochs)
--- print('Detailed accuracies:')
--- print(accuracy_train_task)
 
