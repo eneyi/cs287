@@ -216,6 +216,7 @@ model = buildmodel(hid, nvoc, nans, memsize)
 
 -- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
+torch.manualSeed(0)
 randomkit.normal(parameters, 0, 0.1)
 
 -- Criterion
