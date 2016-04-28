@@ -59,9 +59,9 @@ function graph_model(hid, nans, nvoc, memsize, nhop)
 		local weights = nn.SoftMax()(nn.MM(false, true)({inner_res[i-1], A}))
 		local o = nn.MM()({weights, C})
 		if i ~= nhop then
-			inner_res[i] = nn.Sum(1)(nn.JoinTable(1)({o, nn.Linear(hid, hid, false)(inner_res[i-1])}))
+			inner_res[i] = nn.View(1, hid)(nn.Sum(1)(nn.JoinTable(1)({o, nn.Linear(hid, hid, false)(inner_res[i-1])})))
 		else
-			inner_res[i] = nn.Sum(1)(nn.JoinTable(1)({o, inner_res[i-1]}))
+			inner_res[i] = nn.View(1, hid)(nn.Sum(1)(nn.JoinTable(1)({o, inner_res[i-1]})))
 		end
 	end
 
@@ -77,22 +77,22 @@ function accuracy(sentences, questions, questions_sentences, answers, model, mem
 	local acc_task = torch.zeros(sentences:narrow(2,1,1):max())
 	local task_count = torch.zeros(sentences:narrow(2,1,1):max())
 	local acc = 0
-	local memsize_range = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
+	local time = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
 	local memory = torch.ones(memsize, sentences:size(2)-1)*nvoc
 	for i = 1, questions:size(1) do
 		-- xlua.progress(i, questions:size(1))
 		memory:fill(nvoc)
-        story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[i][1], questions_sentences[i][2]-questions_sentences[i][1]+1)
-        
-        -- ONLY TAKES UP TO THE LAST memsize FACTS:
-		if story:size(1) < memsize then 
-        	memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
-        else
-        	memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
-        end 
 
-        q = questions:narrow(2,2,questions:size(2)-1)[i]
-        input = {{{q, {memory, memsize_range}}, {memory, memsize_range}}, q}
+		local question = questions:narrow(2,2,questions:size(2)-1)[i]
+        local story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[i][1],
+                                                                         questions_sentences[i][2]-questions_sentences[i][1]+1)
+        if story:size(1) < memsize then 
+            memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
+        else
+            memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
+        end
+
+        input = {memory, question, time}
 
 		pred = model:forward(input)
 		m, a = pred:view(nans,1):max(1)
@@ -186,6 +186,8 @@ answers = f['answers']
 nvoc = f['voc_size'][1]
 myFile:close()
 
+print('Data Loaded')
+
 memsize = 50
 hid = 50
 nhop = 2
@@ -198,15 +200,17 @@ nans = torch.max(answers)
 -- memory = torch.ones(memsize, sentences:size(2)-1)*nvoc
 -- memory:narrow(1,memsize - story:size(1)+1,story:size(1)):copy(story)
 
--- model = graph_model(50, nans, nvoc, memsize, 2)
--- parameters, gradParameters = model:getParameters()
--- torch.manualSeed(0)
--- randomkit.normal(parameters, 0, 0.1)
+model = graph_model(50, nans, nvoc, memsize, nhop)
+parameters, gradParameters = model:getParameters()
+torch.manualSeed(0)
+randomkit.normal(parameters, 0, 0.1)
 
 -- print(model:forward({memory, question, time}):exp())
 
 criterion = nn.ClassNLLCriterion()
 
-loss_train, accuracy_train, task_acc = train_model(sentences, questions, questions_sentences, answers, model, criterion, 0.01, 100, memsize, nvoc)
+loss_train, accuracy_train, accuracy_train_task = train_model(sentences, questions, questions_sentences, answers, model, criterion, 0.01, 100, memsize, nvoc)
+print('Detailed accuracies:')
+print(accuracy_train_task)
 
 
