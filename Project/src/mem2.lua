@@ -74,12 +74,10 @@ function buildmodel(hid, nans)
 end
 
 function graph_model(dim_hidden, num_answer, voca_size, memsize)
-    print(dim_hidden, num_answer, voca_size)
     -- Inputs
     local story_in_memory = nn.Identity()()
     local question = nn.Identity()()
     local time = nn.Identity()()
-
 
     -- Embedding
     local question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.LookupTable(voca_size, dim_hidden)(question)));
@@ -99,27 +97,138 @@ function graph_model(dim_hidden, num_answer, voca_size, memsize)
     return model
 end
 
+function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
+    -- Graph model with multiple hops set with the Adjacent approach
 
-function accuracy(sentences, questions, questions_sentences, answers, model, memsize, voca_size)
+    -- Inputs
+    story_in_memory = nn.Identity()()
+    question = nn.Identity()()
+    time = nn.Identity()()
+
+    -- The initialization for C will serve for A
+    C = nn.LookupTable(voca_size, dim_hidden)
+    T_C = nn.LookupTable(memsize, dim_hidden)
+    B = nn.LookupTable(voca_size, dim_hidden)
+    -- Set B = A (use of share to have them tied all along the train)
+    B:share(C,'weight', 'gradWeight', 'bias', 'gradBias')
+
+    question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(B(question)));
+
+    for K=1, num_hops do
+        -- Initialization and A/T_A (next) = C/T_C (prev)
+        A = nn.LookupTable(voca_size, dim_hidden)
+        T_A = nn.LookupTable(memsize, dim_hidden)
+        A:share(C,'weight', 'gradWeight', 'bias', 'gradBias')
+        T_A:share(T_C,'weight', 'gradWeight', 'bias', 'gradBias')
+
+        -- New C
+        C = nn.LookupTable(voca_size, dim_hidden)
+        T_C = nn.LookupTable(memsize, dim_hidden)
+
+        -- Transformed input
+        sent_input_embedding = nn.CAddTable()({nn.Sum(2)(A(story_in_memory)), T_A(time)});
+        sent_output_embedding = nn.CAddTable()({nn.Sum(2)(C(story_in_memory)), T_C(time)});
+
+        -- Components
+        weights = nn.SoftMax()(nn.MM(false, true)({question_embedding, sent_input_embedding}))
+        o = nn.MM()({weights, sent_output_embedding})
+
+        -- Next step
+        question_embedding = nn.CAddTable()({o, question_embedding})
+    end
+
+    W = nn.Linear(dim_hidden, num_answer, false)
+    -- TODO: set W^T = C (num_answer need to be size of voca_size)
+    -- W:parameters()[1] = W:parameters()[1]:transpose(1,2)
+
+    -- Final output
+    output = nn.LogSoftMax()(W(question_embedding))
+
+    -- Model
+    model = nn.gModule({story_in_memory, question, time}, {output})
+
+    return model
+end
+
+function graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
+    -- Inputs
+    story_in_memory = nn.Identity()()
+    question = nn.Identity()()
+    time = nn.Identity()()
+
+    -- Initialization of embeddings
+    A = nn.LookupTable(voca_size, dim_hidden)
+    T_A = nn.LookupTable(memsize, dim_hidden)
+    C = nn.LookupTable(voca_size, dim_hidden)
+    T_C = nn.LookupTable(memsize, dim_hidden)
+    B = nn.LookupTable(voca_size, dim_hidden)
+    H = nn.Linear(dim_hidden, dim_hidden, false)
+
+    question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(B(question)));
+    sent_input_embedding = nn.CAddTable()({nn.Sum(2)(A(story_in_memory)), T_A(time)});
+    sent_output_embedding = nn.CAddTable()({nn.Sum(2)(C(story_in_memory)), T_C(time)});
+
+    -- Debugging
+    nngraph.setDebug(true)
+
+    for K=1, num_hops do
+        -- Components
+        weights = nn.SoftMax()(nn.MM(false, true)({question_embedding, sent_input_embedding}))
+        o = nn.MM()({weights, sent_output_embedding})
+
+        -- Next step initialization
+        question_embedding = nn.CAddTable()({o, H(question_embedding)})
+    end
+
+    W = nn.Linear(dim_hidden, num_answer, false)
+
+    -- Final output
+    output = nn.LogSoftMax()(W(question_embedding))
+
+    -- Model
+    model = nn.gModule({story_in_memory, question, time}, {output})
+
+    return model
+end
+
+-- In place building of the input (to use pre-allocated memory)
+function build_input(story_memory, question_input, cleaned_sentences, cleaned_questions, questions_sentences,
+                   question_index, voca_size)
+        -- Initialize story_memory with padding
+        story_memory:fill(voca_size)
+        -- Extract story and question
+        local story_start = questions_sentences[{question_index,1}]
+        local story_size = questions_sentences[{question_index,2}] - story_start + 1
+        local story = cleaned_sentences:narrow(1,story_start, story_size)
+        question_input:copy(cleaned_questions[question_index])
+        
+        -- Building input
+        if story_size < memsize then 
+            story_memory:narrow(1,memsize - story_size + 1,story_size):copy(story)
+        else
+            story_memory:copy(story:narrow(1, story_size - memsize + 1, memsize))
+        end
+end
+
+function accuracy(sentences, questions, questions_sentences, answers, model, memsize, voca_size,
+                  dim_hidden, position_encoding)
 	local acc = 0
     local time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
     local story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
+    -- Clean sentence and question while removing the the task_id
+    local cleaned_sentences = sentences:narrow(2,2,sentences:size(2)-1)
+    local cleaned_questions = questions:narrow(2, 2, questions:size(2)-1)
+    -- To store the quesiton input
+    local question_input = torch.zeros(cleaned_questions:size(2))
 
 	for i = 1, questions:size(1) do
-		-- xlua.progress(i, questions:size(1))
-        story_memory:fill(voca_size)
-        local story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[i][1],
-                                                                     questions_sentences[i][2]-questions_sentences[i][1]+1)
-        local question_input = questions:narrow(2,2,questions:size(2)-1)[i]
-        if story:size(1) < memsize then 
-            story_memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
-        else
-            story_memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
-        end
+        build_input(story_memory, question_input, cleaned_sentences, cleaned_questions, questions_sentences,
+                   i, voca_size)
         input = {story_memory, question_input, time_input}
 		pred = model:forward(input)
-        -- print(pred:size())
-		m, a = pred:view(pred:size(1),1):max(1)
+        -- print('pred is ', pred)
+
+		m, a = pred:view(pred:size(2),1):max(1)
 		if a[1][1] == answers[i][1] then
 			acc = acc + 1
 		end
@@ -131,17 +240,19 @@ end
 function train_model(sentences, questions, questions_sentences, answers, model, par, gradPar,
                      criterion, eta, nEpochs, memsize, voca_size)
     -- Train the model with a SGD
-    -- standard parameters are
-    -- nEpochs = 1
-    -- eta = 0.01
 
     -- To store the loss
-    loss = torch.zeros(nEpochs)
-    accuracy_tensor = torch.zeros(nEpochs)
-    av_L = 0
+    local loss = torch.zeros(nEpochs)
+    local accuracy_tensor = torch.zeros(nEpochs)
+    local av_L = 0
 
     local time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
     local story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
+    -- Clean sentence and question while removing the the task_id
+    local cleaned_sentences = sentences:narrow(2,2,sentences:size(2)-1)
+    local cleaned_questions = questions:narrow(2, 2, questions:size(2)-1)
+    -- To store the quesiton input
+    local question_input = torch.zeros(cleaned_questions:size(2))
 
     for i = 1, nEpochs do
         -- timing the epoch
@@ -151,38 +262,29 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         	eta = eta/2
         end
         -- mini batch loop
-        for t = 1, questions:size(1) do
-        	-- Display progess
-            -- xlua.progress(t, questions:size(1))
-            -- define input:
-            story_memory:fill(voca_size)
-            local story = sentences:narrow(2,2,sentences:size(2)-1):narrow(1,questions_sentences[t][1],
-                                                                         questions_sentences[t][2]-questions_sentences[t][1]+1)
-            local question_input = questions:narrow(2,2,questions:size(2)-1)[t]
-            if story:size(1) < memsize then 
-                story_memory:narrow(1,memsize-story:size(1)+1,story:size(1)):copy(story)
-            else
-                story_memory:copy(story:narrow(1, story:size(1) - memsize + 1, memsize))
-            end
+        for i = 1, questions:size(1) do
+	        build_input(story_memory, question_input, cleaned_sentences, cleaned_questions, questions_sentences,
+                   i, voca_size)
             input = {story_memory, question_input, time_input}
+
             -- reset gradients
             model:zeroGradParameters()
-            --gradParameters:zero()
 
             -- Forward pass (selection of inputs_batch in case the batch is not full, ie last batch)
             pred = model:forward(input)
             -- Average loss computation
-            f = criterion:forward(pred, answers[t])
+            f = criterion:forward(pred, answers[i])
             av_L = av_L +f
 
             -- Backward pass
-            df_do = criterion:backward(pred, answers[t])
+            df_do = criterion:backward(pred, answers[i])
             model:backward(input, df_do)
             model:updateParameters(eta)
             --par:add(gradPar:mul(-eta))
             
         end
-        accuracy_tensor[i] = accuracy(sentences, questions, questions_sentences, answers, model, memsize, voca_size)
+        accuracy_tensor[i] = accuracy(sentences, questions, questions_sentences, answers, model,
+                                      memsize, voca_size)
         loss[i] = av_L/questions:size(1)
         print('Epoch '..i..': '..timer:time().real)
        	print('\n')
@@ -198,7 +300,7 @@ end
 
 -- Sanity check:
 
-myFile = hdf5.open('../Data/preprocess/task1_train.hdf5','r')
+myFile = hdf5.open('../Data/preprocess/task2_train.hdf5','r')
 f = myFile:all()
 sentences = f['sentences']
 questions = f['questions']
@@ -209,11 +311,19 @@ myFile:close()
 
 -- Building the model
 memsize = 50
-model = graph_model(50, torch.max(answers), voca_size, memsize)
+nEpochs = 100
+eta = 0.01
+dim_hidden = 50
+num_hops = 3
+num_answer = torch.max(answers)
+-- model = graph_model(dim_hidden, num_answer, voca_size, memsize)
+-- model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
+model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
 
 -- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
 print(parameters:size())
+torch.manualSeed(0)
 randomkit.normal(parameters, 0, 0.1)
 
 -- Criterion
@@ -221,5 +331,6 @@ criterion = nn.ClassNLLCriterion()
 
 -- Training
 loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers,
-                                         model, parameters, gradParameters, criterion, 0.01, 100, memsize, voca_size)
+                                         model, parameters, gradParameters, criterion, eta,
+                                         nEpochs, memsize, voca_size)
 
