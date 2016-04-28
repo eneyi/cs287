@@ -1,0 +1,364 @@
+1 John moved to the kitchen.
+2 John took the football there.
+3 How many objects is John carrying? 	one	2
+4 Daniel grabbed the milk there.
+5 John put down the football.
+6 How many objects is John carrying? 	none	2 5
+7 Mary journeyed to the kitchen.
+8 Daniel dropped the milk.
+9 How many objects is John carrying? 	none	2 5
+10 Daniel picked up the milk there.
+11 Mary grabbed the football there.
+12 How many objects is Daniel carrying? 	one	4 8 10
+13 Mary gave the football to John.
+14 John passed the football to Mary.
+15 How many objects is Daniel carrying? 	one	4 8 10
+1 Mary journeyed to the office.
+2 Mary moved to the hallway.
+3 Daniel picked up the milk there.
+4 Daniel discarded the milk.
+5 How many objects is Daniel carrying? 	none	3 4
+6 Mary picked up the football there.
+7 Mary went to the bathroom.
+8 How many objects is Daniel carrying? 	none	3 4
+9 Mary left the football there.
+10 Mary went to the bedroom.
+11 How many objects is Mary carrying? 	none	6 9
+12 Sandra moved to the garden.
+13 Sandra travelled to the hallway.
+14 How many objects is Mary carrying? 	none	6 9
+15 John went back to the kitchen.
+16 Daniel picked up the apple there.
+17 How many objects is Daniel carrying? 	one	3 4 16
+1 John moved to the bathroom.
+2 Mary went back to the bathroom.
+3 John got the apple there.
+4 John dropped the apple.
+5 How many objects is John carrying? 	none	3 4
+6 Daniel journeyed to the bathroom.
+7 Mary grabbed the apple there.
+8 How many objects is John carrying? 	none	3 4
+9 Mary passed the apple to John.
+10 John passed the apple to Mary.
+11 How many objects is John carrying? 	none	3 4 9 10
+12 Mary passed the apple to John.
+13 Mary went back to the hallway.
+14 How many objects is John carrying? 	one	3 4 9 10 12
+15 John passed the apple to Daniel.
+16 Mary went to the garden.
+17 How many objects is Mary carrying? 	none	7 9 10 12
+1 Sandra took the apple there.
+2 Mary went to the office.
+3 How many objects is Sandra carrying? 	one	1
+4 Sandra gave the apple to Mary.
+5 Mary went to the garden.
+6 How many objects is Sandra carrying? 	none	1 4
+7 Mary dropped the apple there.
+8 Sandra journeyed to the bathroom.
+9 How many objects is Sandra carrying? 	none	1 4
+10 John picked up the apple there.
+11 John gave the apple to Mary.
+12 How many objects is John carrying? 	none	10 11
+13 Mary left the apple.
+14 John travelled to the office.
+15 How many objects is Mary carrying? 	none	4 7 11 13
+1 Sandra moved to the hallway.
+2 Mary journeyed to the bedroom.
+3 Mary picked up the apple there.
+4 Mary travelled to the bathroom.
+5 How many objects is Mary carrying? 	one	3
+6 Mary travelled to the garden.
+7 Sandra moved to the garden.
+8 How many objects is Mary carrying? 	one	3
+9 Sandra took the milk there.
+10 Daniel moved to the hallway.
+11 How many objects is Sandra carrying? 	one	9
+12 Mary went back to the bathroom.
+13 Mary dropped the apple.
+14 How many objects is Mary carrying? 	none	3 13
+15 Sandra moved to the kitchen.
+16 Mary got the apple there.
+17 How many objects is Mary carrying? 	one	3 13 16
+1 Sandra moved to the kitchen.
+2 Sandra went to the bathroom.
+3 Sandra went to the garden.
+4 Sandra went to the bedroom.
+5 Mary travelled to the bedroom.
+6 Daniel journeyed to the bedroom.
+7 Daniel moved to the kitchen.
+8 Daniel moved to the bathroom.
+9 John journeyed to the kitchen.
+10 Sandra journeyed to the hallway.
+11 Sandra picked up the football there.
+12 John went back to the office.
+13 How many objects is Sandra carrying? 	one	11
+14 John went to the bedroom.
+15 Mary travelled to the kitchen.
+16 How many objects is Sandra carrying? 	one	11
+17 Daniel moved to the kitchen.
+18 Mary picked up the milk there.
+19 How many objects is Mary carrying? 	one	18
+20 Mary dropped the milk there.
+21 Mary journeyed to the bedroom.
+22 How many objects is Mary carrying? 	none	18 20
+23 Daniel grabbed the milk there.
+24 Sandra left the football.
+25 How many objects is Sandra carrying? 	none	11 24
+1 Mary travelled to the hallway.
+2 Daniel grabbed the football there.
+3 How many objects is Daniel carrying? 	one	2
+4 John journeyed to the bedroom.
+5 John moved to the garden.
+6 How many objects is Daniel carrying? 	one	2
+7 Mary travelled to the bedroom.
+8 Sandra went to the bedroom.
+9 How many objects is Daniel carrying? 	one	2
+10 Sandra moved to the hallway.
+11 Sandra moved to the bedroom.
+12 Mary travelled to the kitchen.
+13 Daniel passed the football to Mary.
+14 How many objects is Daniel carrying? 	none	2 13
+15 Mary passed the football to Daniel.
+16 John moved to the hallway.
+17 How many objects is Daniel carrying? 	one	2 13 15
+1 Daniel moved to the bathroom.
+2 Sandra took the milk there.
+3 How many objects is Sandra carrying? 	one	2
+4 John journeyed to the hallway.
+5 Sandra gave the milk to Daniel.
+6 How many objects is Sandra carrying? 	none	2 5
+7 John moved to the bedroom.
+8 Daniel handed the milk to Sandra.
+9 How many objects is Sandra carrying? 	one	2 5 8
+10 John grabbed the apple there.
+11 John journeyed to the garden.
+12 How many objects is Daniel carrying? 	none	5 8
+13 John passed the apple to Mary.
+14 Daniel went back to the hallway.
+15 How many objects is John carrying? 	none	10 13
+1 Sandra grabbed the football there.
+2 John picked up the milk there.
+3 How many objects is John carrying? 	one	2
+4 Mary went back to the kitchen.
+5 John put down the milk there.
+6 How many objects is John carrying? 	none	2 5
+7 Daniel moved to the garden.
+8 Sandra handed the football to Mary.
+9 How many objects is John carrying? 	none	2 5
+10 John moved to the garden.
+11 Mary handed the football to Sandra.
+12 How many objects is Mary carrying? 	none	8 11
+13 Sandra went back to the office.
+14 John moved to the bedroom.
+15 How many objects is Mary carrying? 	none	8 11
+1 Sandra journeyed to the garden.
+2 Sandra went back to the kitchen.
+3 Mary moved to the office.
+4 Daniel went back to the hallway.
+5 Mary travelled to the garden.
+6 Daniel got the milk there.
+7 How many objects is Daniel carrying? 	one	6
+8 Daniel put down the milk.
+9 Sandra got the football there.
+10 How many objects is Sandra carrying? 	one	9
+11 Daniel picked up the apple there.
+12 Daniel moved to the bedroom.
+13 How many objects is Daniel carrying? 	one	6 8 11
+14 Sandra went back to the bathroom.
+15 Mary went back to the kitchen.
+16 How many objects is Sandra carrying? 	one	9
+17 Sandra discarded the football.
+18 Sandra grabbed the football there.
+19 How many objects is Sandra carrying? 	one	9 17 18
+1 Mary journeyed to the garden.
+2 John journeyed to the bathroom.
+3 Mary got the apple there.
+4 Sandra grabbed the milk there.
+5 How many objects is Mary carrying? 	one	3
+6 Sandra went to the office.
+7 Daniel travelled to the bathroom.
+8 How many objects is Mary carrying? 	one	3
+9 Mary dropped the apple.
+10 Daniel travelled to the bedroom.
+11 How many objects is Mary carrying? 	none	3 9
+12 Mary picked up the apple there.
+13 John went back to the office.
+14 How many objects is Mary carrying? 	one	3 9 12
+15 Daniel went back to the hallway.
+16 Sandra handed the milk to John.
+17 How many objects is Sandra carrying? 	none	4 16
+1 Daniel journeyed to the hallway.
+2 Mary took the apple there.
+3 How many objects is Mary carrying? 	one	2
+4 John took the milk there.
+5 John discarded the milk.
+6 How many objects is John carrying? 	none	4 5
+7 John picked up the milk there.
+8 John put down the milk.
+9 How many objects is John carrying? 	none	4 5 7 8
+10 John moved to the bedroom.
+11 John went back to the bathroom.
+12 How many objects is John carrying? 	none	4 5 7 8
+13 Mary left the apple.
+14 Sandra journeyed to the hallway.
+15 How many objects is John carrying? 	none	4 5 7 8
+1 Sandra journeyed to the bathroom.
+2 John journeyed to the kitchen.
+3 Sandra journeyed to the hallway.
+4 Daniel journeyed to the bathroom.
+5 John grabbed the milk there.
+6 Sandra went back to the garden.
+7 How many objects is John carrying? 	one	5
+8 John travelled to the office.
+9 Daniel travelled to the bedroom.
+10 How many objects is John carrying? 	one	5
+11 John passed the milk to Mary.
+12 Mary handed the milk to John.
+13 How many objects is John carrying? 	one	5 11 12
+14 Daniel picked up the football there.
+15 Mary went back to the bathroom.
+16 How many objects is Daniel carrying? 	one	14
+17 Mary journeyed to the kitchen.
+18 Daniel discarded the football there.
+19 How many objects is Daniel carrying? 	none	14 18
+1 Daniel moved to the bathroom.
+2 John grabbed the apple there.
+3 How many objects is John carrying? 	one	2
+4 John journeyed to the bathroom.
+5 Sandra journeyed to the kitchen.
+6 How many objects is John carrying? 	one	2
+7 John passed the apple to Daniel.
+8 Daniel gave the apple to John.
+9 How many objects is John carrying? 	one	2 7 8
+10 John gave the apple to Daniel.
+11 Daniel gave the apple to John.
+12 How many objects is Daniel carrying? 	none	7 8 10 11
+13 Mary went back to the kitchen.
+14 John went to the office.
+15 How many objects is Daniel carrying? 	none	7 8 10 11
+1 Mary moved to the garden.
+2 Sandra went to the kitchen.
+3 John moved to the hallway.
+4 Mary moved to the bedroom.
+5 Mary journeyed to the office.
+6 Mary went to the bedroom.
+7 John went to the garden.
+8 John journeyed to the office.
+9 John picked up the football there.
+10 Mary took the apple there.
+11 How many objects is John carrying? 	one	9
+12 John picked up the milk there.
+13 Mary moved to the office.
+14 How many objects is John carrying? 	two	9 12
+15 Mary moved to the hallway.
+16 John moved to the kitchen.
+17 How many objects is John carrying? 	two	9 12
+18 John passed the football to Sandra.
+19 John moved to the bedroom.
+20 How many objects is John carrying? 	one	9 12 18
+21 Sandra dropped the football.
+22 Sandra journeyed to the hallway.
+23 How many objects is Sandra carrying? 	none	18 21
+1 Sandra went back to the office.
+2 John went to the bedroom.
+3 Sandra got the football there.
+4 John grabbed the milk there.
+5 How many objects is John carrying? 	one	4
+6 Sandra journeyed to the garden.
+7 Sandra went to the hallway.
+8 How many objects is John carrying? 	one	4
+9 Sandra handed the football to Daniel.
+10 Daniel passed the football to Sandra.
+11 How many objects is Daniel carrying? 	none	9 10
+12 Sandra passed the football to Daniel.
+13 Daniel gave the football to Sandra.
+14 How many objects is Sandra carrying? 	one	3 9 10 12 13
+15 Daniel went back to the office.
+16 Sandra moved to the kitchen.
+17 How many objects is Sandra carrying? 	one	3 9 10 12 13
+1 Daniel moved to the bedroom.
+2 Daniel journeyed to the hallway.
+3 Mary travelled to the hallway.
+4 Mary went to the garden.
+5 Daniel journeyed to the garden.
+6 Sandra went to the bathroom.
+7 Daniel took the football there.
+8 Daniel handed the football to Mary.
+9 How many objects is Daniel carrying? 	none	7 8
+10 John journeyed to the garden.
+11 Mary gave the football to John.
+12 How many objects is Daniel carrying? 	none	7 8
+13 John went to the bedroom.
+14 Sandra journeyed to the bedroom.
+15 How many objects is Mary carrying? 	none	8 11
+16 Mary travelled to the kitchen.
+17 Mary travelled to the hallway.
+18 How many objects is Mary carrying? 	none	8 11
+19 Sandra went to the garden.
+20 Daniel journeyed to the bathroom.
+21 John journeyed to the office.
+22 John discarded the football.
+23 How many objects is John carrying? 	none	11 22
+1 Mary moved to the bathroom.
+2 Sandra journeyed to the bedroom.
+3 John went to the kitchen.
+4 Mary took the football there.
+5 How many objects is Mary carrying? 	one	4
+6 Sandra went back to the office.
+7 Daniel went back to the office.
+8 How many objects is Mary carrying? 	one	4
+9 John moved to the bedroom.
+10 Sandra moved to the garden.
+11 How many objects is Mary carrying? 	one	4
+12 Mary travelled to the garden.
+13 Mary went to the hallway.
+14 Sandra journeyed to the bedroom.
+15 Mary dropped the football.
+16 How many objects is Mary carrying? 	none	4 15
+17 Mary got the football there.
+18 Daniel travelled to the garden.
+19 How many objects is Mary carrying? 	one	4 15 17
+1 John moved to the kitchen.
+2 Daniel went to the office.
+3 Daniel journeyed to the bathroom.
+4 Daniel went back to the garden.
+5 John moved to the bathroom.
+6 John went to the garden.
+7 Mary travelled to the hallway.
+8 Sandra travelled to the office.
+9 Sandra travelled to the garden.
+10 Mary went to the kitchen.
+11 Sandra journeyed to the bathroom.
+12 Mary got the milk there.
+13 How many objects is Mary carrying? 	one	12
+14 John journeyed to the bedroom.
+15 Daniel went back to the bathroom.
+16 How many objects is Mary carrying? 	one	12
+17 Daniel went to the garden.
+18 Daniel moved to the office.
+19 How many objects is Mary carrying? 	one	12
+20 Mary put down the milk there.
+21 John went to the kitchen.
+22 How many objects is Mary carrying? 	none	12 20
+23 Daniel travelled to the hallway.
+24 John picked up the milk there.
+25 How many objects is Mary carrying? 	none	12 20
+1 John went back to the garden.
+2 Sandra went back to the office.
+3 Sandra took the football there.
+4 Sandra travelled to the bathroom.
+5 How many objects is Sandra carrying? 	one	3
+6 Sandra moved to the hallway.
+7 Mary went back to the kitchen.
+8 How many objects is Sandra carrying? 	one	3
+9 John moved to the hallway.
+10 Sandra went to the garden.
+11 Sandra passed the football to Daniel.
+12 Sandra went back to the hallway.
+13 How many objects is Sandra carrying? 	none	3 11
+14 Daniel went to the bedroom.
+15 Daniel went back to the garden.
+16 How many objects is Sandra carrying? 	none	3 11
+17 Sandra moved to the garden.
+18 Daniel discarded the football.
+19 How many objects is Daniel carrying? 	none	11 18
