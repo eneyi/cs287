@@ -4,6 +4,17 @@ require 'torch';
 require 'xlua';
 require 'randomkit'
 
+cmd = torch.CmdLine()
+
+cmd:option('-gpuid',-1,'which gpu to use. -1 = use CPU')
+opt = cmd:parse(arg)
+
+if opt.gpuid >= 0 then
+    print('using CUDA on GPU ' .. opt.gpuid .. '...')
+    require 'cutorch'
+    require 'cunn'
+    cutorch.setDevice(opt.gpuid + 1)
+end
 
 -- README:
 -- Function to define the 1-hop memory model
@@ -279,6 +290,9 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
             -- Backward pass
             df_do = criterion:backward(pred, answers[i])
             model:backward(input, df_do)
+
+            -- gradient normalization with max norm 40 (l2 norm)
+            gradPar:view(gradPar:size(1),1):renorm(1,2,40)
             model:updateParameters(eta)
             --par:add(gradPar:mul(-eta))
             
@@ -300,7 +314,7 @@ end
 
 -- Sanity check:
 
-myFile = hdf5.open('../Data/preprocess/task2_train.hdf5','r')
+myFile = hdf5.open('../Data/preprocess/all_train.hdf5','r')
 f = myFile:all()
 sentences = f['sentences']
 questions = f['questions']
@@ -317,8 +331,8 @@ dim_hidden = 50
 num_hops = 3
 num_answer = torch.max(answers)
 -- model = graph_model(dim_hidden, num_answer, voca_size, memsize)
--- model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
-model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
+model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
+-- model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
 
 -- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
@@ -334,3 +348,7 @@ loss_train, accuracy_train = train_model(sentences, questions, questions_sentenc
                                          model, parameters, gradParameters, criterion, eta,
                                          nEpochs, memsize, voca_size)
 
+-- Cuda
+-- loss_train, accuracy_train = train_model(sentences:cuda(), questions:cuda(), questions_sentences:cuda(), answers:cuda(),
+--                                          model:cuda(), parameters:cuda(), gradParameters:cuda(), criterion:cuda(), eta,
+--                                          nEpochs, memsize, voca_size)
