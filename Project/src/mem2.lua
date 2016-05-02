@@ -1,20 +1,8 @@
 require 'hdf5';
 require 'nngraph';
 require 'torch';
-require 'xlua';
+-- require 'xlua';
 require 'randomkit'
-
-cmd = torch.CmdLine()
-
-cmd:option('-gpuid',-1,'which gpu to use. -1 = use CPU')
-opt = cmd:parse(arg)
-
-if opt.gpuid >= 0 then
-    print('using CUDA on GPU ' .. opt.gpuid .. '...')
-    require 'cutorch'
-    require 'cunn'
-    cutorch.setDevice(opt.gpuid + 1)
-end
 
 -- README:
 -- Function to define the 1-hop memory model
@@ -161,6 +149,7 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
     return model
 end
 
+
 function graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
     -- Inputs
     story_in_memory = nn.Identity()()
@@ -222,7 +211,7 @@ function build_input(story_memory, question_input, cleaned_sentences, cleaned_qu
 end
 
 function accuracy(sentences, questions, questions_sentences, answers, model, memsize, voca_size,
-                  dim_hidden, position_encoding)
+                  dim_hidden)
 	local acc = 0
     local time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
     local story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
@@ -312,9 +301,8 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
     return loss, accuracy_tensor
 end
 
--- Sanity check:
 
-myFile = hdf5.open('../Data/preprocess/all_train.hdf5','r')
+myFile = hdf5.open('../Data/preprocess/task123_train.hdf5','r')
 f = myFile:all()
 sentences = f['sentences']
 questions = f['questions']
@@ -330,25 +318,24 @@ eta = 0.01
 dim_hidden = 50
 num_hops = 3
 num_answer = torch.max(answers)
+batch_size = 16
+sentence_size = sentences:size(2) - 1
 -- model = graph_model(dim_hidden, num_answer, voca_size, memsize)
 model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
 -- model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
 
 -- Initialise parameters using normal(0,0.1) as mentioned in the paper
 parameters, gradParameters = model:getParameters()
-print(parameters:size())
 torch.manualSeed(0)
 randomkit.normal(parameters, 0, 0.1)
 
--- Criterion
+-- -- Criterion
 criterion = nn.ClassNLLCriterion()
 
--- Training
-loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers,
-                                         model, parameters, gradParameters, criterion, eta,
-                                         nEpochs, memsize, voca_size)
-
--- Cuda
--- loss_train, accuracy_train = train_model(sentences:cuda(), questions:cuda(), questions_sentences:cuda(), answers:cuda(),
---                                          model:cuda(), parameters:cuda(), gradParameters:cuda(), criterion:cuda(), eta,
+-- -- Training
+-- loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers,
+--                                          model, parameters, gradParameters, criterion, eta,
 --                                          nEpochs, memsize, voca_size)
+
+
+
