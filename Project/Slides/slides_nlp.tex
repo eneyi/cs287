@@ -1,0 +1,190 @@
+\documentclass[pdf]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{adjustbox}
+
+ 
+\usetheme{Warsaw}
+
+
+\mode<presentation>{}
+%% preamble
+
+\setbeamercolor{framesource}{fg=gray}
+\setbeamerfont{framesource}{size=\tiny}
+
+\newcommand{\source}[1]{\begin{textblock*}{4cm}(8.7cm,8.6cm)
+    \begin{beamercolorbox}[ht=0.3cm,right]{framesource}
+        \usebeamerfont{framesource}\usebeamercolor[fg]{framesource} Source: {#1}
+    \end{beamercolorbox}
+\end{textblock*}}
+
+
+\author{Virgile Audi \\ Nicolas Drizard}
+\date{TF: Sam Wiseman \\ May, $3^{rd}$ 2015}
+\title{Memory Network For Question Answering}
+
+\begin{document}
+
+
+%% title frame
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+\frametitle{Outline}
+\tableofcontents
+\end{frame}
+
+\AtBeginSection[]
+{
+  \begin{frame}
+    \frametitle{Table of Contents}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\section{Motivation}
+
+\subsection{Questions}
+\begin{frame}{Supporting Facts}
+
+\textbf{Story} 
+\begin{center}
+Mary went to the bathroom.\\
+John moved to the hallway.\\
+Mary travelled to the office.
+\end{center}
+
+\textbf{Q} Where is Mary? \textbf{A} office
+
+\textbf{Story} 
+\begin{center}
+John picked up the apple.\\
+John went to the office.\\
+John went to the kitchen.\\
+John dropped the apple.
+\end{center}
+
+\textbf{Q} Where was the apple before the kitchen? \textbf{A} office
+\end{frame}
+
+\begin{frame}{Reasoning}
+
+\textbf{Story} 
+\begin{center}
+Sheep are afraid of wolves.\\
+Cats are afraid of dogs.\\
+Mice are afraid of cats.\\
+Gertrude is a sheep.
+\end{center}
+
+\textbf{Q} What is Gertrude afraid of? \textbf{A} wolves
+
+\textbf{Story}
+\begin{center}
+Lily is a swan.\\
+Lily is white.\\
+Bernhard is green.\\
+Greg is a swan.
+\end{center}
+
+\textbf{Q} What color is Greg? \textbf{A} white
+\end{frame}
+
+\subsection{Intuition}
+
+\begin{frame}{Intuition}
+
+How do Humans build their answer?
+
+\begin{enumerate}
+	\item Type of question
+	\item Occurence of the words from the question
+	\item Associations of words (\textit{memory})
+	\item Meaning of words (\textit{reasoning}, \textit{interpretation})
+\end{enumerate}
+
+\end{frame}
+
+\section{Baseline Model}
+
+\begin{frame}{Count Based Model}
+
+Prediction based on two features:
+
+\[
+\hat{y}(X,Q) = argmax(\log(f_1(X)) + \log(f_2(Q)))
+\]
+
+with 
+
+\begin{itemize}
+	\item $(X, Q)$ tuple story, question
+	\item $f_1(X)$: answer words counts in the story (weighted by order of appearance)
+	\item $f_2(Q)$: embedding of the question based on possible answers question word
+\end{itemize}
+
+\end{frame}
+
+\section{End-to-end Memory Network}
+\subsection{Architecture}
+
+\begin{frame}{Single Hop Architecture}
+\begin{figure}
+\includegraphics[scale=0.45]{mem.png}
+\caption{Single Hop architecture}
+\source{End-To-end Memory Networks}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Multiple Hops Architecture}
+\begin{figure}
+\includegraphics[scale=0.45]{mem_multiple.png}
+\caption{Multiple Hops architecture}
+\source{End-To-end Memory Networks}
+\end{figure}
+\end{frame}
+
+\subsection{Parameters Tying}
+
+\begin{frame}{Parameters Tying}
+Two Approaches to reduce the number of parameters:
+
+\begin{itemize}
+	\item \textbf{Adjacent}
+		\begin{itemize}
+			\item $A^{k+1} = C^{k}$
+			\item $B = A^1$
+		\end{itemize}
+	\item \textbf{RNN-like}
+		\begin{itemize}
+			\item $A^1 = A^2 = ... = A^k$
+			\item $C^1 = C^2 = ... = C^k$
+			\item $u^{k+1} = Hu^k + o^k$
+		\end{itemize}
+\end{itemize}
+
+\end{frame}
+
+\subsection{Implementation Details}
+
+\begin{frame}{Implementation Tricks}
+\begin{itemize}
+	\item bag-of-words representation $x_i = \{x_{i1}, ..., x_{is}\}$ becomes $m_i = \sum_j Ax_{ij}$
+	\item Temporal encoding $m_i = \sum_j Ax_{ij} + T_A(i)$
+	\item high variance, best model over several training
+\end{itemize}	
+\end{frame}
+
+\section{Result}
+
+
+\section{Future Steps}
+
+
+
+
+\end{document}
