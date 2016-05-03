@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.9.2)  2 MAY 2016 21:24
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.9.2)  3 MAY 2016 14:11
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1268,8 +1268,12 @@ Overfull \vbox (1.8768pt too high) detected at line 149
 
 ] (./slides_nlp.toc) [14
 
-] (./slides_nlp.toc)
-[15
+] [15
+
+]
+(./slides_nlp.toc) [16
+
+] [17
 
 ]
 \tf@nav=\write6
@@ -1281,11 +1285,11 @@ Overfull \vbox (1.8768pt too high) detected at line 149
 \tf@snm=\write8
 \openout8 = `slides_nlp.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 190.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 190.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 233.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 233.
  (./slides_nlp.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 190.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 190.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 233.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 233.
 Package rerunfilecheck Info: File `slides_nlp.out' has not changed.
 (rerunfilecheck)             Checksum: 828C439B120A74306926E4D4C4EB1E32;559.
 
@@ -1293,13 +1297,13 @@ Package rerunfilecheck Info: File `slides_nlp.out' has not changed.
 LaTeX Font Warning: Size substitutions with differences
 (Font)              up to 1.0pt have occurred.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 190.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 233.
  ) 
 Here is how much of TeX's memory you used:
- 17950 strings out of 493089
- 344018 string characters out of 6134843
- 412997 words of memory out of 5000000
- 20923 multiletter control sequences out of 15000+600000
+ 17958 strings out of 493089
+ 344090 string characters out of 6134843
+ 429028 words of memory out of 5000000
+ 20926 multiletter control sequences out of 15000+600000
  14534 words of font info for 53 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  56i,19n,66p,390b,680s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1312,10 +1316,10 @@ r/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmssbx10.pfb></u
 sr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmssi10.pfb></u
 sr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmssi8.pfb></us
 r/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
-Output written on slides_nlp.pdf (15 pages, 268947 bytes).
+Output written on slides_nlp.pdf (17 pages, 276435 bytes).
 PDF statistics:
- 694 PDF objects out of 1000 (max. 8388607)
- 635 compressed objects within 7 object streams
- 41 named destinations out of 1000 (max. 500000)
+ 758 PDF objects out of 1000 (max. 8388607)
+ 697 compressed objects within 7 object streams
+ 46 named destinations out of 1000 (max. 500000)
  193 words of extra memory for PDF output out of 10000 (max. 10000000)
 
