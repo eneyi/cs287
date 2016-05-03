@@ -1,8 +1,16 @@
 require 'hdf5';
 require 'nngraph';
 require 'torch';
--- require 'xlua';
+require 'xlua';
 require 'randomkit'
+
+cmd = torch.CmdLine()
+
+cmd:option('-filename','task1','prefix filename for preprocessed data')
+cmd:option('-nepochs',10,'number of epochs')
+cmd:option('-hops',1,'number of hops')
+cmd:option('-mem',50,'Size of the memory')
+cmd:option('-adjacent',1,'adjacent parameters if 1, else rnn like')
 
 -- README:
 -- Function to define the 1-hop memory model
@@ -210,32 +218,72 @@ function build_input(story_memory, question_input, cleaned_sentences, cleaned_qu
         end
 end
 
-function accuracy(sentences, questions, questions_sentences, answers, model, memsize, voca_size,
-                  dim_hidden)
+-- Compute the accuracies total and by task
+function accuracy(sentences, questions, questions_sentences, answers, model, memsize,
+                  voca_size, dim_hidden)
+    -- To store per task metrics (row may be unused)
+    local task_id_max = sentences:narrow(2, 1, 1):max() 
+    local acc_by_task = torch.zeros(task_id_max, 2)
+    -- Store index of the task
+    acc_by_task:narrow(2, 1, 1):copy(torch.linspace(1, task_id_max, task_id_max))
+
+    local count_task = torch.zeros(task_id_max)
 	local acc = 0
     local time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
     local story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
-    -- Clean sentence and question while removing the the task_id
+    -- Clean sentence and question while removing the task_id
     local cleaned_sentences = sentences:narrow(2,2,sentences:size(2)-1)
     local cleaned_questions = questions:narrow(2, 2, questions:size(2)-1)
     -- To store the quesiton input
     local question_input = torch.zeros(cleaned_questions:size(2))
 
 	for i = 1, questions:size(1) do
+        -- Current task id
+        t_id = questions[{i, 1}]
+
+        -- Prediction
+        build_input(story_memory, question_input, cleaned_sentences, cleaned_questions,
+                    questions_sentences, i, voca_size)
+        input = {story_memory, question_input, time_input}
+		pred = model:forward(input)
+
+		m, a = pred:view(pred:size(2),1):max(1)
+		if a[1][1] == answers[i] then
+			acc = acc + 1
+            acc_by_task[{t_id, 2}] = acc_by_task[{t_id, 2}] + 1
+		end
+        count_task[t_id] = count_task[t_id] + 1
+	end
+    -- Normalize accuracy
+    acc_by_task:narrow(2, 2, 1):cdiv(count_task)
+	return acc/questions:size(1), acc_by_task
+end
+
+-- Compute only the total accuracy
+function accuracy_total(sentences, questions, questions_sentences, time_input, answers, model, memsize, voca_size,
+                  dim_hidden)
+    local acc = 0
+    local story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
+    -- Clean sentence and question while removing the the task_id
+    local cleaned_sentences = sentences:narrow(2,2,sentences:size(2)-1)
+    local cleaned_questions = questions:narrow(2, 2, questions:size(2)-1)
+    -- To store the question input
+    local question_input = torch.zeros(cleaned_questions:size(2))
+
+    for i = 1, questions:size(1) do
         build_input(story_memory, question_input, cleaned_sentences, cleaned_questions, questions_sentences,
                    i, voca_size)
         input = {story_memory, question_input, time_input}
-		pred = model:forward(input)
+        pred = model:forward(input)
         -- print('pred is ', pred)
 
-		m, a = pred:view(pred:size(2),1):max(1)
-		if a[1][1] == answers[i][1] then
-			acc = acc + 1
-		end
-	end
-	return acc/questions:size(1)
+        m, a = pred:view(pred:size(2),1):max(1)
+        if a[1][1] == answers[i] then
+            acc = acc + 1
+        end
+    end
+    return acc/questions:size(1)
 end
-
 
 function train_model(sentences, questions, questions_sentences, answers, model, par, gradPar,
                      criterion, eta, nEpochs, memsize, voca_size)
@@ -263,6 +311,9 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         end
         -- mini batch loop
         for i = 1, questions:size(1) do
+            -- display progress
+            xlua.progress(i, questions:size(1))
+
 	        build_input(story_memory, question_input, cleaned_sentences, cleaned_questions, questions_sentences,
                    i, voca_size)
             input = {story_memory, question_input, time_input}
@@ -286,8 +337,8 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
             --par:add(gradPar:mul(-eta))
             
         end
-        accuracy_tensor[i] = accuracy(sentences, questions, questions_sentences, answers, model,
-                                      memsize, voca_size)
+        accuracy_tensor[i] = accuracy_total(sentences, questions, questions_sentences,
+                                            time_input, answers, model, memsize, voca_size)
         loss[i] = av_L/questions:size(1)
         print('Epoch '..i..': '..timer:time().real)
        	print('\n')
@@ -301,41 +352,82 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
     return loss, accuracy_tensor
 end
 
+function main()
+    -- Parsing arg
+    opt = cmd:parse(arg)
 
-myFile = hdf5.open('../Data/preprocess/task123_train.hdf5','r')
-f = myFile:all()
-sentences = f['sentences']
-questions = f['questions']
-questions_sentences = f['questions_sentences']
-answers = f['answers']
-voca_size = f['voc_size'][1]
-myFile:close()
+    myFile = hdf5.open('../Data/preprocess/'.. opt.filename ..'_train.hdf5','r')
+    f = myFile:all()
+    sentences = f['sentences']
+    questions = f['questions']
+    questions_sentences = f['questions_sentences']
+    answers = f['answers']
+    voca_size = f['voc_size'][1]
+    myFile:close()
 
--- Building the model
-memsize = 50
-nEpochs = 100
-eta = 0.01
-dim_hidden = 50
-num_hops = 3
-num_answer = torch.max(answers)
-batch_size = 16
-sentence_size = sentences:size(2) - 1
--- model = graph_model(dim_hidden, num_answer, voca_size, memsize)
-model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
--- model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
+    -- Building the model
+    memsize = opt.mem
+    nEpochs = opt.nepochs
+    eta = 0.01
+    dim_hidden = 50
+    num_hops = opt.hops
+    num_answer = torch.max(answers)
+    sentence_size = sentences:size(2) - 1
+    -- model = graph_model(dim_hidden, num_answer, voca_size, memsize)
+    if opt.adjacent == 1 then
+        model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
+    else
+        model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
+    end
 
--- Initialise parameters using normal(0,0.1) as mentioned in the paper
-parameters, gradParameters = model:getParameters()
-torch.manualSeed(0)
-randomkit.normal(parameters, 0, 0.1)
+    -- Initialise parameters using normal(0,0.1) as mentioned in the paper
+    parameters, gradParameters = model:getParameters()
+    torch.manualSeed(0)
+    randomkit.normal(parameters, 0, 0.1)
 
--- -- Criterion
-criterion = nn.ClassNLLCriterion()
+    -- -- Criterion
+    criterion = nn.ClassNLLCriterion()
 
--- -- Training
--- loss_train, accuracy_train = train_model(sentences, questions, questions_sentences, answers,
---                                          model, parameters, gradParameters, criterion, eta,
---                                          nEpochs, memsize, voca_size)
+    -- -- Training
+    loss_train, accuracy_tensor_train = train_model(sentences, questions, questions_sentences, answers,
+                                             model, parameters, gradParameters, criterion, eta,
+                                             nEpochs, memsize, voca_size)
 
+    accuracy_train, accuracy_by_task_train = accuracy(sentences, questions,
+                                                      questions_sentences, answers,
+                                                      model, memsize, voca_size, dim_hidden)
 
+    print('Train accuracy TOTAL '.. accuracy_train)
+    print('Train accuracy by task')
+    print(accuracy_by_task_train)
+    print('\n')
+    print('***************************************************')
+    -- Prediction on test
+    myFile = hdf5.open('../Data/preprocess/'.. opt.filename ..'_test.hdf5','r')
+    f = myFile:all()
+    sentences_test = f['sentences']
+    questions_test = f['questions']
+    questions_sentences_test = f['questions_sentences']
+    answers_test = f['answers']
+    voca_size = f['voc_size'][1]
+    myFile:close()
 
+    accuracy_test, accuracy_by_task_test = accuracy(sentences_test, questions_test,
+                                                    questions_sentences_test, answers_test,
+                                                    model, memsize, voca_size, dim_hidden)
+    print('Test accuracy TOTAL '.. accuracy_test)
+    print('Test accuracy by task')
+    print(accuracy_by_task_test)
+    print('\n')
+    print('***************************************************')
+
+    -- Saving the final accuracies
+    fname = opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent.acc_by_task.hdf5'
+    myFile = hdf5.open(fname, 'w')
+    myFile:write('train', accuracy_by_task_train)
+    myFile:write('test', accuracy_by_task_test)
+    myFile:close()
+    print('Accuracy by task saved at '.. fname)
+end
+
+main()
