@@ -87,7 +87,11 @@ def build_sentences_mapping(filenames_tuples, word2index=None):
                     # Answer list (in case of list of words as answer)
                     answer = line_split[1].split(',')
                     # Need to store a new word for the combination observed
-                    answer_combination = ''.join(sorted(answer))
+                    # Case single char answer (ie task 8) we dont want to sort
+                    if len(answer[0]) == 1:
+                        answer_combination = ''.join(answer)
+                    else:
+                        answer_combination = ''.join(sorted(answer))
                     if not pretrained:
                         if answer_combination not in word2index:
                             word2index[answer_combination] = w
@@ -219,6 +223,9 @@ def main(arguments):
 
     # Filter out tasks with multiple anwsers expected
     tasks = args.tasks
+    # for t in tasks:
+    #     if t in [8, 19]:
+    #         tasks.remove(t)
 
     # ###### STEP 0: retrieving filenames
     # Train
