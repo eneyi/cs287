@@ -86,16 +86,22 @@ def build_sentences_mapping(filenames_tuples, word2index=None):
                 if len(line_split) > 1:
                     # Answer list (in case of list of words as answer)
                     answer = line_split[1].split(',')
+                    # Need to store a new word for the combination observed
+                    # Case single char answer (ie task 8) we dont want to sort
+                    if len(answer[0]) == 1:
+                        answer_combination = ''.join(answer)
+                    else:
+                        answer_combination = ''.join(sorted(answer))
                     if not pretrained:
-                        for aw in answer:
-                            if aw not in word2index:
-                                word2index[aw] = w
-                                w += 1
+                        if answer_combination not in word2index:
+                            word2index[answer_combination] = w
+                            w += 1
                     bow = line_split[0].rstrip('? ').split()[1:]
                     # tuple (id_task, bow)
                     index2question[q] = (task_id, bow)
                     index2supportings[q] = [localindex2globalindex[int(u)] for u in line_split[2].split()]
-                    answers.append([word2index[aw] for aw in answer])
+                    # For list we store the index of the combination word as answer
+                    answers.append(word2index[answer_combination])
                     question_index2sentences_index[q] = [current_start, s-1]
                     q += 1
                 else:
@@ -122,15 +128,9 @@ def build_sentences_mapping(filenames_tuples, word2index=None):
                 word2index[word] = w
                 w += 1
 
-    # Convert answers to np.array
+    # Convert answers to np.array (for each question we have now 1 answer)
     # Compute the max number of answers for a question
-    max_number = 1
-    for a in answers:
-        if len(a) > max_number:
-            max_number = len(a)
-    answers_matrix = np.zeros((len(answers), max_number))
-    for i, a in enumerate(answers):
-        answers_matrix[i, :len(a)] = a
+    answers_matrix = np.array(answers)
 
     return word2index, index2sentence, index2question, index2supportings, question_index2sentences_index, answers_matrix
 
@@ -215,16 +215,17 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('--tasks', default=range(1, 21), type=int, nargs='+', help='Tasks list')
+    parser.add_argument('--tasks', default=range(1, 21), type=int, nargs='+',
+                        help='Tasks list')
     parser.add_argument('--f', default='new', type=str,
                         help='Filename to save preprocess data in hdf5 format')
     args = parser.parse_args(arguments)
 
     # Filter out tasks with multiple anwsers expected
     tasks = args.tasks
-    for t in [8, 19]:
-        if t in tasks:
-            tasks.remove(t)
+    # for t in tasks:
+    #     if t in [8, 19]:
+    #         tasks.remove(t)
 
     # ###### STEP 0: retrieving filenames
     # Train
@@ -290,15 +291,20 @@ def main(arguments):
 
     # Debugging
     print('DEBUG print')
+    print('Size vocabulary')
     print(len(index2word))
+    print('sentences train: size and sample')
     print(sentences_train.shape)
     print(sentences_train[:5])
+    print('questions train: size and sample')
     print(questions_train.shape)
     print(questions_train[:5])
+    print('questions_sentences train: size and sample')
     print(questions_sentences_train.shape)
     print(questions_sentences_train[:5])
+    print('answers sample')
     print(answers_train[:5])
-    print([[index2word[aw] for aw in r] for r in answers_train[:5]])
+    print([index2word[aw] for aw in answers_train[:5]])
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

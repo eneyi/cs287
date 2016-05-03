@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.9.2)  2 MAY 2016 19:06
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015) (preloaded format=pdflatex 2015.9.2)  3 MAY 2016 14:01
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1025,7 +1025,7 @@ Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
 Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
 (hyperref)                removing `math shift' on input line 29.
 
-No file slides.aux.
+(./slides.aux)
 \openout1 = `slides.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 29.
@@ -1042,6 +1042,7 @@ LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 29.
 LaTeX Font Info:    ... okay on input line 29.
 LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 29.
 LaTeX Font Info:    ... okay on input line 29.
+
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -1119,6 +1120,8 @@ Package: gettitlestring 2010/12/03 v1.4 Cleanup title references (HO)
 LaTeX Info: Redefining \ref on input line 29.
 LaTeX Info: Redefining \pageref on input line 29.
 LaTeX Info: Redefining \nameref on input line 29.
+
+(./slides.out) (./slides.out)
 \@outlinefile=\write5
 \openout5 = `slides.out'.
 
@@ -1200,8 +1203,7 @@ r-theorem-dictionary/translator-theorem-dictionary-English.dict
 Dictionary: translator-theorem-dictionary, Language: English 
 )
 LaTeX Info: Redefining \includegraphics on input line 29.
-
-No file slides.nav.
+ (./slides.nav)
 LaTeX Font Info:    Try loading font information for U+msa on input line 29.
 (/usr/local/texlive/2015/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
@@ -1231,20 +1233,17 @@ Overfull \hbox (63.83734pt too wide) has occurred while \output is active
  [][][][]  
  []
 
-[1
+[1{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map}
 
-{/usr/local/texlive/2015/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-No file slides.toc.
-
+]
+(./slides.toc)
 Overfull \hbox (63.83734pt too wide) has occurred while \output is active
  [][][][]  
  []
 
 [2
 
-]
-No file slides.toc.
-
+] (./slides.toc)
 Overfull \hbox (63.83734pt too wide) has occurred while \output is active
  [][][][]  
  []
@@ -1266,6 +1265,10 @@ Overfull \hbox (63.83734pt too wide) has occurred while \output is active
 [5
 
 ]
+Overfull \vbox (22.11276pt too high) detected at line 96
+ []
+
+
 Overfull \hbox (63.83734pt too wide) has occurred while \output is active
  [][][][]  
  []
@@ -1492,9 +1495,7 @@ Overfull \hbox (63.83734pt too wide) has occurred while \output is active
 
 [16
 
-]
-No file slides.toc.
-
+] (./slides.toc)
 Overfull \hbox (63.83734pt too wide) has occurred while \output is active
  [][][][]  
  []
@@ -1634,9 +1635,7 @@ Overfull \hbox (63.83734pt too wide) has occurred while \output is active
 
 [24
 
-]
-No file slides.toc.
-
+] (./slides.toc)
 Overfull \hbox (63.83734pt too wide) has occurred while \output is active
  [][][][]  
  []
@@ -1875,15 +1874,9 @@ Package atveryend Info: Empty hook `AfterLastShipout' on input line 502.
  (./slides.aux)
 Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 502.
 Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 502.
+Package rerunfilecheck Info: File `slides.out' has not changed.
+(rerunfilecheck)             Checksum: B1D5AF1190CFBF03B88F5FDE7031AF91;865.
 
-
-Package rerunfilecheck Warning: File `slides.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `slides.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  B1D5AF1190CFBF03B88F5FDE7031AF91;865.
 
 LaTeX Font Warning: Size substitutions with differences
 (Font)              up to 1.0pt have occurred.
@@ -1891,13 +1884,13 @@ LaTeX Font Warning: Size substitutions with differences
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 502.
  ) 
 Here is how much of TeX's memory you used:
- 17851 strings out of 493089
- 341184 string characters out of 6134843
- 418126 words of memory out of 5000000
- 20779 multiletter control sequences out of 15000+600000
+ 18069 strings out of 493089
+ 345229 string characters out of 6134843
+ 419230 words of memory out of 5000000
+ 20981 multiletter control sequences out of 15000+600000
  15996 words of font info for 59 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 56i,18n,66p,386b,772s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 56i,19n,66p,386b,774s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb
 ></usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
 </usr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmss10.pfb><
@@ -1908,10 +1901,10 @@ sr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmssi10.pfb></u
 sr/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmssi8.pfb></us
 r/local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr
 /local/texlive/2015/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on slides.pdf (34 pages, 178065 bytes).
+Output written on slides.pdf (34 pages, 198334 bytes).
 PDF statistics:
- 1005 PDF objects out of 1200 (max. 8388607)
- 934 compressed objects within 10 object streams
+ 1342 PDF objects out of 1440 (max. 8388607)
+ 1262 compressed objects within 13 object streams
  83 named destinations out of 1000 (max. 500000)
- 91 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 221 words of extra memory for PDF output out of 10000 (max. 10000000)
 
