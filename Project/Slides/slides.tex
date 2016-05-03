@@ -1,0 +1,502 @@
+\documentclass[pdf]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{adjustbox}
+ 
+\usetheme{Warsaw}
+
+
+\mode<presentation>{}
+%% preamble
+
+\setbeamercolor{framesource}{fg=gray}
+\setbeamerfont{framesource}{size=\tiny}
+
+\newcommand{\source}[1]{\begin{textblock*}{4cm}(8.7cm,8.6cm)
+    \begin{beamercolorbox}[ht=0.3cm,right]{framesource}
+        \usebeamerfont{framesource}\usebeamercolor[fg]{framesource} Source: {#1}
+    \end{beamercolorbox}
+\end{textblock*}}
+
+
+\author{Nicolas Drizard}
+\date{Advisors: David Bessis, Artem Kozhevnikov, Victor Mazzeo \\ Supervisor: Michalis Vazirgiannis \\ July, $9^{th}$ 2015}
+\title{Evaluation of a Neighborhood Weighted Graph between Products \\
+$ $   \\
+    CONFIDENTIAL}
+
+\begin{document}
+
+
+%% title frame
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+\frametitle{Outline}
+\tableofcontents
+\end{frame}
+
+\AtBeginSection[]
+{
+  \begin{frame}
+    \frametitle{Table of Contents}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\section{Targeting Application}
+\subsection{Objective}
+
+\begin{frame}{Objective}
+Workflow of the targeting Application:
+\begin{enumerate}
+\item{Choosing the campaign content}
+\item{Choosing the campaign volume}
+\item{Learning the model}
+\item{Scoring the user base}
+\item{Obtaining the target}
+\end{enumerate}
+\end{frame}
+
+\subsection{Data Environment}
+
+\begin{frame}{Data Tables}
+\begin{itemize}
+\item{\textbf{user}: socio demographic characteristics and contact data of each user}
+\item{\textbf{product}}
+\item{\textbf{purchase}}
+\item{\textbf{page-view}: information about the navigation of the user on the website, i.e. how he arrived, on which content he clicked...}
+\item{\textbf{email}: data about the marketing email sent, in particular if the user opened it or clicked inside}
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Example}
+\begin{figure}
+\begin{tabular}{|c|c|}
+			\hline
+domain &  gmail.com\\ \hline
+zipcode &  93400 \\ \hline
+user\_id &  420050933 \\ \hline
+contactable &  True \\ \hline
+firstname & Roger \\ \hline
+title & MISTER \\ \hline
+Lastname & Dupond \\ \hline
+yob & 1978 \\ \hline
+first\_purchase\_date & 2001-02-16 \\ \hline
+dob & 1978-12-05 \\ \hline
+gender & M \\ \hline
+country & France \\ \hline
+login & bernarddupond \\ \hline
+\end{tabular}
+\caption{User Table}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Example}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{4.5cm} % each column can also be its own environment
+     \begin{center}
+     \begin{figure}
+    		\begin{tabular}{|c|c|}
+			\hline
+product\_id &  188752258\\ \hline
+date &  2015-06-30  \\ \hline
+user\_id &  420050933 \\ \hline
+basket\_id &  391290000 \\ \hline
+price & 10.4 \\ \hline
+    			\end{tabular}
+    			\caption{Purchase Table}
+			\end{figure}
+		\end{center}
+     \end{column}
+          \begin{column}[T]{6cm} % alternative top-align that's better for graphics
+          \begin{figure}
+		\begin{tabular}{|c|c|}
+			\hline
+product\_id &  156820100\\ \hline
+genre &  Livre  \\ \hline
+categories\_1 &  Litterature \\ \hline
+categories\_2 &  Littérature française \\ \hline
+name & un bel morir \\ \hline
+price & 5.00 \\ \hline
+    			\end{tabular}
+    			\caption{Product Table}
+			\end{figure}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\subsection{Prediction Method}
+
+\begin{frame}{Method}
+\begin{figure}
+ \includegraphics[scale=0.35]{supervised.png}
+\caption{Supervised Learning Workflow}
+\source{http://www.astroml.org/sklearn\_tutorial}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Method}
+\begin{itemize}
+\item{\textbf{Dimension Reduction}: embeds each category of data in a low dimensional vector space}
+\item{\textbf{Regularized Logistic Regression}}
+\begin{equation*}
+\min_{w}\dfrac{1}{2n_{sample}}||Xw - y||^2 + \alpha ||w||
+\end{equation*}
+\end{itemize}
+
+\end{frame}
+
+\subsection{Application Demonstration}
+
+\begin{frame}{Targeted Products}
+\begin{figure}
+ \includegraphics[scale=0.25]{target.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Performance}
+\begin{figure}
+ \includegraphics[scale=0.25]{gain_curve_ex.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Extract Info}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{5cm} % each column can also be its own 
+     \includegraphics[scale=0.25]{sex_distribution.png}
+     \end{column}
+          \begin{column}[T]{5cm} % alternative top-align that's better for graphics
+     \includegraphics[scale=0.25]{age.png}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\begin{frame}{Extract Info}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{5cm} % each column can also be its own 
+     \includegraphics[scale=0.25]{geographic.png}
+     \end{column}
+          \begin{column}[T]{5cm} % alternative top-align that's better for graphics
+     \includegraphics[scale=0.25]{domain.png}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\begin{frame}{Extracts Comparison}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{5cm} % each column can also be its own 
+     \includegraphics[scale=0.25]{sex_comp.png}
+     \end{column}
+          \begin{column}[T]{5cm} % alternative top-align that's better for graphics
+     \includegraphics[scale=0.25]{ex_overlap.png}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\subsection{Issue}
+
+\begin{frame}{Filter}
+\begin{alertblock}{Issue}
+Should we apply a filter before the learning or after directly to the scored table?
+\end{alertblock}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{4cm} % each column can also be its own 
+          \begin{figure}
+          \adjustbox{max height=\dimexpr\textheight-3.5cm\relax,
+           max width=\textwidth}{
+		\begin{tabular}{|c|c|c|}
+			\hline
+product & in idf & not in idf \\ \hline
+theatre & 141 & 71 \\ \hline
+orsay & 241 & 227 \\ \hline
+veles & 517 & 411 \\ \hline
+		\end{tabular}
+		}
+    			\caption{Original Data}
+			\end{figure}
+			     \end{column}
+          \begin{column}[T]{5.5cm} % alternative top-align that's better for graphics
+          \begin{figure}
+           \adjustbox{max height=\dimexpr\textheight-5.5cm\relax,
+           max width=\textwidth}{
+		\begin{tabular}{|c|c|c|c|c|c|}
+			\hline
+filter & product & robustness & lift 10\% \\ \hline	
+pre & orsay & 0.996 & 5.708 \\ \hline
+post & orsay & +6\% & +14 \\ \hline
+pre & theatre & 0.947 & 4.412 \\ \hline
+post & theatre & -7\% & 0 \\ \hline
+pre & veles & 0.888 & 5.174 \\ \hline
+post & veles & -3\% & +6 \\ \hline
+		\end{tabular}
+		}
+    			\caption{Comparison Results}
+			\end{figure}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\begin{frame}{Minimum of Positive Events}
+\begin{alertblock}{Issue}
+How could we target the products with not enough purchase?
+\end{alertblock}
+\begin{block}{Neighborhood Weighted Graph or Similarity Mapping}
+Neighborhood Weighted Graph is a mapping where each structure is mapped to a ranked list of similar products, called buddies. 
+\end{block}
+
+\begin{block}{Target Extension}
+Extension of the targeted products list with the most similar products to increase the number of positive events considered for the learning until a given threshold.
+\end{block}
+ 
+\end{frame}
+
+
+\section{Quality Evaluation Mission}
+\subsection{Metrics}
+
+\begin{frame}{Global Model Performance}
+ \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{4cm} % each column can also be its own 
+\begin{itemize}
+	\item{AUC}
+	\item{Robustness}
+	\item{Lift}
+\end{itemize}
+    	\end{column}
+    	     \begin{column}[T]{4cm} % each column can also be its own 
+			\begin{figure}
+	    	     \includegraphics[scale=0.2]{gain_curve.png}
+    	     \caption{Gain Curve}		
+			\end{figure}			    	     
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\begin{frame}{Graph Homogeneity \& Stability}
+\begin{block}{Homogeneity}
+Evaluates the homogeneity of the buddies for any targeted product
+	\begin{equation*}
+	overlap_{homogeneity} = Extract_{even}^{5\%} \cap Extract_{odd}^{5\%}
+	\end{equation*}
+\end{block}
+\begin{block}{Stability}
+Evaluates the stability of the construc- tion of the graph
+	\begin{equation*}
+	overlap_{stability} = Extract_{train}^{5\%} \cap Extract_{test}^{5\%}
+	\end{equation*}
+\end{block}
+\begin{alertblock}{Remark}
+References needed:
+$ overlap_{extratag} < ... < overlap_{intratag} $
+\end{alertblock}
+\end{frame}
+
+\begin{frame}{Buddies Specificity}
+\begin{block}{Buddies Specificity Overlap}
+Overlap among the buddies lists truncated at a given number (here 50) for different entries weighted by contribution.
+\end{block}
+			\begin{figure}
+	    	     \includegraphics[scale=0.19]{Overlap_Buddies.png}
+    	     \caption{Gain Curve}		
+			\end{figure}
+\end{frame}
+
+\subsection{Demonstration}
+
+
+\begin{frame}{Aggregated Report}
+     \begin{figure}
+                \adjustbox{max height=\dimexpr\textheight-5.5cm\relax,
+           max width=\textwidth}{
+		\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+auc &  robustness &  $overlap_{intratag}$ & $overlap_{extratag}$ &  $overlap_{homogeneity}$ &  lift\_5 &  lift\_10 \\ \hline
+0.69 &  0.91 &  0.93 &  0.77 &  0.93  &  8.90 &  5.99 \\ \hline
+\end{tabular}
+}
+\caption{Model Performance Metrics}
+     \end{figure}
+          \begin{figure}
+              \adjustbox{max height=\dimexpr\textheight-5.5cm\relax,
+           max width=\textwidth}{
+     		\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+positive\_events &  length &  entropy & std & max &  argmax &  mean & argmean & argmedian\\ \hline
+182 &  150 &  2.99 &  4.61 &  35.4  &  15 &  1.10 & 60 & 50 \\ \hline
+\end{tabular}
+}
+\caption{Detailed Report}
+    	\end{figure}
+\end{frame}
+
+\begin{frame}{Extract Info}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{5cm} % each column can also be its own 
+              \begin{figure}
+     \includegraphics[scale=0.25]{curves.png}
+     \caption{Gain Curves}
+              \end{figure}
+     \end{column}
+          \begin{column}[T]{5cm} % alternative top-align that's better for graphics
+          \begin{figure}
+     \includegraphics[scale=0.25]{pressure.png}
+          \caption{Pressure Distribution}
+              \end{figure}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\begin{frame}{Detailed Report}
+\begin{figure}
+ \includegraphics[scale=0.25]{campaign_overlap.png}
+           \caption{Campaing Overlap}
+\end{figure}
+\end{frame}
+
+\subsection{Perspectives}
+
+\begin{frame}{Applications}
+Possible applications of the reporting mission:
+\begin{itemize}
+\item{Features evaluation}
+\item{Benchmark of the positive events minimum required}
+\item{Setting dynamically targeting parameters for each client}
+\item{Set a trust threshold}
+\end{itemize}
+\end{frame}
+
+\section{Graph Implementation Methods}
+\subsection{Methods}
+
+
+\begin{frame}{Data}
+Let $M_{id}$ be the matrix of purchase occurrence over the user\_id
+
+\vspace{0.6cm}
+
+$ M_{id} $ = \bordermatrix{~  & user_1 & \dots & user_n \cr
+                 product_1 & 1 & \dots & 0 \cr
+                \vdots & \dots & \dots & \dots \cr
+                  product_n & 1 &\dots & 1 \cr} 
+                  
+\end{frame}
+
+
+\begin{frame}{Data}
+Let $M_{sd}$ be the matrix of purchase occurrence over the socio demo characteristics: ( \textbf{year of birth} (\textbf{yob}), \textbf{sex}, \textbf{firstname} )
+
+\vspace{0.6cm}
+
+$ M_{sd} $ = \bordermatrix{~  & yob_1 & \dots & yob_n & firstname_1 & \dots & firstname_n & M & F \cr
+                 product_1 & 1 & \dots & 0 & 1 & \dots & 0 & 1 & 1 \cr
+                \vdots & \dots & \dots & \dots & \dots & \dots & \dots & \dots & \dots \cr
+                  product_n & 1 &\dots & 1 & 1 & \dots & 1 & 0 & 1\cr} 
+                  
+\end{frame}
+
+\begin{frame}{Methods}
+\begin{itemize}
+\item{Jaccard Index}
+\item{Singular Value Decomposition (SVD)}
+\item{Non Negative Matrix Factorization (NMF)}
+\end{itemize}
+\end{frame}
+
+\subsection{Comparison}
+
+
+\begin{frame}{Top Buddies Intersection}
+\begin{block}{Remark}
+Evaluation of the intersection between the buddies lists from two graphs: \\
+x axis : number of products \\
+y axis : number of common buddies 
+\end{block}
+\begin{figure}
+\includegraphics[scale=0.20]{jaccard.png}
+\caption{Jaccard Index}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Top Buddies Intersection}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{5cm} % each column can also be its own 
+              \begin{figure}
+     \includegraphics[scale=0.25]{svd.png}
+     \caption{SVD}
+              \end{figure}
+     \end{column}
+          \begin{column}[T]{5cm} % alternative top-align that's better for graphics
+          \begin{figure}
+     \includegraphics[scale=0.25]{nmf.png}
+          \caption{NMF}
+              \end{figure}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\begin{frame}{Buddies Specificity Overlap: Jaccard}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{5cm} % each column can also be its own 
+              \begin{figure}
+     \includegraphics[scale=0.25]{jac_id.png}
+     \caption{User id}
+              \end{figure}
+     \end{column}
+          \begin{column}[T]{5cm} % alternative top-align that's better for graphics
+          \begin{figure}
+     \includegraphics[scale=0.25]{jac_sd.png}
+          \caption{Socio Demo}
+              \end{figure}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\begin{frame}{Buddies Specificity Overlap: SVD}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{5cm} % each column can also be its own 
+              \begin{figure}
+     \includegraphics[scale=0.25]{svd_id.png}
+     \caption{User id}
+              \end{figure}
+     \end{column}
+          \begin{column}[T]{5cm} % alternative top-align that's better for graphics
+          \begin{figure}
+     \includegraphics[scale=0.25]{svd_sd.png}
+          \caption{Socio Demo}
+              \end{figure}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\begin{frame}{Buddies Specificity Overlap: NMF}
+     \begin{columns}[T] % contents are top vertically aligned
+     \begin{column}[T]{5cm} % each column can also be its own 
+              \begin{figure}
+     \includegraphics[scale=0.25]{nmf_id.png}
+     \caption{User id}
+              \end{figure}
+     \end{column}
+          \begin{column}[T]{5cm} % alternative top-align that's better for graphics
+          \begin{figure}
+     \includegraphics[scale=0.25]{nmf_sd.png}
+          \caption{Socio Demo}
+              \end{figure}
+    	\end{column}
+     \end{columns}
+\end{frame}
+
+\subsection{Perspectives}
+
+\begin{frame}{Other Approaches}
+Possible applications of the reporting mission:
+\begin{itemize}
+\item{Distance-based metrics between the distribution of the socio-demo characteristics in the occurrence profile}
+\item{Combining Different Methods}
+\end{itemize}
+\end{frame}
+
+\end{document}

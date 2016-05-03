@@ -1,0 +1,11 @@
+\beamer@endinputifotherversion {3.36pt}
+\beamer@sectionintoc {1}{Motivation}{3}{0}{1}
+\beamer@subsectionintoc {1}{1}{Questions}{4}{0}{1}
+\beamer@subsectionintoc {1}{2}{Intuition}{6}{0}{1}
+\beamer@sectionintoc {2}{Baseline Model}{7}{0}{2}
+\beamer@sectionintoc {3}{End-to-end Memory Network}{9}{0}{3}
+\beamer@subsectionintoc {3}{1}{Architecture}{10}{0}{3}
+\beamer@subsectionintoc {3}{2}{Parameters Tying}{12}{0}{3}
+\beamer@subsectionintoc {3}{3}{Implementation Details}{13}{0}{3}
+\beamer@sectionintoc {4}{Result}{14}{0}{4}
+\beamer@sectionintoc {5}{Future Steps}{15}{0}{5}
