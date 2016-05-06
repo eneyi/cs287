@@ -80,17 +80,32 @@ function buildmodel(hid, nans)
 	return model
 end
 
-function graph_model(dim_hidden, num_answer, voca_size, memsize)
+function graph_model(dim_hidden, num_answer, voca_size, memsize, sentence_size)
     -- Inputs
     local story_in_memory = nn.Identity()()
     local question = nn.Identity()()
     local time = nn.Identity()()
+    
+    -- Position Encoding
+    local sentence_size = sentence_size or 6
+    local PE = torch.Tensor(memsize, sentence_size, dim_hidden)
+    local PE_ = torch.Tensor(sentence_size, dim_hidden)
+
+    for j = 1,sentence_size do
+        for k = 1, dim_hidden do
+            PE_[j][k] = (1-j/6)-(k/10)*(1-2*j/6)
+        end
+    end
+    for i = 1, memsize do
+        PE[i] = PE_
+    end
+
 
     -- Embedding
     local question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.LookupTable(voca_size, dim_hidden)(question)));
-    local sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story_in_memory)),
+    local sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({nn.LookupTable(voca_size, dim_hidden)(story_in_memory),PE})),
                                            nn.LookupTable(memsize, dim_hidden)(time)});
-    local sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story_in_memory)),
+    local sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({nn.LookupTable(voca_size, dim_hidden)(story_in_memory),PE})),
                                            nn.LookupTable(memsize, dim_hidden)(time)});
 
     -- Components
