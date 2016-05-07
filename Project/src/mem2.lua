@@ -307,13 +307,16 @@ function accuracy_total(sentences, questions, questions_sentences, time_input, a
     return acc/questions:size(1)
 end
 
-function train_model(sentences, questions, questions_sentences, answers, PE_mem, PE_ques, model, par, gradPar,
-                     criterion, eta, nEpochs, memsize, voca_size)
+function train_model(sentences, questions, questions_sentences, answers,
+                    valid_questions, valid_questions_sentences, valid_answers,
+                    PE_mem, PE_ques, model, par, gradPar,
+                     criterion, eta, nEpochs, memsize, voca_size, valid_threshold)
     -- Train the model with a SGD
 
     -- To store the loss
     local loss = torch.zeros(nEpochs)
     local accuracy_tensor = torch.zeros(nEpochs)
+    local accuracy_tensor_valid = torch.zeros(nEpochs)
     local av_L = 0
 
     local time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
@@ -366,6 +369,8 @@ function train_model(sentences, questions, questions_sentences, answers, PE_mem,
         end
         accuracy_tensor[i] = accuracy_total(sentences, questions, questions_sentences,
                                             time_input, answers, PE_mem, PE_ques, model, memsize, voca_size)
+        accuracy_tensor_valid[i] = accuracy_total(sentences, valid_questions, valid_questions_sentences,
+                                            time_input, valid_answers, PE_mem, PE_ques, model, memsize, voca_size)
         loss[i] = av_L/questions:size(1)
         print('Epoch '..i..': '..timer:time().real)
         print('\n')
@@ -373,10 +378,14 @@ function train_model(sentences, questions, questions_sentences, answers, PE_mem,
         print('\n')
         print('Training accuracy: '.. accuracy_tensor[i])
         print('\n')
+        print('Validation accuracy: '.. accuracy_tensor_valid[i])
+        print('\n')
         print('***************************************************')
-       
+        if accuracy_tensor_valid[i]>valid_threshold then
+            return loss:narrow(1,1,i), accuracy_tensor:narrow(1,1,i), accuracy_tensor_valid:narrow(1,1,i)
+        end
     end
-    return loss, accuracy_tensor
+    return loss, accuracy_tensor, accuracy_tensor_valid
 end
 
 function main()
@@ -391,7 +400,19 @@ function main()
     answers = f['answers']
     voca_size = f['voc_size'][1]
     myFile:close()
-    
+
+    -- Train and validation:
+    ndata = questions:size(1)
+    perm = torch.randperm(ndata):long()
+
+    train_questions = questions:index(1,perm):narrow(1,1,math.floor(0.9*ndata))
+    train_questions_sentences = questions_sentences:index(1,perm):narrow(1,1,math.floor(0.9*ndata))
+    train_answers = answers:index(1,perm):narrow(1,1,math.floor(0.9*ndata))
+
+    valid_questions = questions:index(1,perm):narrow(1,math.floor(0.9*ndata)+1,ndata-math.floor(0.9*ndata))
+    valid_questions_sentences = questions_sentences:index(1,perm):narrow(1,math.floor(0.9*ndata)+1,ndata-math.floor(0.9*ndata))
+    valid_answers = answers:index(1,perm):narrow(1,math.floor(0.9*ndata)+1,ndata-math.floor(0.9*ndata))
+
     -- Building the model
     memsize = opt.mem
     nEpochs = opt.nepochs
@@ -401,6 +422,7 @@ function main()
     num_answer = torch.max(answers)
     sentence_size = sentences:size(2) - 1
     question_size = questions:size(2) - 1
+    valid_threshold = 0.86
     -- model = graph_model(dim_hidden, num_answer, voca_size, memsize)
     if opt.adjacent == 1 then
         model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
@@ -436,12 +458,17 @@ function main()
     criterion = nn.ClassNLLCriterion()
 
     -- -- Training
-    loss_train, accuracy_tensor_train = train_model(sentences, questions, questions_sentences, answers, PE_mem, PE_ques,
-                                             model, parameters, gradParameters, criterion, eta,
-                                             nEpochs, memsize, voca_size)
+    loss_train, accuracy_tensor_train, accuracy_tensor_valid = train_model(sentences, train_questions, train_questions_sentences, train_answers, 
+                                            valid_questions, valid_questions_sentences, valid_answers, 
+                                            PE_mem, PE_ques,model, parameters, gradParameters, criterion, eta,
+                                             nEpochs, memsize, voca_size, valid_threshold)
 
-    accuracy_train, accuracy_by_task_train = accuracy(sentences, questions,
-                                                      questions_sentences, answers, PE_mem, PE_ques,
+    accuracy_train, accuracy_by_task_train = accuracy(sentences, train_questions,
+                                                      train_questions_sentences, train_answers, PE_mem, PE_ques,
+                                                      model, memsize, voca_size, dim_hidden)
+
+    accuracy_valid, accuracy_by_task_valid = accuracy(sentences, valid_questions,
+                                                      valid_questions_sentences, valid_answers, PE_mem, PE_ques,
                                                       model, memsize, voca_size, dim_hidden)
 
     print('Train accuracy TOTAL '.. accuracy_train)
@@ -449,6 +476,13 @@ function main()
     print(accuracy_by_task_train)
     print('\n')
     print('***************************************************')
+
+    print('Valid accuracy TOTAL '.. accuracy_valid)
+    print('Valid accuracy by task')
+    print(accuracy_by_task_valid)
+    print('\n')
+    print('***************************************************')
+
     -- Prediction on test
     myFile = hdf5.open('../Data/preprocess/'.. opt.filename ..'_test.hdf5','r')
     f = myFile:all()
