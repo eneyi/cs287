@@ -4,23 +4,8 @@ require 'torch';
 require 'xlua';
 require 'randomkit'
 
-
-cmd = torch.CmdLine()
-
-cmd:option('-filename','task1','prefix filename for preprocessed data')
-cmd:option('-nepochs',10,'number of epochs')
-cmd:option('-hops',1,'number of hops')
-cmd:option('-mem',50,'Size of the memory')
-cmd:option('-adjacent',1,'adjacent parameters if 1, else rnn like')
-cmd:option('-batchsize',16,'Batch size')
-
-
-if opt.gpuid >= 0 then
-    print('using CUDA on GPU ' .. opt.gpuid .. '...')
-    require 'cutorch'
-    require 'cunn'
-    cutorch.setDevice(opt.gpuid + 1)
-end
+-- Batch version of the model
+-- Not functional right now
 
 function graph_model_hops_adjacent_batch(dim_hidden, num_answer, voca_size, memsize, num_hops, sentence_size, batch_size)
     -- Graph model with multiple hops set with the Adjacent approach
@@ -52,7 +37,7 @@ function graph_model_hops_adjacent_batch(dim_hidden, num_answer, voca_size, mems
 
         -- Batch
         A_batched = nn.Sum(3)(nn.View(-1, memsize, sentence_size, dim_hidden)(A(story_in_memory)))
-        C_batched = nn.Sum(3)(nn.View(-1, memsize, sentence_size, dim_hidden)(A(story_in_memory)))
+        C_batched = nn.Sum(3)(nn.View(-1, memsize, sentence_size, dim_hidden)(C(story_in_memory)))
 
         -- Transformed input
         sent_input_embedding = nn.CAddTable()({A_batched, T_A(time)});
@@ -88,8 +73,8 @@ function build_input_batch(story_memory, question_input, cleaned_sentences, clea
         story_memory:fill(voca_size)
         -- Extract story and question
         for s=1,math.min(batch_size, questions_sentences:size(1) - question_index) do
-            local story_start = questions_sentences[{question_index + s,1}]
-            local story_size = questions_sentences[{question_index + s,2}] - story_start + 1
+            local story_start = questions_sentences[{question_index + s - 1,1}]
+            local story_size = questions_sentences[{question_index + s - 1,2}] - story_start + 1
             local story = cleaned_sentences:narrow(1,story_start, story_size)
             -- Building input
             sm = story_memory:narrow(1, s, 1):view(story_memory:size(2), story_memory:size(3))
@@ -128,6 +113,8 @@ function accuracy_batch(sentences, questions, questions_sentences, answers, mode
 
         m, a = pred:max(2)
         answer = answers:narrow(1,i,batch_size):view(batch_size)
+        -- print('argmax is ', a)
+        -- print('answer is ', answer)
         for s=1, batch_size do
             if a[s][1] == answer[s] then
                 acc = acc + 1
@@ -210,144 +197,3 @@ function train_model_batch(sentences, questions, questions_sentences, answers, m
     end
     return loss, accuracy_tensor
 end
-
------------- Main pipeline
-
-myFile = hdf5.open('../Data/preprocess/task123_train.hdf5','r')
-f = myFile:all()
-sentences = f['sentences']
-questions = f['questions']
-questions_sentences = f['questions_sentences']
-answers = f['answers']
-voca_size = f['voc_size'][1]
-myFile:close()
-
--- Building the model
-memsize = 50
-nEpochs = 100
-eta = 0.01
-dim_hidden = 50
-num_hops = 3
-num_answer = torch.max(answers)
-batch_size = 16
-sentence_size = sentences:size(2) - 1
-model = graph_model_hops_adjacent_batch(dim_hidden, num_answer, voca_size, memsize,
-                                        num_hops, sentence_size, batch_size)
-
--- Initialise parameters using normal(0,0.1) as mentioned in the paper
-parameters, gradParameters = model:getParameters()
-torch.manualSeed(0)
-randomkit.normal(parameters, 0, 0.1)
-
--- -- Criterion
-criterion = nn.ClassNLLCriterion()
-
--- Cuda
--- loss_train, accuracy_train = train_model_batch(sentences:cuda(), questions:cuda(), questions_sentences:cuda(), answers:cuda(),
---                                          model:cuda(), parameters, gradParameters, criterion:cuda(), eta,
---                                          nEpochs, memsize, voca_size, batch_size)
-
--- Batch training
--- loss_train, accuracy_train = train_model_batch(sentences, questions, questions_sentences, answers,
---                                          model, parameters, gradParameters, criterion, eta,
---                                          nEpochs, memsize, voca_size, batch_size)
-
-
--- Testing batch
-
-cleaned_sentences = sentences:narrow(2,2,sentences:size(2)-1)
-cleaned_questions = questions:narrow(2, 2, questions:size(2)-1)
-
-time_input_batch = torch.linspace(1,memsize,memsize):type('torch.LongTensor'):repeatTensor(batch_size,1)
-story_memory_batch = torch.ones(batch_size, memsize, sentences:size(2)-1)*voca_size
-question_input_batch = torch.zeros(batch_size, cleaned_questions:size(2))
-
-build_input_batch(story_memory_batch, question_input_batch, cleaned_sentences, cleaned_questions, questions_sentences,
-                   1, voca_size, batch_size)
-print(story_memory_batch:size(), question_input_batch:size(), time_input_batch:size())
-
-input_batch = {story_memory_batch:view(batch_size, -1), question_input_batch, time_input_batch}
-pred = model:forward(input_batch)
-print(pred:size())
-
-
-function main()
-    -- Parsing arg
-    opt = cmd:parse(arg)
-
-    myFile = hdf5.open('../Data/preprocess/'.. opt.filename ..'_train.hdf5','r')
-    f = myFile:all()
-    sentences = f['sentences']
-    questions = f['questions']
-    questions_sentences = f['questions_sentences']
-    answers = f['answers']
-    voca_size = f['voc_size'][1]
-    myFile:close()
-
-    -- Building the model
-    batch_size = opt.batchsize
-    memsize = opt.mem
-    nEpochs = opt.nepochs
-    eta = 0.01
-    dim_hidden = 50
-    num_hops = opt.hops
-    num_answer = torch.max(answers)
-    sentence_size = sentences:size(2) - 1
-    -- model = graph_model(dim_hidden, num_answer, voca_size, memsize)
-    if opt.adjacent == 1 then
-        model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
-    else
-        model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
-    end
-
-    -- Initialise parameters using normal(0,0.1) as mentioned in the paper
-    parameters, gradParameters = model:getParameters()
-    torch.manualSeed(0)
-    randomkit.normal(parameters, 0, 0.1)
-
-    -- -- Criterion
-    criterion = nn.ClassNLLCriterion()
-
-    -- -- Training
-    loss_train, accuracy_tensor_train = train_model(sentences, questions, questions_sentences, answers,
-                                             model, parameters, gradParameters, criterion, eta,
-                                             nEpochs, memsize, voca_size)
-
-    accuracy_train, accuracy_by_task_train = accuracy(sentences, questions,
-                                                      questions_sentences, answers,
-                                                      model, memsize, voca_size, dim_hidden)
-
-    print('Train accuracy TOTAL '.. accuracy_train)
-    print('Train accuracy by task')
-    print(accuracy_by_task_train)
-    print('\n')
-    print('***************************************************')
-    -- Prediction on test
-    myFile = hdf5.open('../Data/preprocess/'.. opt.filename ..'_test.hdf5','r')
-    f = myFile:all()
-    sentences_test = f['sentences']
-    questions_test = f['questions']
-    questions_sentences_test = f['questions_sentences']
-    answers_test = f['answers']
-    voca_size = f['voc_size'][1]
-    myFile:close()
-
-    accuracy_test, accuracy_by_task_test = accuracy(sentences_test, questions_test,
-                                                    questions_sentences_test, answers_test,
-                                                    model, memsize, voca_size, dim_hidden)
-    print('Test accuracy TOTAL '.. accuracy_test)
-    print('Test accuracy by task')
-    print(accuracy_by_task_test)
-    print('\n')
-    print('***************************************************')
-
-    -- Saving the final accuracies
-    fname = opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent.acc_by_task.hdf5'
-    myFile = hdf5.open(fname, 'w')
-    myFile:write('train', accuracy_by_task_train)
-    myFile:write('test', accuracy_by_task_test)
-    myFile:close()
-    print('Accuracy by task saved at '.. fname)
-end
-
-main()
