@@ -1,8 +1,9 @@
-require 'hdf5';
-require 'nngraph';
-require 'torch';
-require 'xlua';
-require 'randomkit'
+require("hdf5");
+require("nngraph");
+require("torch");
+require("xlua");
+require("randomkit");
+require 'mem2b.lua';
 
 cmd = torch.CmdLine()
 
@@ -11,6 +12,7 @@ cmd:option('-nepochs',10,'number of epochs')
 cmd:option('-hops',1,'number of hops')
 cmd:option('-mem',50,'Size of the memory')
 cmd:option('-adjacent',1,'adjacent parameters if 1, else rnn like')
+cmd:option('-batchsize',16,'Batch size')
 
 -- README:
 -- Function to define the 1-hop memory model
@@ -366,6 +368,7 @@ function main()
     myFile:close()
 
     -- Building the model
+    batch_size = opt.batchsize
     memsize = opt.mem
     nEpochs = opt.nepochs
     eta = 0.01
@@ -374,60 +377,122 @@ function main()
     num_answer = torch.max(answers)
     sentence_size = sentences:size(2) - 1
     -- model = graph_model(dim_hidden, num_answer, voca_size, memsize)
-    if opt.adjacent == 1 then
-        model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
-    else
-        model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
-    end
+    -- if opt.adjacent == 1 then
+    --     model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
+    -- else
+    --     model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops)
+    -- end
+
+    -- Batch model
+    model_batch = graph_model_hops_adjacent_batch(dim_hidden, num_answer, voca_size, memsize,
+                                            num_hops, sentence_size, batch_size)
+
+    -- No batch model
+    model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
+
 
     -- Initialise parameters using normal(0,0.1) as mentioned in the paper
     parameters, gradParameters = model:getParameters()
+    parameters_batch, gradParameters_batch = model_batch:getParameters()
     torch.manualSeed(0)
     randomkit.normal(parameters, 0, 0.1)
+    parameters_batch:copy(parameters)
+
+    print('Batch model parameters size ', parameters_batch:size())
+    print('Model parameters size ', parameters:size())
+
+    -- Comparing output
+
+    -- batch
+    -- print('Batch')
+    -- story_memory_batch = torch.ones(batch_size, memsize, sentences:size(2)-1)*voca_size
+    -- story_memory_batch_sized = torch.ones(batch_size, memsize * (sentences:size(2)-1))
+    -- -- Clean sentence and question while removing the the task_id
+    -- cleaned_sentences = sentences:narrow(2,2,sentences:size(2)-1)
+    -- cleaned_questions = questions:narrow(2, 2, questions:size(2)-1)
+    -- -- To store the quesiton input
+    -- time_input_batch = torch.linspace(1,memsize,memsize):type('torch.LongTensor'):repeatTensor(batch_size,1)
+    -- question_input_batch = torch.zeros(batch_size, cleaned_questions:size(2))
+
+    -- build_input_batch(story_memory_batch, question_input_batch, cleaned_sentences, cleaned_questions, questions_sentences,
+    --                    1, voca_size, batch_size)
+    -- story_memory_batch_sized:copy(torch.view(story_memory_batch, batch_size, -1))
+    -- input = {story_memory_batch_sized, question_input_batch, time_input_batch}
+
+    -- print('input 1 is ', story_memory_batch:narrow(1,1,1))
+    -- print('input 2 is ', story_memory_batch:narrow(1,2,1))
+    -- print('question is ', question_input_batch)
+    -- pred = model_batch:forward(input)
+    -- print('pred is ', pred)
+    -- m, a = pred:max(2)
+    -- print('argmax pred ', a)
+
+    -- No batch
+    -- print('No Batch')
+    -- time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
+    -- story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
+    -- question_input = torch.zeros(cleaned_questions:size(2))
+
+    -- for i=1,batch_size do
+    --     build_input(story_memory, question_input, cleaned_sentences, cleaned_questions, questions_sentences,
+    --            i, voca_size)
+    --     input = {story_memory, question_input, time_input}
+    --     pred = model:forward(input)
+    --     print('story is ', story_memory)
+    --     print('question is ', question_input)
+    --     print('pred is ', pred)
+    --     m, a = pred:max(2)
+    --     print('argmax pred ', a)
+    -- end
+
+
 
     -- -- Criterion
     criterion = nn.ClassNLLCriterion()
 
     -- -- Training
-    loss_train, accuracy_tensor_train = train_model(sentences, questions, questions_sentences, answers,
-                                             model, parameters, gradParameters, criterion, eta,
-                                             nEpochs, memsize, voca_size)
+    -- loss_train, accuracy_tensor_train = train_model(sentences, questions, questions_sentences, answers,
+    --                                          model, parameters, gradParameters, criterion, eta,
+    --                                          nEpochs, memsize, voca_size)
 
-    accuracy_train, accuracy_by_task_train = accuracy(sentences, questions,
-                                                      questions_sentences, answers,
-                                                      model, memsize, voca_size, dim_hidden)
+    train_model_batch(sentences, questions, questions_sentences, answers, model_batch, parameters_batch, gradParameters_batch,
+                     criterion, eta, nEpochs, memsize, voca_size, batch_size)
 
-    print('Train accuracy TOTAL '.. accuracy_train)
-    print('Train accuracy by task')
-    print(accuracy_by_task_train)
-    print('\n')
-    print('***************************************************')
-    -- Prediction on test
-    myFile = hdf5.open('../Data/preprocess/'.. opt.filename ..'_test.hdf5','r')
-    f = myFile:all()
-    sentences_test = f['sentences']
-    questions_test = f['questions']
-    questions_sentences_test = f['questions_sentences']
-    answers_test = f['answers']
-    voca_size = f['voc_size'][1]
-    myFile:close()
+    -- accuracy_train, accuracy_by_task_train = accuracy(sentences, questions,
+    --                                                   questions_sentences, answers,
+    --                                                   model, memsize, voca_size, dim_hidden)
 
-    accuracy_test, accuracy_by_task_test = accuracy(sentences_test, questions_test,
-                                                    questions_sentences_test, answers_test,
-                                                    model, memsize, voca_size, dim_hidden)
-    print('Test accuracy TOTAL '.. accuracy_test)
-    print('Test accuracy by task')
-    print(accuracy_by_task_test)
-    print('\n')
-    print('***************************************************')
+    -- print('Train accuracy TOTAL '.. accuracy_train)
+    -- print('Train accuracy by task')
+    -- print(accuracy_by_task_train)
+    -- print('\n')
+    -- print('***************************************************')
+    -- -- Prediction on test
+    -- myFile = hdf5.open('../Data/preprocess/'.. opt.filename ..'_test.hdf5','r')
+    -- f = myFile:all()
+    -- sentences_test = f['sentences']
+    -- questions_test = f['questions']
+    -- questions_sentences_test = f['questions_sentences']
+    -- answers_test = f['answers']
+    -- voca_size = f['voc_size'][1]
+    -- myFile:close()
 
-    -- Saving the final accuracies
-    fname = opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent.acc_by_task.hdf5'
-    myFile = hdf5.open(fname, 'w')
-    myFile:write('train', accuracy_by_task_train)
-    myFile:write('test', accuracy_by_task_test)
-    myFile:close()
-    print('Accuracy by task saved at '.. fname)
+    -- accuracy_test, accuracy_by_task_test = accuracy(sentences_test, questions_test,
+    --                                                 questions_sentences_test, answers_test,
+    --                                                 model, memsize, voca_size, dim_hidden)
+    -- print('Test accuracy TOTAL '.. accuracy_test)
+    -- print('Test accuracy by task')
+    -- print(accuracy_by_task_test)
+    -- print('\n')
+    -- print('***************************************************')
+
+    -- -- Saving the final accuracies
+    -- fname = opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent.acc_by_task.hdf5'
+    -- myFile = hdf5.open(fname, 'w')
+    -- myFile:write('train', accuracy_by_task_train)
+    -- myFile:write('test', accuracy_by_task_test)
+    -- myFile:close()
+    -- print('Accuracy by task saved at '.. fname)
 end
 
-main()
+-- main()
