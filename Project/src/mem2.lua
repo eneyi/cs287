@@ -82,17 +82,32 @@ function buildmodel(hid, nans)
 	return model
 end
 
-function graph_model(dim_hidden, num_answer, voca_size, memsize)
+function graph_model(dim_hidden, num_answer, voca_size, memsize, sentence_size)
     -- Inputs
     local story_in_memory = nn.Identity()()
     local question = nn.Identity()()
     local time = nn.Identity()()
+    
+    -- Position Encoding
+    local sentence_size = sentence_size or 6
+    local PE = torch.Tensor(memsize, sentence_size, dim_hidden)
+    local PE_ = torch.Tensor(sentence_size, dim_hidden)
+
+    for j = 1,sentence_size do
+        for k = 1, dim_hidden do
+            PE_[j][k] = (1-j/6)-(k/10)*(1-2*j/6)
+        end
+    end
+    for i = 1, memsize do
+        PE[i] = PE_
+    end
+
 
     -- Embedding
     local question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.LookupTable(voca_size, dim_hidden)(question)));
-    local sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story_in_memory)),
+    local sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({nn.LookupTable(voca_size, dim_hidden)(story_in_memory),PE})),
                                            nn.LookupTable(memsize, dim_hidden)(time)});
-    local sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.LookupTable(voca_size, dim_hidden)(story_in_memory)),
+    local sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({nn.LookupTable(voca_size, dim_hidden)(story_in_memory),PE})),
                                            nn.LookupTable(memsize, dim_hidden)(time)});
 
     -- Components
@@ -113,7 +128,8 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
     story_in_memory = nn.Identity()()
     question = nn.Identity()()
     time = nn.Identity()()
-
+    PE = nn.Identity()()
+  
     -- The initialization for C will serve for A
     C = nn.LookupTable(voca_size, dim_hidden)
     T_C = nn.LookupTable(memsize, dim_hidden)
@@ -121,7 +137,7 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
     -- Set B = A (use of share to have them tied all along the train)
     B:share(C,'weight', 'gradWeight', 'bias', 'gradBias')
 
-    question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(B(question)));
+    question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.CMulTable()({B(question),nn.Narrow(1,1,1)(PE)})));
 
     for K=1, num_hops do
         -- Initialization and A/T_A (next) = C/T_C (prev)
@@ -133,10 +149,11 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
         -- New C
         C = nn.LookupTable(voca_size, dim_hidden)
         T_C = nn.LookupTable(memsize, dim_hidden)
-
         -- Transformed input
-        sent_input_embedding = nn.CAddTable()({nn.Sum(2)(A(story_in_memory)), T_A(time)});
-        sent_output_embedding = nn.CAddTable()({nn.Sum(2)(C(story_in_memory)), T_C(time)});
+        sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({A(story_in_memory), PE})), T_A(time)});
+        -- sent_input_embedding = nn.CAddTable()({nn.Sum(2)(A(story_in_memory)), T_A(time)});
+        sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({C(story_in_memory), PE})), T_C(time)});
+        -- sent_output_embedding = nn.CAddTable()({nn.Sum(2)(C(story_in_memory)), T_C(time)});
 
         -- Components
         weights = nn.SoftMax()(nn.MM(false, true)({question_embedding, sent_input_embedding}))
@@ -154,7 +171,8 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
     output = nn.LogSoftMax()(W(question_embedding))
 
     -- Model
-    model = nn.gModule({story_in_memory, question, time}, {output})
+    model = nn.gModule({story_in_memory, question, time, PE}, {output})
+    -- model = nn.gModule({story_in_memory, question, time}, {output})
 
     return model
 end
@@ -196,7 +214,7 @@ function graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, n
     output = nn.LogSoftMax()(W(question_embedding))
 
     -- Model
-    model = nn.gModule({story_in_memory, question, time}, {output})
+    model = nn.gModule({story_in_memory, question, time, PE}, {output})
 
     return model
 end
@@ -246,8 +264,9 @@ function accuracy(sentences, questions, questions_sentences, answers, model, mem
         -- Prediction
         build_input(story_memory, question_input, cleaned_sentences, cleaned_questions,
                     questions_sentences, i, voca_size)
-        input = {story_memory, question_input, time_input}
-		pred = model:forward(input)
+        input = {story_memory, question_input, time_input, PE}
+		-- input = {story_memory, question_input, time_input}
+        pred = model:forward(input)
 
 		m, a = pred:view(pred:size(2),1):max(1)
 		if a[1][1] == answers[i] then
@@ -275,7 +294,8 @@ function accuracy_total(sentences, questions, questions_sentences, time_input, a
     for i = 1, questions:size(1) do
         build_input(story_memory, question_input, cleaned_sentences, cleaned_questions, questions_sentences,
                    i, voca_size)
-        input = {story_memory, question_input, time_input}
+        input = {story_memory, question_input, time_input, PE}
+        -- input = {story_memory, question_input, time_input}
         pred = model:forward(input)
         -- print('pred is ', pred)
 
@@ -308,7 +328,7 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
         -- timing the epoch
         timer = torch.Timer()
         av_L = 0
-        if i % 25 == 0 and i < 100 then
+        if i % 15 == 0 and i < 100 then
         	eta = eta/2
         end
         -- mini batch loop
@@ -318,7 +338,8 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
 
 	        build_input(story_memory, question_input, cleaned_sentences, cleaned_questions, questions_sentences,
                    i, voca_size)
-            input = {story_memory, question_input, time_input}
+            input = {story_memory, question_input, time_input, PE}
+            -- input = {story_memory, question_input, time_input}
 
             -- reset gradients
             model:zeroGradParameters()
@@ -334,7 +355,11 @@ function train_model(sentences, questions, questions_sentences, answers, model, 
             model:backward(input, df_do)
 
             -- gradient normalization with max norm 40 (l2 norm)
-            gradPar:view(gradPar:size(1),1):renorm(1,2,40)
+            local gn = gradPar:norm()
+            if gn > 40 then
+                gradPar:mul(40 / gn)
+            end
+            -- gradPar:view(gradPar:size(1),1):renorm(1,2,40)
             model:updateParameters(eta)
             --par:add(gradPar:mul(-eta))
             
@@ -391,10 +416,26 @@ function main()
     model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops)
 
 
+    --Position Encoding
+    PE = torch.Tensor(memsize, sentence_size, dim_hidden)
+    PE_ = torch.Tensor(sentence_size, dim_hidden)
+
+    for j = 1,sentence_size do
+        for k = 1, dim_hidden do
+            PE_[j][k] = (1-j/sentence_size)-(k/dim_hidden)*(1-2*j/sentence_size)
+        end
+    end
+    for i = 1, memsize do
+        PE[i] = PE_
+    end
+
     -- Initialise parameters using normal(0,0.1) as mentioned in the paper
     parameters, gradParameters = model:getParameters()
+<<<<<<< HEAD
     parameters_batch, gradParameters_batch = model_batch:getParameters()
     torch.manualSeed(0)
+=======
+>>>>>>> 02e49271a835fa0c656a296860aa98c0f2fccb0b
     randomkit.normal(parameters, 0, 0.1)
     parameters_batch:copy(parameters)
 
@@ -451,6 +492,7 @@ function main()
     criterion = nn.ClassNLLCriterion()
 
     -- -- Training
+<<<<<<< HEAD
     -- loss_train, accuracy_tensor_train = train_model(sentences, questions, questions_sentences, answers,
     --                                          model, parameters, gradParameters, criterion, eta,
     --                                          nEpochs, memsize, voca_size)
@@ -493,6 +535,47 @@ function main()
     -- myFile:write('test', accuracy_by_task_test)
     -- myFile:close()
     -- print('Accuracy by task saved at '.. fname)
+=======
+    loss_train, accuracy_tensor_train = train_model(sentences, questions, questions_sentences, answers,
+                                             model, parameters, gradParameters, criterion, eta,
+                                             nEpochs, memsize, voca_size)
+
+    accuracy_train, accuracy_by_task_train = accuracy(sentences, questions,
+                                                      questions_sentences, answers,
+                                                      model, memsize, voca_size, dim_hidden)
+
+    print('Train accuracy TOTAL '.. accuracy_train)
+    print('Train accuracy by task')
+    print(accuracy_by_task_train)
+    print('\n')
+    print('***************************************************')
+    -- Prediction on test
+    myFile = hdf5.open('../Data/preprocess/'.. opt.filename ..'_test.hdf5','r')
+    f = myFile:all()
+    sentences_test = f['sentences']
+    questions_test = f['questions']
+    questions_sentences_test = f['questions_sentences']
+    answers_test = f['answers']
+    voca_size = f['voc_size'][1]
+    myFile:close()
+
+    accuracy_test, accuracy_by_task_test = accuracy(sentences_test, questions_test,
+                                                    questions_sentences_test, answers_test,
+                                                    model, memsize, voca_size, dim_hidden)
+    print('Test accuracy TOTAL '.. accuracy_test)
+    print('Test accuracy by task')
+    print(accuracy_by_task_test)
+    print('\n')
+    print('***************************************************')
+
+    -- Saving the final accuracies
+    fname = 'accuracies'..opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent.acc_by_task.hdf5'
+    myFile = hdf5.open(fname, 'w')
+    myFile:write('train', accuracy_by_task_train)
+    myFile:write('test', accuracy_by_task_test)
+    myFile:close()
+    print('Accuracy by task saved at '.. fname)
+>>>>>>> 02e49271a835fa0c656a296860aa98c0f2fccb0b
 end
 
 -- main()
