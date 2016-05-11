@@ -11,6 +11,7 @@ cmd:option('-nepochs',10,'number of epochs')
 cmd:option('-hops',1,'number of hops')
 cmd:option('-mem',50,'Size of the memory')
 cmd:option('-adjacent',1,'adjacent parameters if 1, else rnn like')
+cmd:option('-tp',0.9,'Train proportion for the train/validation split')
 
 -- README:
 -- Function to define the 1-hop memory model
@@ -404,14 +405,15 @@ function main()
     -- Train and validation:
     ndata = questions:size(1)
     perm = torch.randperm(ndata):long()
+    train_proportion = opt.tp
 
-    train_questions = questions:index(1,perm):narrow(1,1,math.floor(0.9*ndata))
-    train_questions_sentences = questions_sentences:index(1,perm):narrow(1,1,math.floor(0.9*ndata))
-    train_answers = answers:index(1,perm):narrow(1,1,math.floor(0.9*ndata))
+    train_questions = questions:index(1,perm):narrow(1,1,math.floor(train_proportion*ndata))
+    train_questions_sentences = questions_sentences:index(1,perm):narrow(1,1,math.floor(train_proportion*ndata))
+    train_answers = answers:index(1,perm):narrow(1,1,math.floor(train_proportion*ndata))
 
-    valid_questions = questions:index(1,perm):narrow(1,math.floor(0.9*ndata)+1,ndata-math.floor(0.9*ndata))
-    valid_questions_sentences = questions_sentences:index(1,perm):narrow(1,math.floor(0.9*ndata)+1,ndata-math.floor(0.9*ndata))
-    valid_answers = answers:index(1,perm):narrow(1,math.floor(0.9*ndata)+1,ndata-math.floor(0.9*ndata))
+    valid_questions = questions:index(1,perm):narrow(1,math.floor(train_proportion*ndata)+1,ndata-math.floor(train_proportion*ndata))
+    valid_questions_sentences = questions_sentences:index(1,perm):narrow(1,math.floor(train_proportion*ndata)+1,ndata-math.floor(train_proportion*ndata))
+    valid_answers = answers:index(1,perm):narrow(1,math.floor(train_proportion*ndata)+1,ndata-math.floor(train_proportion*ndata))
 
     -- Building the model
     memsize = opt.mem
