@@ -60,18 +60,20 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
     -- parameter PE, if not nil use PE
 
     -- Inputs
-    story_in_memory = nn.Identity()()
-    question = nn.Identity()()
-    time = nn.Identity()()
+    local story_in_memory = nn.Identity()()
+    local question = nn.Identity()()
+    local time = nn.Identity()()
+    local PE_mem_node, PE_ques_node
+    local question_embedding, A, T_A, sent_input_embedding, sent_output_embedding, weights, o
     if PE == 1 then
         PE_mem_node = nn.Identity()()
         PE_ques_node = nn.Identity()()
     end
   
     -- The initialization for C will serve for A
-    C = nn.LookupTable(voca_size, dim_hidden)
-    T_C = nn.LookupTable(memsize, dim_hidden)
-    B = nn.LookupTable(voca_size, dim_hidden)
+    local C = nn.LookupTable(voca_size, dim_hidden)
+    local T_C = nn.LookupTable(memsize, dim_hidden)
+    local B = nn.LookupTable(voca_size, dim_hidden)
     -- Set B = A (use of share to have them tied all along the train)
     B:share(C,'weight', 'gradWeight', 'bias', 'gradBias')
 
@@ -113,14 +115,15 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
         question_embedding = nn.CAddTable()({o, question_embedding})
     end
 
-    W = nn.Linear(dim_hidden, num_answer, false)
+    local W = nn.Linear(dim_hidden, num_answer, false)
     -- TODO: set W^T = C (num_answer need to be size of voca_size)
     -- W:parameters()[1] = W:parameters()[1]:transpose(1,2)
 
     -- Final output
-    output = nn.LogSoftMax()(W(question_embedding))
+    local output = nn.LogSoftMax()(W(question_embedding))
 
     -- Model
+    local model
     if PE == 1 then
         model = nn.gModule({story_in_memory, question, time, PE_mem_node, PE_ques_node}, {output})
     else
@@ -299,7 +302,7 @@ function train_model(sentences, questions, questions_sentences, answers,
                     valid_questions, valid_questions_sentences, valid_answers,
                     model, par, gradPar, criterion, eta, nEpochs, memsize,
                     voca_size, valid_threshold, dim_hidden, num_answer, num_hops, PE, LS,
-                    train_proportion)
+                    train_proportion, epsilon, adjacent)
     -- Train the model with a SGD
 
     -- To store the loss
@@ -307,6 +310,7 @@ function train_model(sentences, questions, questions_sentences, answers,
     local accuracy_tensor = torch.zeros(nEpochs)
     local accuracy_tensor_valid = torch.zeros(nEpochs)
     local av_L = 0
+    local av_L_valid = 0
 
     local time_input = torch.linspace(1,memsize,memsize):type('torch.LongTensor')
     local story_memory = torch.ones(memsize, sentences:size(2)-1)*voca_size
@@ -345,6 +349,7 @@ function train_model(sentences, questions, questions_sentences, answers,
             end
         end
         -- mini batch loop
+        print('eta used '.. eta)
         for i = 1, questions:size(1) do
             -- display progress
             xlua.progress(i, questions:size(1))
@@ -364,7 +369,7 @@ function train_model(sentences, questions, questions_sentences, answers,
             pred = model:forward(input)
             -- Average loss computation
             f = criterion:forward(pred, answers[i])
-            av_L = av_L +f
+            av_L = av_L + f
 
             -- Backward pass
             df_do = criterion:backward(pred, answers[i])
@@ -379,8 +384,8 @@ function train_model(sentences, questions, questions_sentences, answers,
             --par:add(gradPar:mul(-eta))
             
         end
-        -- accuracy_tensor[ite] = accuracy_total(sentences, questions, questions_sentences, time_input, answers, model, memsize, voca_size,
-        --                                     dim_hidden, PE)
+        accuracy_tensor[ite] = accuracy_total(sentences, questions, questions_sentences, time_input, answers, model, memsize, voca_size,
+                                            dim_hidden, PE)
         if train_proportion ~= 1 then
             accuracy_tensor_valid[ite] = accuracy_total(sentences, valid_questions, valid_questions_sentences, time_input, valid_answers,
                                                       model, memsize, voca_size, dim_hidden, PE)
@@ -389,10 +394,10 @@ function train_model(sentences, questions, questions_sentences, answers,
         print('Epoch '..ite..': '..timer:time().real)
         print('\n')
         print('Average Loss: '.. loss[ite])
-        -- print('\n')
-        -- print('Training accuracy: '.. accuracy_tensor[ite])
-        -- print('\n')
-        -- print('Validation accuracy: '.. accuracy_tensor_valid[ite])
+        print('\n')
+        print('Training accuracy: '.. accuracy_tensor[ite])
+        print('\n')
+        print('Validation accuracy: '.. accuracy_tensor_valid[ite])
         print('\n')
         print('***************************************************')
 
@@ -413,19 +418,33 @@ function train_model(sentences, questions, questions_sentences, answers,
                 pred_valid = model:forward(input)
                 -- Average loss computation
                 f = criterion:forward(pred_valid, valid_answers[i])
+                print('valid question '..i)
+                print('pred_valid ')
+                print(pred_valid)
+                print('valid_answers '.. valid_answers[i])
+                print('loss '..f)
                 av_L_valid = av_L_valid + f
             end
             av_L_valid = av_L_valid/valid_questions:size(1)
             print('Average valid loss ', av_L_valid)
             -- Check if valid loss still decreasing
-            if av_L_valid < old_loss_valid then
+            improvement_percentage = (av_L_valid - old_loss_valid)/av_L_valid
+            if improvement_percentage < epsilon then
                 old_loss_valid = av_L_valid
             else
                 print('Switching from Linear to Softmax at epoch ' .. ite)
                 -- Creating new model with SoftMax
-                new_model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops, PE, 0)
+                if adjacent == 1 then
+                    new_model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops, PE, 0)
+                else
+                    new_model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops, PE, 0)
+                end
+                -- Initializing parameters
+                old_par = par:clone()
+                par, gradPar = new_model:getParameters()
+                -- randomkit.normal(par, 0, 0.1)
                 -- Copying parameters
-                new_model:parameters()[1]:copy(model:parameters()[1])
+                par:copy(old_par)
                 -- Changing model pointer
                 model = new_model
                 -- Restart training
@@ -443,7 +462,7 @@ function train_model(sentences, questions, questions_sentences, answers,
         -- Update
         ite = ite + 1
     end
-    return loss, accuracy_tensor, accuracy_tensor_valid
+    return loss, accuracy_tensor, accuracy_tensor_valid, model
 end
 
 --Position Encoding initialization
@@ -500,14 +519,16 @@ function main()
     nEpochs = opt.nepochs
     PE = opt.pe
     LS = opt.ls
+    adjacent = opt.adjacent
     eta = 0.01
     dim_hidden = 50
     num_hops = opt.hops
     num_answer = torch.max(answers)
     valid_threshold = 0.86
+    epsilon = 0.05
 
     -- model = graph_model(dim_hidden, num_answer, voca_size, memsize)
-    if opt.adjacent == 1 then 
+    if adjacent == 1 then 
         model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops, PE, LS)
     else
         model = graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, num_hops, PE, LS)
@@ -521,14 +542,14 @@ function main()
     criterion = nn.ClassNLLCriterion()
 
     -- -- Training
-    loss_train, accuracy_tensor_train, accuracy_tensor_valid = train_model(sentences, train_questions,
+    loss_train, accuracy_tensor_train, accuracy_tensor_valid, model = train_model(sentences, train_questions,
                                                                            train_questions_sentences, train_answers,
                                                                            valid_questions, valid_questions_sentences,
                                                                            valid_answers ,model, parameters,
                                                                            gradParameters, criterion, eta, nEpochs,
                                                                            memsize, voca_size, valid_threshold,
                                                                            dim_hidden, num_answer, num_hops, PE, LS,
-                                                                           train_proportion)
+                                                                           train_proportion, epsilon, adjacent)
 
     accuracy_train, accuracy_by_task_train = accuracy(sentences, train_questions,
                                                       train_questions_sentences, train_answers,
@@ -573,7 +594,7 @@ function main()
     print('***************************************************')
 
     -- Saving the final accuracies
-    fname = 'accuracies/bytask/'..opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent_pe'.. PE ..'_'.. opt.extension.. '_acc_by_task.hdf5'
+    fname = 'accuracies/'..opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent_pe'.. PE ..'_ls'..LS..'_'.. opt.extension.. '_acc_by_task.hdf5'
     myFile = hdf5.open(fname, 'w')
     myFile:write('train', accuracy_by_task_train)
     myFile:write('test', accuracy_by_task_test)
