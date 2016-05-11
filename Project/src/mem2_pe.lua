@@ -573,7 +573,7 @@ function main()
     print('***************************************************')
 
     -- Saving the final accuracies
-    fname = 'accuracies/'..opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent_pe'.. PE ..'_'.. opt.extension.. '_acc_by_task.hdf5'
+    fname = 'accuracies/bytask/'..opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent_pe'.. PE ..'_'.. opt.extension.. '_acc_by_task.hdf5'
     myFile = hdf5.open(fname, 'w')
     myFile:write('train', accuracy_by_task_train)
     myFile:write('test', accuracy_by_task_test)
