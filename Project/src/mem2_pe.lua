@@ -11,9 +11,10 @@ cmd:option('-nepochs',10,'number of epochs')
 cmd:option('-hops',3,'number of hops')
 cmd:option('-mem',50,'Size of the memory')
 cmd:option('-adjacent',1,'adjacent parameters if 1, else rnn like')
-cmd:option('-tp',0.9,'Train proportion for the train/validation split')
+cmd:option('-tp',1,'Train proportion for the train/validation split')
 cmd:option('-pe',0,'If 1, use of position encoding')
 cmd:option('-ls',0,'If 1, use linear starting')
+cmd:option('-extension',1,'Extension added to the file when saved')
 
 
 function graph_model(dim_hidden, num_answer, voca_size, memsize, sentence_size)
@@ -63,8 +64,8 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
     question = nn.Identity()()
     time = nn.Identity()()
     if PE == 1 then
-        PE_mem = nn.Identity()()
-        PE_ques = nn.Identity()()
+        PE_mem_node = nn.Identity()()
+        PE_ques_node = nn.Identity()()
     end
   
     -- The initialization for C will serve for A
@@ -75,7 +76,7 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
     B:share(C,'weight', 'gradWeight', 'bias', 'gradBias')
 
     if PE == 1 then
-        question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.CMulTable()({B(question),PE_ques})));
+        question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.CMulTable()({B(question),PE_ques_node})));
     else
         question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(B(question)));
     end
@@ -92,8 +93,8 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
         T_C = nn.LookupTable(memsize, dim_hidden)
         -- Transformed input
         if PE == 1 then
-            sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({A(story_in_memory), PE_mem})), T_A(time)});
-            sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({C(story_in_memory), PE_mem})), T_C(time)});
+            sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({A(story_in_memory), PE_mem_node})), T_A(time)});
+            sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({C(story_in_memory), PE_mem_node})), T_C(time)});
         else
             sent_input_embedding = nn.CAddTable()({nn.Sum(2)(A(story_in_memory)), T_A(time)});
             sent_output_embedding = nn.CAddTable()({nn.Sum(2)(C(story_in_memory)), T_C(time)});
@@ -121,7 +122,7 @@ function graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, n
 
     -- Model
     if PE == 1 then
-        model = nn.gModule({story_in_memory, question, time, PE_mem, PE_ques}, {output})
+        model = nn.gModule({story_in_memory, question, time, PE_mem_node, PE_ques_node}, {output})
     else
         model = nn.gModule({story_in_memory, question, time}, {output})
     end
@@ -136,8 +137,8 @@ function graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, n
     question = nn.Identity()()
     time = nn.Identity()()
     if PE == 1 then
-        PE_mem = nn.Identity()()
-        PE_ques = nn.Identity()()
+        PE_mem_node = nn.Identity()()
+        PE_ques_node = nn.Identity()()
     end
 
     -- Initialization of embeddings
@@ -149,9 +150,9 @@ function graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, n
     H = nn.Linear(dim_hidden, dim_hidden, false)
 
     if PE == 1 then
-        question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.CMulTable()({B(question),PE_ques})));
-        sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({A(story_in_memory), PE_mem})), T_A(time)});
-        sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({C(story_in_memory), PE_mem})), T_C(time)});
+        question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(nn.CMulTable()({B(question),PE_ques_node})));
+        sent_input_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({A(story_in_memory), PE_mem_node})), T_A(time)});
+        sent_output_embedding = nn.CAddTable()({nn.Sum(2)(nn.CMulTable()({C(story_in_memory), PE_mem_node})), T_C(time)});
     else
         question_embedding = nn.View(1, dim_hidden)(nn.Sum(1)(B(question)));
         sent_input_embedding = nn.CAddTable()({nn.Sum(2)(A(story_in_memory)), T_A(time)});
@@ -182,7 +183,7 @@ function graph_model_hops_rnn_like(dim_hidden, num_answer, voca_size, memsize, n
 
     -- Model
     if PE == 1 then
-        model = nn.gModule({story_in_memory, question, time, PE_mem, PE_ques}, {output})
+        model = nn.gModule({story_in_memory, question, time, PE_mem_node, PE_ques_node}, {output})
     else
         model = nn.gModule({story_in_memory, question, time}, {output})
     end
@@ -232,7 +233,6 @@ function accuracy(sentences, questions, questions_sentences, answers, model, mem
         PE_mem, PE_ques = build_PE(cleaned_sentences:size(2), cleaned_questions:size(2),
                                    memsize, dim_hidden)     
     end
-
     for i = 1, questions:size(1) do
         -- Current task id
         t_id = questions[{i, 1}]
@@ -298,7 +298,8 @@ end
 function train_model(sentences, questions, questions_sentences, answers,
                     valid_questions, valid_questions_sentences, valid_answers,
                     model, par, gradPar, criterion, eta, nEpochs, memsize,
-                    voca_size, valid_threshold, dim_hidden, PE, LS)
+                    voca_size, valid_threshold, dim_hidden, num_answer, num_hops, PE, LS,
+                    train_proportion)
     -- Train the model with a SGD
 
     -- To store the loss
@@ -316,6 +317,7 @@ function train_model(sentences, questions, questions_sentences, answers,
     local question_input = torch.zeros(cleaned_questions:size(2))
 
     -- Build PE input if needed
+    local PE_mem, PE_ques
     if PE == 1 then
         PE_mem, PE_ques = build_PE(cleaned_sentences:size(2), cleaned_questions:size(2),
                                    memsize, dim_hidden)     
@@ -332,7 +334,7 @@ function train_model(sentences, questions, questions_sentences, answers,
 
     ite = 1
     -- while loop used for LS
-    while ite < nEpochs do
+    while ite <= nEpochs do
         -- timing the epoch
         timer = torch.Timer()
         av_L = 0
@@ -358,7 +360,7 @@ function train_model(sentences, questions, questions_sentences, answers,
             -- reset gradients
             model:zeroGradParameters()
 
-            -- Forward pass (selection of inputs_batch in case the batch is not full, ie last batch)
+            -- Forward pass
             pred = model:forward(input)
             -- Average loss computation
             f = criterion:forward(pred, answers[i])
@@ -373,24 +375,24 @@ function train_model(sentences, questions, questions_sentences, answers,
             if gn > 40 then
                 gradPar:mul(40 / gn)
             end
-            -- gradPar:view(gradPar:size(1),1):renorm(1,2,40)
             model:updateParameters(eta)
             --par:add(gradPar:mul(-eta))
             
         end
-        accuracy_tensor[ite] = accuracy_total(sentences, questions, questions_sentences, time_input, answers, model, memsize, voca_size,
-                                            dim_hidden, PE)
-                            
-        accuracy_tensor_valid[ite] = accuracy_total(sentences, valid_questions, valid_questions_sentences, time_input, valid_answers,
-                                                  model, memsize, voca_size, dim_hidden, PE)
+        -- accuracy_tensor[ite] = accuracy_total(sentences, questions, questions_sentences, time_input, answers, model, memsize, voca_size,
+        --                                     dim_hidden, PE)
+        if train_proportion ~= 1 then
+            accuracy_tensor_valid[ite] = accuracy_total(sentences, valid_questions, valid_questions_sentences, time_input, valid_answers,
+                                                      model, memsize, voca_size, dim_hidden, PE)
+        end
         loss[ite] = av_L/questions:size(1)
         print('Epoch '..ite..': '..timer:time().real)
         print('\n')
         print('Average Loss: '.. loss[ite])
-        print('\n')
-        print('Training accuracy: '.. accuracy_tensor[ite])
-        print('\n')
-        print('Validation accuracy: '.. accuracy_tensor_valid[ite])
+        -- print('\n')
+        -- print('Training accuracy: '.. accuracy_tensor[ite])
+        -- print('\n')
+        -- print('Validation accuracy: '.. accuracy_tensor_valid[ite])
         print('\n')
         print('***************************************************')
 
@@ -413,16 +415,19 @@ function train_model(sentences, questions, questions_sentences, answers,
                 f = criterion:forward(pred_valid, valid_answers[i])
                 av_L_valid = av_L_valid + f
             end
+            av_L_valid = av_L_valid/valid_questions:size(1)
             print('Average valid loss ', av_L_valid)
             -- Check if valid loss still decreasing
             if av_L_valid < old_loss_valid then
                 old_loss_valid = av_L_valid
             else
-                print('Switching from Linear to Softmax at epoch ', ite)
+                print('Switching from Linear to Softmax at epoch ' .. ite)
                 -- Creating new model with SoftMax
                 new_model = graph_model_hops_adjacent(dim_hidden, num_answer, voca_size, memsize, num_hops, PE, 0)
                 -- Copying parameters
                 new_model:parameters()[1]:copy(model:parameters()[1])
+                -- Changing model pointer
+                model = new_model
                 -- Restart training
                 ite = 0
                 -- Switch on
@@ -430,7 +435,6 @@ function train_model(sentences, questions, questions_sentences, answers,
                 -- Reset eta
                 eta = old_eta
             end
-
         end
         -- if accuracy_tensor_valid[i] > valid_threshold then
         --     return loss:narrow(1,1,i), accuracy_tensor:narrow(1,1,i), accuracy_tensor_valid:narrow(1,1,i)
@@ -484,9 +488,12 @@ function main()
     train_questions_sentences = questions_sentences:index(1,perm):narrow(1,1,math.floor(train_proportion*ndata))
     train_answers = answers:index(1,perm):narrow(1,1,math.floor(train_proportion*ndata))
 
-    valid_questions = questions:index(1,perm):narrow(1,math.floor(train_proportion*ndata)+1,ndata-math.floor(train_proportion*ndata))
-    valid_questions_sentences = questions_sentences:index(1,perm):narrow(1,math.floor(train_proportion*ndata)+1,ndata-math.floor(train_proportion*ndata))
-    valid_answers = answers:index(1,perm):narrow(1,math.floor(train_proportion*ndata)+1,ndata-math.floor(train_proportion*ndata))
+    -- Check if split asked 
+    if train_proportion ~= 1 then
+        valid_questions = questions:index(1,perm):narrow(1,math.floor(train_proportion*ndata)+1,ndata-math.floor(train_proportion*ndata))
+        valid_questions_sentences = questions_sentences:index(1,perm):narrow(1,math.floor(train_proportion*ndata)+1,ndata-math.floor(train_proportion*ndata))
+        valid_answers = answers:index(1,perm):narrow(1,math.floor(train_proportion*ndata)+1,ndata-math.floor(train_proportion*ndata))
+    end
 
     -- Parameters of the model
     memsize = opt.mem
@@ -520,15 +527,17 @@ function main()
                                                                            valid_answers ,model, parameters,
                                                                            gradParameters, criterion, eta, nEpochs,
                                                                            memsize, voca_size, valid_threshold,
-                                                                           dim_hidden, PE, LS)
+                                                                           dim_hidden, num_answer, num_hops, PE, LS,
+                                                                           train_proportion)
 
     accuracy_train, accuracy_by_task_train = accuracy(sentences, train_questions,
                                                       train_questions_sentences, train_answers,
                                                       model, memsize, voca_size, dim_hidden, PE)
-
-    accuracy_valid, accuracy_by_task_valid = accuracy(sentences, valid_questions,
+    if train_proportion ~= 1 then 
+        accuracy_valid, accuracy_by_task_valid = accuracy(sentences, valid_questions,
                                                       valid_questions_sentences, valid_answers,
                                                       model, memsize, voca_size, dim_hidden, PE)
+    end
 
     print('Train accuracy TOTAL '.. accuracy_train)
     print('Train accuracy by task')
@@ -536,11 +545,13 @@ function main()
     print('\n')
     print('***************************************************')
 
-    print('Valid accuracy TOTAL '.. accuracy_valid)
-    print('Valid accuracy by task')
-    print(accuracy_by_task_valid)
-    print('\n')
-    print('***************************************************')
+    if train_proportion ~= 1 then 
+        print('Valid accuracy TOTAL '.. accuracy_valid)
+        print('Valid accuracy by task')
+        print(accuracy_by_task_valid)
+        print('\n')
+        print('***************************************************')
+    end
 
     -- Prediction on test
     myFile = hdf5.open('../Data/preprocess/'.. opt.filename ..'_test.hdf5','r')
@@ -562,7 +573,7 @@ function main()
     print('***************************************************')
 
     -- Saving the final accuracies
-    fname = 'accuracies/'..opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent.acc_by_task.hdf5'
+    fname = 'accuracies/'..opt.filename .. '_' ..num_hops..'hops_'.. opt.adjacent..'adjacent_pe'.. PE ..'_'.. opt.extension.. '_acc_by_task.hdf5'
     myFile = hdf5.open(fname, 'w')
     myFile:write('train', accuracy_by_task_train)
     myFile:write('test', accuracy_by_task_test)
