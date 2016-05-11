@@ -21,5 +21,5 @@
 for i in `seq 1 20`;
 do
     python preprocess.py --task $i --f task$i
-    th mem2_pe.lua -filename task$i -hops 3 -adjacent 1 -nepochs 2 -pe 1 -extension $i
+    th mem2_pe.lua -filename task$i -hops 3 -adjacent 1 -nepochs 80 -pe 1 -extension $i
 done
