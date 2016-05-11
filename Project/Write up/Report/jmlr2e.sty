@@ -192,8 +192,6 @@
 
 \def\@startauthor{\noindent \normalsize\bf}
 \def\@endauthor{}
-\def\@starteditor{\noindent \small {\bf Editor:~}}
-\def\@endeditor{\normalsize}
 \def\@maketitle{\vbox{\hsize\textwidth
  \linewidth\hsize \vskip \beforetitskip
  {\begin{center} \Large\bf \@title \par \end{center}} \vskip \aftertitskip
@@ -204,8 +202,6 @@
   \def\AND{\@endauthor\rm\hss \vskip \interauthorskip \@startauthor}
   \@startauthor \@author \@endauthor}
 
-  \vskip \aftermaketitskip
-  \noindent \@starteditor \@editor \@endeditor
   \vskip \aftermaketitskip
 }}
 
