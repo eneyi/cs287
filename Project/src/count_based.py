@@ -157,7 +157,7 @@ def main(arguments):
 
     # Filter the tasks expecting more than one output
     tasks = args.tasks
-    for t in [8, 19]:
+    for t in [19]:
         if t in tasks:
             tasks.remove(t)
 
