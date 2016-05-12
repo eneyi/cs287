@@ -8,6 +8,29 @@ from helper import *
 import preprocess
 import itertools
 
+##########################
+#
+# README
+#
+# This code implements the count based baseline
+# for the bAbI task. The preprocessing is done
+# by the code in preprocess.py which is called here.
+#
+# Command args:
+#   --task: tasks to solve (list of ints between 1 and 20,
+#            tasks 8 and 19 are removed because the baseline)
+#
+# OUTPUT:
+# None, it will print the result from the train and test set
+# on average and by task in the command line
+#
+# HOW TO USE:
+# For all tasks
+# $  python count_based.py
+# To precise tasks:
+# $  python count_based.py --task 1 4
+#
+# Authors: Virgile Audi | Nicolas Drizard 2016
 
 def sentence_relevance(story, ques, n=1, stopwords=None):
 
@@ -53,7 +76,7 @@ def train_question_vector(questions, answers, aw_number, alpha=0.1):
         # Index starts at 1
         if q[1] not in questions_embeddings:
             questions_embeddings[q[1]] = alpha*np.ones(aw_number)
-        questions_embeddings[q[1]][r[0]-1] += 1
+        questions_embeddings[q[1]][r-1] += 1
 
     # Normalize
     for k in questions_embeddings.keys():
@@ -128,25 +151,25 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('--f', default='new', type=str,
-                        help='Filename to save preprocess data in hdf5 format')
     parser.add_argument(
         '--tasks', default=range(1, 21), type=int, nargs='+', help='Tasks list')
     args = parser.parse_args(arguments)
 
     # Filter the tasks expecting more than one output
     tasks = args.tasks
-    for t in [8, 19]:
+    for t in [19]:
         if t in tasks:
             tasks.remove(t)
 
     # Wrap up in an argument
     new_arguments = ['--task'] + [str(t) for t in tasks]
+    # Preprocessing
+    preprocess.main(new_arguments)
 
     # Loading the data
     sentences_train, questions_train, questions_sentences_train, answers_train = read_preprocessed_matrix_data(
-        'all_train')
-    with open('../Data/preprocess/all_train_word2index', 'rb') as file:
+        'new_train')
+    with open('../Data/preprocess/new_word2index', 'rb') as file:
         word2index = pickle.load(file)
 
     # ###### Training the questions embeddings
@@ -196,7 +219,7 @@ def main(arguments):
 
     # ##### Test
     sentences_test, questions_test, questions_sentences_test, answers_test = read_preprocessed_matrix_data(
-        'all_test')
+        'new_test')
 
     # Batch predictions
     predictions_test = batch_prediction(questions_test, questions_sentences_test, sentences_test,
